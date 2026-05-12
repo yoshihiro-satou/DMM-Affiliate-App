@@ -8,7 +8,7 @@ pages_build_output_dir = ".open-next/assets"
 # DMM_API_ID = ""
 # DMM_AFFILIATE_ID = ""
 
-[[kv_namespaces]]
-# ISRキャッシュ用 KV（Cloudflare Dashboardで作成後にIDを入力）
+# [[kv_namespaces]]
+# ISRキャッシュ用 KV（Cloudflare Dashboardで作成後にコメントアウトを外してIDを入力）
 # binding = "NEXT_CACHE_WORKERS_KV"
 # id = ""
