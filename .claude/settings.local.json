@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem *)",
+      "Bash(git *)",
+      "Bash(Select-Object Name, Mode, Length)",
+      "Bash(pnpm create *)",
+      "Bash(cp -r \"/c/Users/yoshihiro/AppData/Local/Temp/dmm-app-tmp/.\" \"/c/Users/yoshihiro/Documents/GitHub/DMM-Affiliate-App/\" --exclude=\".git\")",
+      "Bash(rsync -av --exclude='.git' \"/c/Users/yoshihiro/AppData/Local/Temp/dmm-app-tmp/\" \"/c/Users/yoshihiro/Documents/GitHub/DMM-Affiliate-App/\")",
+      "Bash(pnpm install *)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm remove *)",
+      "Bash(pnpm dlx *)",
+      "Bash(timeout 15 pnpm dev)",
+      "WebFetch(domain:terms.dmm.com)"
+    ]
+  }
+}

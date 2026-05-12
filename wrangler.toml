@@ -1,0 +1,14 @@
+name = "dmm-affiliate-app"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".open-next/assets"
+
+[vars]
+# 本番環境変数は Cloudflare Dashboard または wrangler secret put で設定
+# DMM_API_ID = ""
+# DMM_AFFILIATE_ID = ""
+
+[[kv_namespaces]]
+# ISRキャッシュ用 KV（Cloudflare Dashboardで作成後にIDを入力）
+# binding = "NEXT_CACHE_WORKERS_KV"
+# id = ""
