@@ -17,9 +17,13 @@ export function ProductCard({ item, rank, featured = false }: Props) {
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
   const reviewAvg = item.review?.average ? parseFloat(item.review.average) : null
   const reviewCount = item.review?.count ?? 0
-  // list = 一覧用縦パッケージ画像（商品カードに適切）
-  // large は 2024年6月以降の作品で横版2K画像になることがあるため最後に回す
-  const imageUrl = item.imageURL.list ?? item.imageURL.large ?? item.imageURL.small
+  // pics.dmm.co.jp / pics.dmm.com の large = 縦パッケージ高画質 → 優先
+  // awsimgsrc.dmm.co.jp の large = 2024年6月以降の2K横版カバーの可能性あり → list にフォールバック
+  const { large, list, small } = item.imageURL
+  const isPortraitLarge =
+    large != null &&
+    (large.includes('pics.dmm.co.jp') || large.includes('pics.dmm.com'))
+  const imageUrl = isPortraitLarge ? large : (list ?? large ?? small ?? null)
 
   return (
     <div className="relative flex flex-col">
