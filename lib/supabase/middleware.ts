@@ -35,11 +35,12 @@ export async function updateSession(request: NextRequest) {
   const isPublicAsset =
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname.startsWith('/api/auth')
+    pathname.startsWith('/api/')
 
   if (!ageCheckDone && !isAgeCheckPage && !isPublicAsset) {
     const url = request.nextUrl.clone()
     url.pathname = '/age-check'
+    url.searchParams.set('from', pathname)
     return NextResponse.redirect(url)
   }
 
