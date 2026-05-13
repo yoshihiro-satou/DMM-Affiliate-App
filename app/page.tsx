@@ -1,65 +1,123 @@
-import Image from "next/image";
+import { Suspense } from 'react'
+import type { Metadata } from 'next'
+import { fetchItemList } from '@/lib/dmm/client'
+import { sortByRankingScore } from '@/lib/ranking'
+import { BentoGrid } from '@/components/layout/BentoGrid'
+import { ProductCard } from '@/components/product/ProductCard'
+import { ProductCardSkeleton } from '@/components/ui/ProductCardSkeleton'
 
-export default function Home() {
+export const revalidate = 3600
+
+export const metadata: Metadata = {
+  title: 'FANZA おすすめ - セール・ランキング',
+  description: 'FANZAの人気作品・セール・ランキングをアプリ感覚でチェック。',
+}
+
+// ------------------------------------
+// 非同期セクション（Suspenseで個別ストリーミング）
+// ------------------------------------
+async function RankingSection() {
+  const result = await fetchItemList({ sort: 'rank', hits: 10, service: 'digital', floor: 'videoa' })
+  const ranked = sortByRankingScore(result.items)
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: '今週のランキング',
+    itemListElement: ranked.slice(0, 10).map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.title,
+      url: item.affiliateURL,
+    })),
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <BentoGrid items={ranked} />
+    </>
+  )
+}
+
+async function NewArrivalsSection() {
+  const result = await fetchItemList({ sort: 'date', hits: 6, service: 'digital', floor: 'videoa' })
+  return (
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      {result.items.map((item) => (
+        <ProductCard key={item.content_id} item={item} />
+      ))}
     </div>
-  );
+  )
+}
+
+function LoadingGrid({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <ProductCardSkeleton key={i} />
+      ))}
+    </div>
+  )
+}
+
+// ------------------------------------
+// ページ本体
+// ------------------------------------
+export default function HomePage() {
+  return (
+    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      {/* FANZA同人 クーポンバナー（常時固定） */}
+      <a
+        href="https://al.dmm.co.jp/?lurl=https%3A%2F%2Fwww.dmm.co.jp%2Fdc%2Fdoujin%2F&af_id=fanza-affiliate-001&ch=toolbar&ch_id=tool"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between gap-2 border-b border-red-900/30 bg-gradient-to-r from-red-950/60 to-black/0 px-4 py-2.5"
+        style={{ WebkitTapHighlightColor: 'transparent' }}
+      >
+        <div className="flex flex-col">
+          <span className="text-[10px] font-semibold tracking-widest text-red-500/80">
+            PR · PICKUP
+          </span>
+          <span className="text-[13px] font-bold text-white">
+            FANZA同人 最大90%OFFクーポン配布中
+          </span>
+        </div>
+        <span className="shrink-0 rounded border border-red-600 px-2 py-1 text-[11px] font-bold text-red-400">
+          詳細 →
+        </span>
+      </a>
+
+      {/* ランキング */}
+      <section className="px-3 pt-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[15px] font-black tracking-tight text-white">
+            今週のランキング
+          </h2>
+          <a href="/ranking" className="text-[12px] text-white/40 hover:text-white/60">
+            もっと見る →
+          </a>
+        </div>
+        <Suspense fallback={<LoadingGrid count={6} />}>
+          <RankingSection />
+        </Suspense>
+      </section>
+
+      {/* 新着作品 */}
+      <section className="px-3 pt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[15px] font-black tracking-tight text-white">新着作品</h2>
+          <a href="/ranking?period=new" className="text-[12px] text-white/40 hover:text-white/60">
+            もっと見る →
+          </a>
+        </div>
+        <Suspense fallback={<LoadingGrid count={4} />}>
+          <NewArrivalsSection />
+        </Suspense>
+      </section>
+    </main>
+  )
 }
