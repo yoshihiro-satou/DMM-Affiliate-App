@@ -2,12 +2,29 @@ import Image from 'next/image'
 import type { DmmItem } from '@/types/dmm'
 import { parsePrice, calcDiscountRate } from '@/lib/ranking'
 
-// imageURL.list の実寸: 184×250px
 const IMG_W = 184
 const IMG_H = 250
+// awsimgsrc.dmm.co.jp のリサイズAPIに渡す幅（2x Retina 想定）
+const CDN_W = 368
+const CDN_H = 500
 
 const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTg0IiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMTExMTExIi8+PC9zdmc+'
+
+function buildImageUrl(raw: string): { src: string; unoptimized: boolean } {
+  try {
+    const url = new URL(raw)
+    if (url.hostname === 'awsimgsrc.dmm.co.jp') {
+      url.searchParams.set('w', String(CDN_W))
+      url.searchParams.set('h', String(CDN_H))
+      url.searchParams.set('t', 'margin')
+      return { src: url.toString(), unoptimized: true }
+    }
+  } catch {
+    // fall through
+  }
+  return { src: raw, unoptimized: false }
+}
 
 type Props = {
   item: DmmItem
@@ -20,8 +37,8 @@ export function ProductCard({ item, rank }: Props) {
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
   const reviewAvg = item.review?.average ? parseFloat(item.review.average) : null
   const reviewCount = item.review?.count ?? 0
-  // list = 一覧用縦パッケージ画像（実寸 184×250px）
-  const imageUrl = item.imageURL.list ?? item.imageURL.large ?? item.imageURL.small ?? null
+  const rawImageUrl = item.imageURL.list ?? item.imageURL.large ?? item.imageURL.small ?? null
+  const imageProps = rawImageUrl ? buildImageUrl(rawImageUrl) : null
 
   return (
     <div className="flex flex-col">
@@ -32,12 +49,13 @@ export function ProductCard({ item, rank }: Props) {
         rel="noopener noreferrer"
         className="relative block overflow-hidden rounded-lg bg-white/5"
       >
-        {imageUrl ? (
+        {imageProps ? (
           <Image
-            src={imageUrl}
+            src={imageProps.src}
             alt={item.title}
             width={IMG_W}
             height={IMG_H}
+            unoptimized={imageProps.unoptimized}
             className="aspect-[184/250] w-full object-cover"
             placeholder="blur"
             blurDataURL={BLUR_PLACEHOLDER}
