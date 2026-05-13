@@ -17,7 +17,9 @@ export function ProductCard({ item, rank, featured = false }: Props) {
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
   const reviewAvg = item.review?.average ? parseFloat(item.review.average) : null
   const reviewCount = item.review?.count ?? 0
-  const imageUrl = item.imageURL.large ?? item.imageURL.small ?? item.imageURL.list
+  // list = 一覧用縦パッケージ画像（商品カードに適切）
+  // large は 2024年6月以降の作品で横版2K画像になることがあるため最後に回す
+  const imageUrl = item.imageURL.list ?? item.imageURL.large ?? item.imageURL.small
 
   return (
     <div className="relative flex flex-col">
