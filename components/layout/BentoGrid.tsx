@@ -11,10 +11,10 @@ export function BentoGrid({ items }: Props) {
   const [hero, ...rest] = items
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-      {/* 大タイル: モバイル 2×1、デスクトップ 2×2 */}
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      {/* 大タイル: モバイル全幅、sm以上は2カラム分 */}
       {hero && (
-        <div className="col-span-2 md:row-span-2">
+        <div className="col-span-2 sm:row-span-2">
           <ProductCard item={hero} rank={1} featured />
         </div>
       )}

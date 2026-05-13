@@ -80,7 +80,7 @@ export default async function RankingPage({ searchParams }: Props) {
       <RankingTabs currentPeriod={validPeriod} />
 
       {/* 商品グリッド */}
-      <div className="grid grid-cols-2 gap-3 px-3 pb-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 px-3 pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((item, i) => (
           <ProductCard key={item.content_id} item={item} rank={i + 1} />
         ))}

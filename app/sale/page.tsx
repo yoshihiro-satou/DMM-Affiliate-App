@@ -39,7 +39,7 @@ export default async function SalePage() {
       </div>
 
       {/* 商品グリッド */}
-      <div className="grid grid-cols-2 gap-3 p-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((item, i) => (
           <ProductCard key={item.content_id} item={item} rank={i + 1} />
         ))}

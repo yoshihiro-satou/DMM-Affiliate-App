@@ -46,7 +46,7 @@ async function RankingSection() {
 async function NewArrivalsSection() {
   const result = await fetchItemList({ sort: 'date', hits: 6, service: 'digital', floor: 'videoa' })
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {result.items.map((item) => (
         <ProductCard key={item.content_id} item={item} />
       ))}
@@ -56,7 +56,7 @@ async function NewArrivalsSection() {
 
 function LoadingGrid({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {Array.from({ length: count }).map((_, i) => (
         <ProductCardSkeleton key={i} />
       ))}

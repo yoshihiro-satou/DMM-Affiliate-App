@@ -17,13 +17,8 @@ export function ProductCard({ item, rank, featured = false }: Props) {
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
   const reviewAvg = item.review?.average ? parseFloat(item.review.average) : null
   const reviewCount = item.review?.count ?? 0
-  // pics.dmm.co.jp / pics.dmm.com の large = 縦パッケージ高画質 → 優先
-  // awsimgsrc.dmm.co.jp の large = 2024年6月以降の2K横版カバーの可能性あり → list にフォールバック
-  const { large, list, small } = item.imageURL
-  const isPortraitLarge =
-    large != null &&
-    (large.includes('pics.dmm.co.jp') || large.includes('pics.dmm.com'))
-  const imageUrl = isPortraitLarge ? large : (list ?? large ?? small ?? null)
+  // list = 一覧用縦パッケージ画像（正しいコンテンツ）
+  const imageUrl = item.imageURL.list ?? item.imageURL.large ?? item.imageURL.small ?? null
 
   return (
     <div className="relative flex flex-col">
@@ -72,7 +67,7 @@ export function ProductCard({ item, rank, featured = false }: Props) {
             className={`w-full object-cover ${featured ? 'aspect-[3/4]' : 'aspect-[2/3]'}`}
             placeholder="blur"
             blurDataURL={BLUR_PLACEHOLDER}
-            sizes="(max-width: 768px) 50vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 17vw"
           />
         ) : (
           <div className={`w-full bg-white/5 ${featured ? 'aspect-[3/4]' : 'aspect-[2/3]'}`} />
