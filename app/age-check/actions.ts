@@ -2,11 +2,12 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { AGE_CHECK_COOKIE, AGE_CHECK_VALUE } from '@/lib/constants/age-check'
 
 export async function confirmAge(formData: FormData) {
   const cookieStore = await cookies()
 
-  cookieStore.set('age_check_done', '1', {
+  cookieStore.set(AGE_CHECK_COOKIE, AGE_CHECK_VALUE, {
     maxAge: 60 * 60 * 24 * 365, // 1年
     path: '/',
     httpOnly: true,

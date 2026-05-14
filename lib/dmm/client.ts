@@ -5,7 +5,7 @@ import {
   DmmActressResponseSchema,
   DmmFloorListResponseSchema,
 } from '@/types/dmm'
-import type { DmmItemListResponse, DmmActressResponse, DmmFloorListResponse } from '@/types/dmm'
+import type { DmmItemListResponse, DmmActressResponse, DmmFloorListResponse, ItemSort, ActressSort, Article } from '@/types/dmm'
 
 const BASE_URL = 'https://api.dmm.com/affiliate/v3'
 
@@ -27,8 +27,7 @@ function buildParams(extra: Record<string, string | number | undefined>): URLSea
   return params
 }
 
-// 連続リクエスト時のレート制限対策（500ms スリープ）
-export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
 // ------------------------------------
 // 商品一覧
@@ -39,12 +38,14 @@ export type FetchItemListParams = {
   floor?: string
   hits?: number
   offset?: number
-  sort?: 'rank' | 'date' | 'price' | '-price' | 'review_rank' | 'match'
+  sort?: ItemSort
   keyword?: string
-  article?: string
+  cid?: string
+  article?: Article
   article_id?: number
   gte_date?: string
   lte_date?: string
+  mono_stock?: 'stock' | 'reserve' | 'reserve_empty' | 'mono'
 }
 
 export const fetchItemList = cache(
@@ -57,10 +58,12 @@ export const fetchItemList = cache(
       offset: params.offset ?? 1,
       sort: params.sort,
       keyword: params.keyword,
+      cid: params.cid,
       article: params.article,
       article_id: params.article_id,
       gte_date: params.gte_date,
       lte_date: params.lte_date,
+      mono_stock: params.mono_stock,
     })
 
     const res = await fetch(`${BASE_URL}/ItemList?${searchParams}`, {
@@ -86,7 +89,8 @@ export const fetchItemList = cache(
 export type FetchActressListParams = {
   hits?: number
   offset?: number
-  sort?: 'id' | '-id' | 'name' | 'bust' | '-bust' | 'waist' | '-waist' | 'hip' | '-hip' | 'height' | '-height' | 'birthday' | '-birthday'
+  sort?: ActressSort
+  initial?: string
   keyword?: string
   actress_id?: number
   gte_bust?: number
@@ -97,6 +101,8 @@ export type FetchActressListParams = {
   lte_hip?: number
   gte_height?: number
   lte_height?: number
+  gte_birthday?: string
+  lte_birthday?: string
 }
 
 export const fetchActressList = cache(
@@ -106,6 +112,7 @@ export const fetchActressList = cache(
       hits: params.hits ?? 20,
       offset: params.offset ?? 1,
       sort: params.sort,
+      initial: params.initial,
       keyword: params.keyword,
       actress_id: params.actress_id,
       gte_bust: params.gte_bust,
@@ -116,6 +123,8 @@ export const fetchActressList = cache(
       lte_hip: params.lte_hip,
       gte_height: params.gte_height,
       lte_height: params.lte_height,
+      gte_birthday: params.gte_birthday,
+      lte_birthday: params.lte_birthday,
     })
 
     const res = await fetch(`${BASE_URL}/ActressSearch?${searchParams}`, {

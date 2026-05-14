@@ -39,6 +39,44 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 - ベースURL: `https://api.dmm.com/affiliate/v3/`
 - **`DMM_API_ID` と `DMM_AFFILIATE_ID` は絶対に `NEXT_PUBLIC_` を付けない**。ブラウザからのCORSは不可のため、必ず Server Components か Route Handler 経由でフェッチする
 - `next/image` の remotePatterns に `pics.dmm.co.jp` / `pics.dmm.com` / `awsimgsrc.dmm.co.jp` の3ホストを登録済み
+- **アフィリエイトID**: API用途では末尾 990〜997 のID（yoshihirock-990 〜 yoshihirock-997）を使用。末尾が 990〜999 以外はエラーになる
+- **1リクエストあたりの最大取得件数**: 100件（`hits` パラメータの上限）。`offset` 最大値は 50000
+- **クレジット表示必須**: FANZAコンテンツ利用時は規定のクレジット（`Powered by FANZA Webサービス` またはバナー画像）を全ページに表示する（`docs/dmm-affiliate-api-terms.md` 参照）
+
+#### 提供中 API エンドポイント一覧
+
+| API | エンドポイント | 主なパラメータ | 概要 |
+|-----|------------|-------------|------|
+| 商品情報API v3 | `GET /ItemList` | site / service / floor / hits / offset / sort / keyword / cid / article / article_id / gte_date / lte_date | 商品一覧・詳細取得 |
+| フロアAPI | `GET /FloorList` | — | サービス・フロア一覧取得 |
+| 女優検索API | `GET /ActressSearch` | initial / actress_id / keyword / gte_bust〜lte_hip / gte_height〜lte_birthday | 女優情報・3サイズ等 |
+| ジャンル検索API | `GET /GenreSearch` | floor_id（必須）/ initial / hits / offset | ジャンル一覧（フロア指定必須） |
+| メーカー検索API | `GET /MakerSearch` | floor_id（必須）/ initial / hits / offset | メーカー一覧（フロア指定必須） |
+| シリーズ検索API | `GET /SeriesSearch` | floor_id（必須）/ initial / hits / offset | シリーズ一覧（フロア指定必須） |
+| 作者検索API | `GET /AuthorSearch` | floor_id（必須）/ initial / hits / offset | 作者一覧（フロア指定必須） |
+
+#### ItemList ソート順
+
+| 値 | 意味 |
+|-----|------|
+| `rank`（デフォルト） | 人気順 |
+| `price` | 価格高順 |
+| `-price` | 価格安順 |
+| `date` | 発売日順 |
+| `review` | 評価順 |
+| `match` | キーワードマッチング順 |
+
+#### article 絞り込み
+
+`article` + `article_id` を組み合わせて特定女優・ジャンル・シリーズに絞り込める。`article_id` は各検索APIから取得する。
+
+| article 値 | 絞り込み対象 |
+|----------|-----------|
+| `actress` | 女優 |
+| `author` | 作者 |
+| `genre` | ジャンル |
+| `series` | シリーズ |
+| `maker` | メーカー |
 
 ### レンダリング戦略
 

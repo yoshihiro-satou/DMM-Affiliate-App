@@ -100,6 +100,7 @@ export const DmmActressSchema = z.object({
   name: z.string(),
   ruby: z.string().optional(),
   bust: z.string().optional(),
+  cup: z.string().optional(),
   waist: z.string().optional(),
   hip: z.string().optional(),
   height: z.string().optional(),
@@ -160,7 +161,7 @@ export const DmmFloorListResponseSchema = z.object({
             id: z.string(),
             code: z.string(),
             name: z.string(),
-            floors: z.array(DmmFloorSchema),
+            floor: z.array(DmmFloorSchema),
           })
         ),
       })
@@ -173,28 +174,41 @@ export type DmmFloorListResponse = z.infer<typeof DmmFloorListResponseSchema>
 // ------------------------------------
 // Route Handler 用クエリパラメータスキーマ
 // ------------------------------------
+
+export const ItemSortSchema = z.enum(['rank', 'date', 'price', '-price', 'review', 'match'])
+export type ItemSort = z.infer<typeof ItemSortSchema>
+
+export const ArticleSchema = z.enum(['actress', 'author', 'genre', 'series', 'maker'])
+export type Article = z.infer<typeof ArticleSchema>
+
+export const ActressSortSchema = z.enum([
+  'id', '-id', 'name', '-name',
+  'bust', '-bust', 'waist', '-waist', 'hip', '-hip',
+  'height', '-height', 'birthday', '-birthday',
+])
+export type ActressSort = z.infer<typeof ActressSortSchema>
+
 export const ItemListQuerySchema = z.object({
   site: z.string().default('FANZA'),
   service: z.string().optional(),
   floor: z.string().optional(),
   hits: z.coerce.number().min(1).max(100).default(20),
   offset: z.coerce.number().min(1).max(50000).default(1),
-  sort: z
-    .enum(['rank', 'date', 'price', '-price', 'review_rank', 'match'])
-    .default('rank'),
+  sort: ItemSortSchema.default('rank'),
   keyword: z.string().optional(),
-  article: z.string().optional(),
+  cid: z.string().optional(),
+  article: ArticleSchema.optional(),
   article_id: z.coerce.number().optional(),
   gte_date: z.string().optional(),
   lte_date: z.string().optional(),
+  mono_stock: z.enum(['stock', 'reserve', 'reserve_empty', 'mono']).optional(),
 })
 
 export const ActressListQuerySchema = z.object({
   hits: z.coerce.number().min(1).max(100).default(20),
   offset: z.coerce.number().min(1).max(50000).default(1),
-  sort: z
-    .enum(['id', '-id', 'name', 'bust', '-bust', 'waist', '-waist', 'hip', '-hip', 'height', '-height', 'birthday', '-birthday'])
-    .default('id'),
+  sort: ActressSortSchema.default('id'),
+  initial: z.string().optional(),
   keyword: z.string().optional(),
   actress_id: z.coerce.number().optional(),
   gte_bust: z.coerce.number().optional(),
@@ -205,4 +219,6 @@ export const ActressListQuerySchema = z.object({
   lte_hip: z.coerce.number().optional(),
   gte_height: z.coerce.number().optional(),
   lte_height: z.coerce.number().optional(),
+  gte_birthday: z.string().optional(),
+  lte_birthday: z.string().optional(),
 })

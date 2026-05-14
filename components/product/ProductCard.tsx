@@ -29,9 +29,10 @@ function buildImageUrl(raw: string): { src: string; unoptimized: boolean } {
 type Props = {
   item: DmmItem
   rank?: number
+  overlaySlot?: React.ReactNode
 }
 
-export function ProductCard({ item, rank }: Props) {
+export function ProductCard({ item, rank, overlaySlot }: Props) {
   const price = parsePrice(item.prices.price)
   const listPrice = parsePrice(item.prices.list_price)
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
@@ -93,6 +94,8 @@ export function ProductCard({ item, rank }: Props) {
             {rank}
           </span>
         )}
+
+        {overlaySlot}
       </a>
 
       {/* テキスト情報 */}

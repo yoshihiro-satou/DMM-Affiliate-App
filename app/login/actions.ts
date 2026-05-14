@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import type { GuestFavItem } from '@/lib/guest-favorites'
 
 export async function signIn(
   _prevState: { error?: string } | null,
@@ -38,6 +39,7 @@ export async function signIn(
 
 export async function migrateGuestData(data: {
   favorites: string[]
+  favoritesMeta?: GuestFavItem[]
   swipes: Array<{ item_id: string; direction: 'like' | 'skip'; created_at: string }>
 }) {
   const supabase = await createClient()
@@ -45,22 +47,33 @@ export async function migrateGuestData(data: {
   const userId = authData?.claims?.sub
   if (!userId) return
 
-  if (data.favorites.length > 0) {
-    await supabase.from('favorites').upsert(
-      data.favorites.map((item_id) => ({ user_id: userId, item_id })),
-      { onConflict: 'user_id,item_id', ignoreDuplicates: true }
-    )
-  }
-
-  if (data.swipes.length > 0) {
-    await supabase.from('swipe_history').upsert(
-      data.swipes.map(({ item_id, direction, created_at }) => ({
-        user_id: userId,
-        item_id,
-        direction,
-        created_at,
-      })),
-      { onConflict: 'user_id,item_id', ignoreDuplicates: true }
-    )
-  }
+  await Promise.all([
+    data.favorites.length > 0
+      ? supabase.from('favorites').upsert(
+          data.favorites.map((item_id) => {
+            const meta = data.favoritesMeta?.find((m) => m.item_id === item_id)
+            return {
+              user_id: userId,
+              item_id,
+              item_title: meta?.title ?? null,
+              item_url: meta?.affiliate_url ?? null,
+              image_url: meta?.image_url ?? null,
+              price: meta?.price ?? null,
+            }
+          }),
+          { onConflict: 'user_id,item_id', ignoreDuplicates: true }
+        )
+      : Promise.resolve(),
+    data.swipes.length > 0
+      ? supabase.from('swipe_history').upsert(
+          data.swipes.map(({ item_id, direction, created_at }) => ({
+            user_id: userId,
+            item_id,
+            direction,
+            created_at,
+          })),
+          { onConflict: 'user_id,item_id', ignoreDuplicates: true }
+        )
+      : Promise.resolve(),
+  ])
 }

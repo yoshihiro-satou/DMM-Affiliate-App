@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { fetchItemList } from '@/lib/dmm/client'
+import type { FetchItemListParams } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
 import { ProductCard } from '@/components/product/ProductCard'
+import { FavoriteButton } from '@/components/product/FavoriteButton'
 import { RankingTabs } from '@/components/ranking/RankingTabs'
 import type { RankingPeriod } from '@/components/ranking/RankingTabs'
 
@@ -14,12 +16,12 @@ export const metadata: Metadata = {
 
 const PERIOD_CONFIG: Record<
   RankingPeriod,
-  { sort: 'rank' | 'date' | 'review_rank'; label: string }
+  { sort: NonNullable<FetchItemListParams['sort']>; label: string; applyScore: boolean }
 > = {
-  daily: { sort: 'rank', label: '日次ランキング' },
-  weekly: { sort: 'rank', label: '週次ランキング' },
-  monthly: { sort: 'review_rank', label: '月次ランキング' },
-  new: { sort: 'date', label: '新着作品' },
+  daily:   { sort: 'rank',   label: '日次ランキング', applyScore: true },
+  weekly:  { sort: 'rank',   label: '週次ランキング', applyScore: true },
+  monthly: { sort: 'review', label: '月次ランキング', applyScore: true },
+  new:     { sort: 'date',   label: '新着作品',       applyScore: false },
 }
 
 type Props = {
@@ -29,7 +31,7 @@ type Props = {
 export default async function RankingPage({ searchParams }: Props) {
   const { period = 'daily' } = await searchParams
   const validPeriod = (period in PERIOD_CONFIG ? period : 'daily') as RankingPeriod
-  const { sort, label } = PERIOD_CONFIG[validPeriod]
+  const { sort, label, applyScore } = PERIOD_CONFIG[validPeriod]
 
   const result = await fetchItemList({
     sort,
@@ -38,10 +40,7 @@ export default async function RankingPage({ searchParams }: Props) {
     floor: 'videoa',
   })
 
-  const items =
-    sort === 'rank' || sort === 'review_rank'
-      ? sortByRankingScore(result.items)
-      : result.items
+  const items = applyScore ? sortByRankingScore(result.items) : result.items
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -82,7 +81,12 @@ export default async function RankingPage({ searchParams }: Props) {
       {/* 商品グリッド */}
       <div className="grid grid-cols-2 gap-3 px-3 pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((item, i) => (
-          <ProductCard key={item.content_id} item={item} rank={i + 1} />
+          <ProductCard
+            key={item.content_id}
+            item={item}
+            rank={i + 1}
+            overlaySlot={<FavoriteButton item={item} />}
+          />
         ))}
       </div>
     </main>

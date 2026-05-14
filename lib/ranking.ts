@@ -1,21 +1,22 @@
 import type { DmmItem } from '@/types/dmm'
 
-function newnessFactor(dateStr: string | undefined): number {
+function newnessFactor(dateStr: string | undefined, now: number): number {
   if (!dateStr) return 1.0
-  const daysSince = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)
+  const daysSince = (now - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)
   if (daysSince <= 30) return 1.5
   if (daysSince <= 90) return 1.2
   return 1.0
 }
 
-export function calcRankingScore(item: DmmItem): number {
+export function calcRankingScore(item: DmmItem, now = Date.now()): number {
   const avg = item.review?.average ? parseFloat(item.review.average) : 0
   const count = item.review?.count ?? 0
-  return avg * Math.log(count + 1) * newnessFactor(item.date)
+  return avg * Math.log(count + 1) * newnessFactor(item.date, now)
 }
 
 export function sortByRankingScore(items: DmmItem[]): DmmItem[] {
-  return [...items].sort((a, b) => calcRankingScore(b) - calcRankingScore(a))
+  const now = Date.now()
+  return [...items].sort((a, b) => calcRankingScore(b, now) - calcRankingScore(a, now))
 }
 
 export function parsePrice(priceStr: string | undefined): number | null {

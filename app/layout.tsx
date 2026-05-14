@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { AuthListener } from '@/components/auth-listener'
 import { BottomNav } from '@/components/layout/BottomNav'
+import { AuthProvider } from '@/components/providers/auth-provider'
+import { getCurrentUser } from '@/lib/supabase/server'
 import './globals.css'
 
 const geistSans = Geist({
@@ -29,20 +31,30 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const user = await getCurrentUser()
+
   return (
     <html
       lang="ja"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-[#080808] text-white">
-        <AuthListener />
-        {children}
-        <BottomNav />
+        {/* ゲストお気に入り件数をハイドレーション前にバッジへ反映 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var n=JSON.parse(localStorage.getItem('guest_favorites')||'[]').length;if(n>0){var el=document.getElementById('fav-badge');if(el)el.textContent=n}}catch(e){}})()`,
+          }}
+        />
+        <AuthProvider isLoggedIn={!!user} userId={user?.sub ?? null}>
+          <AuthListener />
+          {children}
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   )

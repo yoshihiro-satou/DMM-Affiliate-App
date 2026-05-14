@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { fetchItemList } from '@/lib/dmm/client'
 import { sortByDiscount } from '@/lib/ranking'
 import { ProductCard } from '@/components/product/ProductCard'
+import { FavoriteButton } from '@/components/product/FavoriteButton'
 
 export const revalidate = 3600
 
@@ -41,7 +42,12 @@ export default async function SalePage() {
       {/* 商品グリッド */}
       <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {items.map((item, i) => (
-          <ProductCard key={item.content_id} item={item} rank={i + 1} />
+          <ProductCard
+            key={item.content_id}
+            item={item}
+            rank={i + 1}
+            overlaySlot={<FavoriteButton item={item} />}
+          />
         ))}
       </div>
     </main>

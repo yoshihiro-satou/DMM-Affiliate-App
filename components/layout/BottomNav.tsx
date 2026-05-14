@@ -42,11 +42,20 @@ export function BottomNav() {
               {isActive && (
                 <span className="absolute inset-x-3 top-0 h-px bg-red-600" />
               )}
-              <Icon
-                size={22}
-                strokeWidth={isActive ? 2 : 1.5}
-                className={isActive ? 'text-white' : 'text-white/30'}
-              />
+              <span className="relative">
+                <Icon
+                  size={22}
+                  strokeWidth={isActive ? 2 : 1.5}
+                  className={isActive ? 'text-white' : 'text-white/30'}
+                />
+                {href === '/favorites' && (
+                  <span
+                    id="fav-badge"
+                    suppressHydrationWarning
+                    className="absolute -right-2 -top-1 min-w-[14px] rounded-full bg-red-600 px-[3px] py-px text-center text-[9px] font-bold leading-tight text-white empty:hidden"
+                  />
+                )}
+              </span>
               <span
                 className={`text-[10px] tracking-wide ${
                   isActive ? 'text-white' : 'text-white/25'

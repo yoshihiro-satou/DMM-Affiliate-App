@@ -10,6 +10,8 @@
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && wrangler pages dev",
     "cf:deploy": "opennextjs-cloudflare build && wrangler pages deploy",
+    "worker:dev": "wrangler dev --config workers/wrangler.toml --test-scheduled",
+    "worker:deploy": "wrangler deploy --config workers/wrangler.toml",
     "db:types": "SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN supabase gen types typescript --project-id ilaszemqlacscbaewyox > types/supabase.ts"
   },
   "dependencies": {

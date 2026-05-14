@@ -9,6 +9,69 @@ This document is a structured Markdown reference extracted from the official DMM
 
 ---
 
+## 承認済みアフィリエイトID（API用途）
+
+API リクエスト時のアフィリエイトIDは末尾 **990〜999** のみ有効。以下は承認済みのAPI用ID。
+
+| アフィリエイトID | ステータス |
+|----------------|----------|
+| yoshihirock-990 | 承認済み |
+| yoshihirock-991 | 承認済み |
+| yoshihirock-992 | 承認済み |
+| yoshihirock-993 | 承認済み |
+| yoshihirock-994 | 承認済み |
+| yoshihirock-995 | 承認済み |
+| yoshihirock-996 | 承認済み |
+| yoshihirock-997 | 承認済み |
+
+通常は `yoshihirock-990` を使用する。
+
+---
+
+## クレジット表示（必須）
+
+DMM Web サービスAPIを利用したサイト・アプリには**クレジット表示が必須**。表示規定を守らなかった場合、API利用を停止される可能性がある。
+
+### FANZAクレジット HTML
+
+**画像形式 135px × 17px**
+
+```html
+<a href="https://affiliate.dmm.com/api/"><img src="https://p.dmm.co.jp/p/affiliate/web_service/r18_135_17.gif" width="135" height="17" alt="WEB SERVICE BY FANZA" /></a>
+```
+
+**画像形式 88px × 35px**
+
+```html
+<a href="https://affiliate.dmm.com/api/"><img src="https://p.dmm.co.jp/p/affiliate/web_service/r18_88_35.gif" width="88" height="35" alt="WEB SERVICE BY FANZA" /></a>
+```
+
+**テキスト形式**
+
+```html
+Powered by <a href="https://affiliate.dmm.com/api/">FANZA Webサービス</a>
+```
+
+### DMM.com クレジット HTML（一般コンテンツ利用時）
+
+**画像形式 135px × 17px**
+
+```html
+<a href="https://affiliate.dmm.com/api/"><img src="https://pics.dmm.com/af/web_service/com_135_17.gif" width="135" height="17" alt="WEB SERVICE BY DMM.com" /></a>
+```
+
+**テキスト形式**
+
+```html
+Powered by <a href="https://affiliate.dmm.com/api/">DMM.com Webサービス</a>
+```
+
+> 表示位置は自由だが、そのサイト・アプリが DMM Web サービスを利用して制作されていることがわかる方法で表示すること。
+
+---
+
+---
+
 ## Table of Contents
 
 1. [General Provisions](#article-1-general-provisions)

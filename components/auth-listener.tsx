@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { runGuestMigration } from '@/lib/guest-migration'
 
 export function AuthListener() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const {
@@ -16,7 +16,7 @@ export function AuthListener() {
       }
     })
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  }, [supabase])
 
   return null
 }
