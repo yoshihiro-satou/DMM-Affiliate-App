@@ -1,16 +1,12 @@
 import { migrateGuestData } from '@/app/login/actions'
-import type { GuestFavItem } from '@/lib/guest-favorites'
+import { getGuestFavoriteIds, getGuestFavorites } from '@/lib/guest-favorites'
+import { getGuestSwipes, clearGuestSwipes } from '@/lib/guest-swipes'
 
 export async function runGuestMigration() {
   try {
-    const rawFavs = localStorage.getItem('guest_favorites')
-    const rawFavData = localStorage.getItem('guest_favorites_data')
-    const rawSwipes = localStorage.getItem('guest_swipe_history')
-
-    const favorites: string[] = rawFavs ? JSON.parse(rawFavs) : []
-    const favoritesMeta: GuestFavItem[] = rawFavData ? JSON.parse(rawFavData) : []
-    const swipes: Array<{ item_id: string; direction: 'like' | 'skip'; created_at: string }> =
-      rawSwipes ? JSON.parse(rawSwipes) : []
+    const favorites = getGuestFavoriteIds()
+    const favoritesMeta = getGuestFavorites()
+    const swipes = getGuestSwipes()
 
     if (favorites.length === 0 && swipes.length === 0) return
 
@@ -18,7 +14,7 @@ export async function runGuestMigration() {
 
     localStorage.removeItem('guest_favorites')
     localStorage.removeItem('guest_favorites_data')
-    localStorage.removeItem('guest_swipe_history')
+    clearGuestSwipes()
   } catch {
     // 移行失敗は非クリティカル — サイレントに無視
   }

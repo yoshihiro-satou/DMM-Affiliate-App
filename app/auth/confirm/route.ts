@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { updateLoginStreak } from '@/lib/login-streak'
+import { checkAndAwardBadges } from '@/lib/badge-engine'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -11,6 +13,12 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await updateLoginStreak(user.id)
+        await checkAndAwardBadges(user.id, 'login')
+      }
+
       // next はサイト内パスのみ許容（オープンリダイレクト防止）
       const destination = next.startsWith('/') ? next : '/'
       return NextResponse.redirect(new URL(destination, request.url))

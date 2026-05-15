@@ -4,6 +4,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { AuthListener } from '@/components/auth-listener'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { AuthProvider } from '@/components/providers/auth-provider'
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import { getCurrentUser } from '@/lib/supabase/server'
 import './globals.css'
 
@@ -57,6 +58,7 @@ export default async function RootLayout({
         <NuqsAdapter>
           <AuthProvider isLoggedIn={!!user} userId={user?.sub ?? null}>
             <AuthListener />
+            <ServiceWorkerRegistration />
             {children}
             <BottomNav />
           </AuthProvider>

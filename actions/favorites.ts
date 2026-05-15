@@ -1,7 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { checkAndAwardBadges } from '@/lib/badge-engine'
 import { revalidatePath } from 'next/cache'
+import type { BadgeType } from '@/lib/badges'
 
 export type FavoriteItem = {
   item_id: string
@@ -11,16 +13,19 @@ export type FavoriteItem = {
   price: number | null
 }
 
-export async function addFavorite(item: FavoriteItem): Promise<void> {
+export async function addFavorite(item: FavoriteItem): Promise<{ newBadges: BadgeType[] }> {
   const supabase = await createClient()
   const { data } = await supabase.auth.getClaims()
   const userId = data?.claims?.sub
-  if (!userId) return
+  if (!userId) return { newBadges: [] }
 
   await supabase
     .from('favorites')
     .upsert({ user_id: userId, ...item }, { onConflict: 'user_id,item_id', ignoreDuplicates: true })
   revalidatePath('/favorites')
+
+  const newBadges = await checkAndAwardBadges(userId, 'favorite')
+  return { newBadges }
 }
 
 export async function removeFavorite(itemId: string): Promise<void> {

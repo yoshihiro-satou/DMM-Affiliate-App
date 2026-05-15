@@ -53,6 +53,7 @@ export const DmmItemSchema = z.object({
       .optional(),
   }),
   date: z.string().optional(),
+  date_end: z.string().optional(),
   service_code: z.string().optional(),
   service_name: z.string().optional(),
   floor_code: z.string().optional(),
@@ -73,6 +74,15 @@ export const DmmItemSchema = z.object({
       director: z.array(InfoItemSchema).optional(),
       label: z.array(InfoItemSchema).optional(),
     })
+    .optional(),
+  campaign: z
+    .array(
+      z.object({
+        date_begin: z.string(),
+        date_end: z.string(),
+        title: z.string(),
+      })
+    )
     .optional(),
   jancode: z.string().optional(),
   stock: z.string().optional(),

@@ -1,0 +1,17 @@
+name = "dmm-series-monitor"
+main = "series-monitor.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 9 * * *"]
+
+[vars]
+# SUPABASE_URL は公開情報なので vars に記載してもよい（実際の値は Dashboard か .dev.vars で設定）
+# SUPABASE_URL = "https://xxxx.supabase.co"
+
+# 機密情報はすべて wrangler secret put で登録する（git にコミットしない）
+# wrangler secret put SUPABASE_URL                  --name dmm-series-monitor
+# wrangler secret put SUPABASE_SERVICE_ROLE_KEY     --name dmm-series-monitor
+# wrangler secret put DMM_API_ID                    --name dmm-series-monitor
+# wrangler secret put DMM_AFFILIATE_ID              --name dmm-series-monitor

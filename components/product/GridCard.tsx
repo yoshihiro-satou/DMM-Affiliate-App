@@ -18,13 +18,26 @@ function pickImage(item: DmmItem): string | null {
   )
 }
 
+function formatDeadline(dateEnd: string): string {
+  const end = new Date(dateEnd.replace(' ', 'T'))
+  const now = new Date()
+  const diffMs = end.getTime() - now.getTime()
+  const diffH = Math.ceil(diffMs / (1000 * 60 * 60))
+  if (diffH <= 0) return '本日まで！'
+  if (diffH <= 24) return `残り${diffH}時間`
+  const diffD = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  if (diffD <= 1) return '明日まで'
+  return `${end.getMonth() + 1}/${end.getDate()}まで`
+}
+
 type Props = {
   item: DmmItem
   rank?: number
   featured?: boolean
+  dateEnd?: string
 }
 
-export function GridCard({ item, rank, featured = false }: Props) {
+export function GridCard({ item, rank, featured = false, dateEnd }: Props) {
   const price = parsePrice(item.prices.price)
   const listPrice = parsePrice(item.prices.list_price)
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
@@ -65,6 +78,15 @@ export function GridCard({ item, rank, featured = false }: Props) {
             className={`absolute right-1 top-1 rounded bg-red-600 px-1.5 py-px font-black tabular-nums text-white ${featured ? 'text-[12px]' : 'text-[10px]'}`}
           >
             {discount}%OFF
+          </span>
+        )}
+
+        {/* 期限バッジ */}
+        {dateEnd && (
+          <span
+            className={`absolute left-1 rounded bg-amber-500/90 px-1.5 py-px font-black tabular-nums text-black backdrop-blur-sm ${featured ? 'bottom-14 text-[10px]' : 'bottom-1 text-[9px]'}`}
+          >
+            ⏰ {formatDeadline(dateEnd)}
           </span>
         )}
 

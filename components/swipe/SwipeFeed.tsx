@@ -1,16 +1,19 @@
 'use client'
 
-import { useState, useTransition, useRef, useCallback } from 'react'
+import { useState, useTransition, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { motion, useMotionValue, useTransform, animate } from 'motion/react'
 import type { DmmItem } from '@/types/dmm'
 import { recordSwipe } from '@/actions/swipe'
 import { addFavorite } from '@/actions/favorites'
 import { addGuestFavorite } from '@/lib/guest-favorites'
-import { parsePrice } from '@/lib/ranking'
+import { addGuestSwipe } from '@/lib/guest-swipes'
+import { dmmItemToFavorite, dmmItemToGuestFav } from '@/lib/dmm/mappers'
 import { SampleVideoPlayer } from './SampleVideoPlayer'
+import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
+import { BadgeToast } from '@/components/ui/BadgeToast'
 import { useAuth } from '@/components/providers/auth-provider'
+import type { BadgeType } from '@/lib/badges'
 
 const SWIPE_THRESHOLD = 80
 const GUEST_SWIPE_LIMIT = 10
@@ -25,15 +28,16 @@ export function SwipeFeed({ initialItems }: Props) {
   const router = useRouter()
   const [items, setItems] = useState(initialItems)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [guestSwipeCount, setGuestSwipeCount] = useState(0)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
-  const [isFetching, setIsFetching] = useState(false)
+  const [newBadges, setNewBadges] = useState<BadgeType[]>([])
+  const isFetchingRef = useRef(false)
+  const guestSwipeCountRef = useRef(0)
   const nextOffset = useRef(initialItems.length + 1)
   const [, startTransition] = useTransition()
 
   const fetchMore = useCallback(async () => {
-    if (isFetching) return
-    setIsFetching(true)
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
     try {
       const res = await fetch(
         `/api/dmm/items?service=digital&floor=videoa&sort=rank&hits=20&offset=${nextOffset.current}`
@@ -46,9 +50,9 @@ export function SwipeFeed({ initialItems }: Props) {
         }
       }
     } finally {
-      setIsFetching(false)
+      isFetchingRef.current = false
     }
-  }, [isFetching])
+  }, [])
 
   const handleSwipe = useCallback(
     (itemId: string, direction: 'like' | 'skip' | 'detail', item: DmmItem) => {
@@ -60,44 +64,25 @@ export function SwipeFeed({ initialItems }: Props) {
       navigator.vibrate?.(10)
 
       if (!isLoggedIn) {
-        const newCount = guestSwipeCount + 1
-        setGuestSwipeCount(newCount)
-        try {
-          const history = JSON.parse(
-            localStorage.getItem('guest_swipe_history') ?? '[]'
-          ) as Array<{ item_id: string; direction: string; created_at: string }>
-          history.push({ item_id: itemId, direction, created_at: new Date().toISOString() })
-          localStorage.setItem('guest_swipe_history', JSON.stringify(history))
-        } catch {}
-        if (newCount >= GUEST_SWIPE_LIMIT) setShowLoginPrompt(true)
+        addGuestSwipe(itemId, direction)
+        guestSwipeCountRef.current += 1
+        if (guestSwipeCountRef.current >= GUEST_SWIPE_LIMIT) setShowLoginPrompt(true)
       }
 
       if (direction === 'like') {
         if (isLoggedIn) {
           startTransition(async () => {
-            await addFavorite({
-              item_id: item.content_id,
-              item_title: item.title,
-              item_url: item.affiliateURL,
-              image_url: item.imageURL.list ?? item.imageURL.large ?? null,
-              price: parsePrice(item.prices.price),
-            })
+            await addFavorite(dmmItemToFavorite(item))
           })
         } else {
-          addGuestFavorite({
-            item_id: item.content_id,
-            title: item.title,
-            affiliate_url: item.affiliateURL,
-            image_url: item.imageURL.list ?? item.imageURL.large ?? null,
-            price: parsePrice(item.prices.price),
-            list_price: parsePrice(item.prices.list_price),
-          })
+          addGuestFavorite(dmmItemToGuestFav(item))
         }
       }
 
-      if (isLoggedIn) {
+      if (isLoggedIn && (direction === 'like' || direction === 'skip')) {
         startTransition(async () => {
-          await recordSwipe(itemId, direction)
+          const result = await recordSwipe(itemId, direction)
+          if (result.newBadges.length > 0) setNewBadges(result.newBadges)
         })
       }
 
@@ -107,7 +92,12 @@ export function SwipeFeed({ initialItems }: Props) {
         return next
       })
     },
-    [isLoggedIn, guestSwipeCount, items.length, fetchMore, router]
+    [isLoggedIn, items.length, fetchMore, router]
+  )
+
+  const visibleItems = useMemo(
+    () => items.slice(currentIndex, currentIndex + 3),
+    [items, currentIndex]
   )
 
   const currentItem = items[currentIndex]
@@ -118,8 +108,6 @@ export function SwipeFeed({ initialItems }: Props) {
       </div>
     )
   }
-
-  const visibleItems = items.slice(currentIndex, currentIndex + 3)
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-black">
@@ -142,13 +130,22 @@ export function SwipeFeed({ initialItems }: Props) {
           href={currentItem.affiliateURL}
           target="_blank"
           rel="noopener noreferrer nofollow"
-          className="pointer-events-auto flex h-11 min-w-[44px] items-center rounded-full bg-red-600 px-6 text-sm font-bold text-white shadow-xl"
+          className="pointer-events-auto flex h-11 min-w-11 items-center rounded-full bg-red-600 px-6 text-sm font-bold text-white shadow-xl"
         >
           FANZAで見る
         </a>
       </div>
 
-      {showLoginPrompt && <SwipeLoginPrompt onClose={() => setShowLoginPrompt(false)} />}
+      {showLoginPrompt && (
+        <LoginPromptSheet
+          title="スワイプ履歴を保存しませんか？"
+          body="無料登録するとスワイプ履歴に基づいたパーソナライズ推薦・値下げ通知が利用できます。"
+          closeLabel="このまま続ける"
+          onClose={() => setShowLoginPrompt(false)}
+        />
+      )}
+
+      <BadgeToast badges={newBadges} onDismiss={() => setNewBadges([])} />
     </div>
   )
 }
@@ -207,11 +204,11 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
       <SampleVideoPlayer item={item} isActive={isTop} />
 
       {/* Gradient for readability */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/70" />
 
       {/* LIKE stamp */}
       <motion.div
-        className="pointer-events-none absolute left-5 top-14 rotate-[-15deg] rounded-md border-[3px] border-green-400 px-3 py-1"
+        className="pointer-events-none absolute left-5 top-14 -rotate-15 rounded-md border-[3px] border-green-400 px-3 py-1"
         style={{ opacity: likeOpacity }}
       >
         <span className="text-xl font-black tracking-widest text-green-400">LIKE</span>
@@ -219,7 +216,7 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
 
       {/* SKIP stamp */}
       <motion.div
-        className="pointer-events-none absolute right-5 top-14 rotate-[15deg] rounded-md border-[3px] border-red-400 px-3 py-1"
+        className="pointer-events-none absolute right-5 top-14 rotate-15 rounded-md border-[3px] border-red-400 px-3 py-1"
         style={{ opacity: skipOpacity }}
       >
         <span className="text-xl font-black tracking-widest text-red-400">SKIP</span>
@@ -240,33 +237,5 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
         )}
       </div>
     </motion.div>
-  )
-}
-
-function SwipeLoginPrompt({ onClose }: { onClose: () => void }) {
-  return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/60" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-[#1a1a1a] px-6 pb-10 pt-5">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
-        <h2 className="text-lg font-bold text-white">スワイプ履歴を保存しませんか？</h2>
-        <p className="mt-2 text-[13px] text-white/50">
-          無料登録するとスワイプ履歴に基づいたパーソナライズ推薦・値下げ通知が利用できます。
-        </p>
-        <Link
-          href="/login"
-          className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-red-600 font-bold text-white"
-          onClick={onClose}
-        >
-          無料で登録する
-        </Link>
-        <button
-          onClick={onClose}
-          className="mt-3 flex h-10 w-full items-center justify-center text-[13px] text-white/40"
-        >
-          このまま続ける
-        </button>
-      </div>
-    </>
   )
 }

@@ -1,0 +1,16 @@
+name = "dmm-push-notify"
+main = "push-notify.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+# VAPID_SUBJECT = "mailto:your@email.com"
+# その他の機密情報はすべて wrangler secret put で登録する（git にコミットしない）
+# wrangler secret put SUPABASE_URL               --name dmm-push-notify
+# wrangler secret put SUPABASE_SERVICE_ROLE_KEY  --name dmm-push-notify
+# wrangler secret put VAPID_PUBLIC_KEY           --name dmm-push-notify
+# wrangler secret put VAPID_PRIVATE_KEY_JWK      --name dmm-push-notify
+# wrangler secret put VAPID_SUBJECT              --name dmm-push-notify

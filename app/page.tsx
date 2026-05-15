@@ -1,10 +1,11 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { fetchItemList } from '@/lib/dmm/client'
+import { fetchItemList, fetchDailySaleItems } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
 import { BentoGrid } from '@/components/layout/BentoGrid'
 import { GridCard } from '@/components/product/GridCard'
 import { ProductCardSkeleton } from '@/components/ui/ProductCardSkeleton'
+import { ForYouFeedLazy } from '@/components/recommend/ForYouFeedWrapper'
 
 export const revalidate = 3600
 
@@ -45,13 +46,36 @@ async function RankingSection() {
   )
 }
 
-async function NewArrivalsSection() {
-  const result = await fetchItemList({ sort: 'date', hits: 10, service: 'digital', floor: 'videoa' })
+async function DailySaleSection() {
+  const saleItems = await fetchDailySaleItems(10)
+
+  if (saleItems.length === 0) {
+    const result = await fetchItemList({ sort: 'date', hits: 10, service: 'digital', floor: 'videoa' })
+    return (
+      <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
+        {result.items.map((item, i) => (
+          <GridCard key={item.content_id} item={item} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
-      {result.items.map((item, i) => (
-        <GridCard key={item.content_id} item={item} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
-      ))}
+      {saleItems.map((item, i) => {
+        // 最も早く終わるキャンペーンの期限を dateEnd として渡す
+        const soonest = item.campaign
+          ?.slice()
+          .sort((a, b) => a.date_end.localeCompare(b.date_end))[0]
+        return (
+          <GridCard
+            key={item.content_id}
+            item={item}
+            featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
+            dateEnd={soonest?.date_end}
+          />
+        )
+      })}
     </div>
   )
 }
@@ -77,7 +101,7 @@ export default function HomePage() {
         href="https://al.dmm.co.jp/?lurl=https%3A%2F%2Fwww.dmm.co.jp%2Fdc%2Fdoujin%2F&af_id=fanza-affiliate-001&ch=toolbar&ch_id=tool"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-between gap-2 border-b border-red-900/30 bg-gradient-to-r from-red-950/60 to-black/0 px-4 py-2.5"
+        className="flex items-center justify-between gap-2 border-b border-red-900/30 bg-linear-to-r from-red-950/60 to-black/0 px-4 py-2.5"
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         <div className="flex flex-col">
@@ -108,18 +132,24 @@ export default function HomePage() {
         </Suspense>
       </section>
 
-      {/* 新着作品 */}
+      {/* 本日のおすすめ */}
       <section className="px-3 pt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[15px] font-black tracking-tight text-white">新着作品</h2>
+          <div>
+            <h2 className="text-[15px] font-black tracking-tight text-white">本日のおすすめ</h2>
+            <span className="text-[10px] text-white/40">評価が上昇中です</span>
+          </div>
           <a href="/ranking?period=new" className="text-[12px] text-white/40 hover:text-white/60">
             もっと見る →
           </a>
         </div>
         <Suspense fallback={<LoadingGrid count={4} />}>
-          <NewArrivalsSection />
+          <DailySaleSection />
         </Suspense>
       </section>
+
+      {/* あなたへのおすすめ（クライアントサイド・SWR） */}
+      <ForYouFeedLazy />
     </main>
   )
 }

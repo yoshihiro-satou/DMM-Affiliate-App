@@ -200,6 +200,159 @@ export type Database = {
           created_at?: string
         }
       }
+      series_progress: {
+        Row: {
+          id: string
+          user_id: string
+          series_id: number
+          item_id: string
+          status: 'read' | 'unread'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          series_id: number
+          item_id: string
+          status?: 'read' | 'unread'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          series_id?: number
+          item_id?: string
+          status?: 'read' | 'unread'
+          created_at?: string
+        }
+      }
+      followed_series: {
+        Row: {
+          id: string
+          user_id: string
+          series_id: number
+          series_name: string
+          latest_item_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          series_id: number
+          series_name: string
+          latest_item_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          series_id?: number
+          series_name?: string
+          latest_item_id?: string | null
+          created_at?: string
+        }
+      }
+      view_history: {
+        Row: {
+          id: string
+          user_id: string
+          item_id: string
+          item_title: string | null
+          affiliate_url: string | null
+          image_url: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          item_id: string
+          item_title?: string | null
+          affiliate_url?: string | null
+          image_url?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          item_id?: string
+          item_title?: string | null
+          affiliate_url?: string | null
+          image_url?: string | null
+          viewed_at?: string
+        }
+      }
+      user_points: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          reason: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          reason: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          reason?: string
+          created_at?: string
+        }
+      }
+      login_streaks: {
+        Row: {
+          user_id: string
+          current_streak: number
+          last_login_date: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          current_streak?: number
+          last_login_date?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          current_streak?: number
+          last_login_date?: string
+          updated_at?: string
+        }
+      }
+      notification_queue: {
+        Row: {
+          id: string
+          user_id: string | null
+          type: 'new_release' | 'price_drop' | 'badge'
+          payload: Json
+          sent_at: string | null
+          status: 'pending' | 'sent' | 'failed'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          type: 'new_release' | 'price_drop' | 'badge'
+          payload?: Json
+          sent_at?: string | null
+          status?: 'pending' | 'sent' | 'failed'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          type?: 'new_release' | 'price_drop' | 'badge'
+          payload?: Json
+          sent_at?: string | null
+          status?: 'pending' | 'sent' | 'failed'
+          created_at?: string
+        }
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

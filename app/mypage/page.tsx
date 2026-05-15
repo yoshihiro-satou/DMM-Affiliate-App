@@ -1,11 +1,291 @@
+import { Suspense } from 'react'
 import { createClient, getCurrentUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { Heart, X, Bookmark, BookOpen } from 'lucide-react'
+import { buildUserProfile, topEntries } from '@/lib/personalization'
+import { BADGE_DEFS, ALL_BADGE_TYPES } from '@/lib/badges'
+import { PushSubscribeButton } from '@/components/PushSubscribeButton'
 import { signOut } from './actions'
 
 export const metadata = {
   title: 'マイページ',
   robots: 'noindex,nofollow',
 }
+
+// サーバーコンポーネント内で Date.now() を直接呼ぶと react-hooks/purity に引っかかるため
+// コンポーネント外の通常関数に切り出す
+function getDateRanges() {
+  const now = Date.now()
+  const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const days = Array.from({ length: 14 }, (_, idx) => {
+    const d = new Date(now - (13 - idx) * 24 * 60 * 60 * 1000)
+    return {
+      date: d.toISOString().slice(0, 10),
+      label: `${d.getMonth() + 1}/${d.getDate()}`,
+    }
+  })
+  return { thirtyDaysAgo, days }
+}
+
+// ── 活動統計（高速・Supabase のみ） ──────────────────────────────────────────
+
+async function ActivityStats({ userId }: { userId: string }) {
+  const supabase = await createClient()
+  const { thirtyDaysAgo, days: dayTemplate } = getDateRanges()
+
+  const [likeRes, skipRes, favRes, seriesRes, activityRes] = await Promise.all([
+    supabase
+      .from('swipe_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('direction', 'like'),
+    supabase
+      .from('swipe_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('direction', 'skip'),
+    supabase
+      .from('favorites')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId),
+    supabase
+      .from('followed_series')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId),
+    supabase
+      .from('swipe_history')
+      .select('created_at')
+      .eq('user_id', userId)
+      .gte('created_at', thirtyDaysAgo)
+      .order('created_at', { ascending: true }),
+  ])
+
+  const likeCount = likeRes.count ?? 0
+  const skipCount = skipRes.count ?? 0
+  const favCount = favRes.count ?? 0
+  const seriesCount = seriesRes.count ?? 0
+
+  // 直近14日間の日別スワイプ数を集計
+  const dailyCounts = new Map<string, number>()
+  for (const row of activityRes.data ?? []) {
+    const day = (row.created_at as string).slice(0, 10)
+    dailyCounts.set(day, (dailyCounts.get(day) ?? 0) + 1)
+  }
+
+  const days = dayTemplate.map(({ date, label }) => ({
+    date,
+    label,
+    count: dailyCounts.get(date) ?? 0,
+  }))
+
+  const maxCount = Math.max(...days.map((d) => d.count), 1)
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* 統計カード */}
+      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+        <p
+          className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+          style={{ fontFamily: 'ui-monospace, monospace' }}
+        >
+          ACTIVITY
+        </p>
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { Icon: Heart, label: 'いいね', count: likeCount, color: 'text-red-400' },
+            { Icon: X, label: 'スキップ', count: skipCount, color: 'text-white/30' },
+            { Icon: Bookmark, label: 'お気に入り', count: favCount, color: 'text-yellow-400' },
+            { Icon: BookOpen, label: 'シリーズ', count: seriesCount, color: 'text-blue-400' },
+          ].map(({ Icon, label, count, color }) => (
+            <div key={label} className="flex flex-col items-center gap-1 text-center">
+              <Icon size={16} className={color} />
+              <p className="text-[18px] font-black tabular-nums text-white">{count}</p>
+              <p className="text-[9px] text-white/30">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 直近14日アクティビティチャート */}
+      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+        <p
+          className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+          style={{ fontFamily: 'ui-monospace, monospace' }}
+        >
+          直近14日の閲覧数
+        </p>
+        <div className="flex h-16 items-end gap-px">
+          {days.map(({ date, count }) => (
+            <div key={date} className="flex flex-1 flex-col items-center gap-px">
+              <div
+                className="w-full rounded-t-sm bg-red-600/60 transition-all"
+                style={{ height: `${Math.max(2, (count / maxCount) * 100)}%` }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="mt-1 flex justify-between">
+          <span className="text-[9px] text-white/20">{days[0]?.label}</span>
+          <span className="text-[9px] text-white/20">今日</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── バッジ・ストリーク ────────────────────────────────────────────────────────
+
+function getIsNew(earnedAt: string) {
+  return Date.now() - new Date(earnedAt).getTime() < 86_400_000
+}
+
+async function BadgesSection({ userId }: { userId: string }) {
+  const supabase = await createClient()
+  const [badgesRes, streakRes] = await Promise.all([
+    supabase.from('user_badges').select('badge_type, earned_at').eq('user_id', userId),
+    supabase
+      .from('login_streaks')
+      .select('current_streak')
+      .eq('user_id', userId)
+      .maybeSingle(),
+  ])
+
+  const earnedMap = new Map(
+    (badgesRes.data ?? []).map((b) => [b.badge_type, b.earned_at])
+  )
+  const currentStreak = streakRes.data?.current_streak ?? 0
+  const earnedCount = earnedMap.size
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* ストリーク */}
+      {currentStreak > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-white/8 bg-white/3 px-5 py-4">
+          <div>
+            <p
+              className="mb-1 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+              style={{ fontFamily: 'ui-monospace, monospace' }}
+            >
+              STREAK
+            </p>
+            <p className="text-[22px] font-black text-white">
+              🔥 {currentStreak}日連続
+            </p>
+          </div>
+          <p className="text-[11px] text-white/30">
+            {earnedCount}/{ALL_BADGE_TYPES.length} バッジ
+          </p>
+        </div>
+      )}
+
+      {/* バッジグリッド */}
+      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+        <p
+          className="mb-4 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+          style={{ fontFamily: 'ui-monospace, monospace' }}
+        >
+          BADGES
+        </p>
+        <div className="grid grid-cols-4 gap-y-5">
+          {ALL_BADGE_TYPES.map((type) => {
+            const def = BADGE_DEFS[type]
+            const earnedAt = earnedMap.get(type)
+            const earned = !!earnedAt
+            const fresh = earned && getIsNew(earnedAt)
+            return (
+              <div
+                key={type}
+                className={`relative flex flex-col items-center gap-1.5 text-center transition-opacity ${earned ? 'opacity-100' : 'opacity-20'}`}
+              >
+                {fresh && (
+                  <span className="absolute -right-1 -top-1 rounded-full bg-yellow-500 px-1.5 py-px text-[8px] font-black text-black leading-tight">
+                    NEW
+                  </span>
+                )}
+                <span className="text-[28px] leading-none">{def.emoji}</span>
+                <span className="text-[9px] leading-tight text-white/60">{def.label}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── よく見る女優 TOP5（低速・DMM API あり） ──────────────────────────────────
+
+async function TopActresses({ userId }: { userId: string }) {
+  const profile = await buildUserProfile(userId)
+  const top = topEntries(profile.actressScores, 5)
+
+  if (top.length === 0) return null
+
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <p
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        style={{ fontFamily: 'ui-monospace, monospace' }}
+      >
+        よく見る女優 TOP5
+      </p>
+      <ol className="flex flex-col gap-2">
+        {top.map(({ id, score }, i) => (
+          <li key={id} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
+                  i === 0
+                    ? 'bg-yellow-400 text-black'
+                    : i === 1
+                      ? 'bg-white/70 text-black'
+                      : i === 2
+                        ? 'bg-orange-400 text-black'
+                        : 'bg-white/10 text-white/50'
+                }`}
+              >
+                {i + 1}
+              </span>
+              <a
+                href={`/actress/${id}`}
+                className="text-[12px] text-white/60 hover:text-white"
+              >
+                女優 #{id}
+              </a>
+            </div>
+            <div className="flex items-center gap-1">
+              <div
+                className="h-1.5 rounded-full bg-red-600/50"
+                style={{ width: `${Math.round((score / top[0].score) * 60)}px` }}
+              />
+              <span className="w-8 text-right text-[10px] tabular-nums text-white/30">
+                {score}pt
+              </span>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+function TopActressesSkeleton() {
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <div className="mb-3 h-3 w-28 animate-pulse rounded bg-white/10" />
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="h-5 w-5 animate-pulse rounded-full bg-white/10" />
+            <div className="h-3 w-20 animate-pulse rounded bg-white/8" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── ページ本体 ────────────────────────────────────────────────────────────────
 
 export default async function MyPage() {
   const claims = await getCurrentUser()
@@ -14,27 +294,25 @@ export default async function MyPage() {
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, email, points, created_at')
+    .select('display_name, email')
     .eq('id', claims.sub)
     .single()
 
   const displayName = profile?.display_name ?? 'ゲスト'
   const email = profile?.email ?? (claims.email as string | undefined) ?? ''
-  const points = profile?.points ?? 0
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#080808]">
-      {/* 背景グラデーション */}
+    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none fixed inset-0 z-0"
         style={{
           background:
             'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(180,20,20,0.08) 0%, transparent 70%)',
         }}
       />
 
-      <div className="relative z-10 flex w-full max-w-sm flex-col gap-8 px-6 py-12">
+      <div className="relative z-10 flex w-full flex-col gap-6 px-6 py-10">
         {/* ヘッダー */}
         <div className="flex flex-col items-center gap-4">
           <div className="h-px w-12 bg-red-700" />
@@ -48,7 +326,6 @@ export default async function MyPage() {
 
         {/* プロフィール */}
         <div className="flex flex-col items-center gap-3 text-center">
-          {/* アバタープレースホルダー */}
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl font-black text-white/60">
             {displayName.charAt(0)}
           </div>
@@ -63,25 +340,21 @@ export default async function MyPage() {
           </div>
         </div>
 
-        {/* 区切り */}
         <div className="h-px w-full bg-white/8" />
 
-        {/* ポイント */}
-        <div className="rounded-lg border border-white/8 bg-white/3 p-5">
-          <p
-            className="mb-1 text-[10px] font-semibold tracking-[0.2em] text-white/30"
-            style={{ fontFamily: 'ui-monospace, monospace' }}
-          >
-            POINTS
-          </p>
-          <p className="text-3xl font-black tabular-nums text-white">
-            {points.toLocaleString('ja-JP')}
-            <span className="ml-1 text-sm font-normal text-white/40">pt</span>
-          </p>
-          <p className="mt-2 text-[11px] text-white/20">
-            バッジ・ポイント機能は近日実装予定です
-          </p>
-        </div>
+        {/* 活動統計 */}
+        <ActivityStats userId={claims.sub} />
+
+        {/* バッジ・ストリーク */}
+        <BadgesSection userId={claims.sub} />
+
+        {/* よく見る女優 TOP5（DMM API 呼び出しがあるので Suspense） */}
+        <Suspense fallback={<TopActressesSkeleton />}>
+          <TopActresses userId={claims.sub} />
+        </Suspense>
+
+        {/* プッシュ通知 */}
+        <PushSubscribeButton />
 
         {/* ログアウト */}
         <form action={signOut}>

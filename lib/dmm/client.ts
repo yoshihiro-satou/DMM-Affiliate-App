@@ -5,7 +5,7 @@ import {
   DmmActressResponseSchema,
   DmmFloorListResponseSchema,
 } from '@/types/dmm'
-import type { DmmItemListResponse, DmmActressResponse, DmmFloorListResponse, ItemSort, ActressSort, Article } from '@/types/dmm'
+import type { DmmItem, DmmItemListResponse, DmmActressResponse, DmmFloorListResponse, ItemSort, ActressSort, Article } from '@/types/dmm'
 
 const BASE_URL = 'https://api.dmm.com/affiliate/v3'
 
@@ -167,6 +167,67 @@ export const fetchFloorList = cache(
     return parsed.data.result
   }
 )
+
+// ------------------------------------
+// 日替わりセール商品（JST深夜0時でキャッシュ失効）
+// ------------------------------------
+
+function secondsUntilMidnightJST(): number {
+  const now = new Date()
+  const jstOffset = 9 * 60 * 60 * 1000
+  const nowJST = new Date(now.getTime() + jstOffset)
+  const nextMidnightUTC = new Date(
+    Date.UTC(nowJST.getUTCFullYear(), nowJST.getUTCMonth(), nowJST.getUTCDate() + 1) - jstOffset
+  )
+  return Math.max(60, Math.floor((nextMidnightUTC.getTime() - now.getTime()) / 1000))
+}
+
+async function fetchBatch(sort: 'rank' | 'review', ttl: number): Promise<DmmItem[]> {
+  const searchParams = buildParams({
+    site: 'FANZA',
+    service: 'digital',
+    floor: 'videoa',
+    hits: 100,
+    sort,
+  })
+  const res = await fetch(`${BASE_URL}/ItemList?${searchParams}`, {
+    next: { revalidate: ttl },
+  })
+  if (!res.ok) return []
+  const json = await res.json()
+  const parsed = DmmItemListResponseSchema.safeParse(json)
+  return parsed.success ? parsed.data.result.items : []
+}
+
+export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
+  const ttl = secondsUntilMidnightJST()
+
+  // rank上位100 + review上位100 を並列取得して合算
+  const [rankItems, reviewItems] = await Promise.all([
+    fetchBatch('rank', ttl),
+    fetchBatch('review', ttl),
+  ])
+
+  const today = new Date().toISOString().slice(0, 10)
+  const seen = new Set<string>()
+
+  return [...rankItems, ...reviewItems]
+    .filter(item => {
+      if (seen.has(item.content_id)) return false
+      seen.add(item.content_id)
+
+      // VR作品を除外
+      if (item.iteminfo?.genre?.some(g => g.name?.includes('VR'))) return false
+
+      const hasActiveCampaign = item.campaign?.some(c => c.date_end >= today)
+      const p  = parseFloat((item.prices.price      ?? '').replace('~', ''))
+      const lp = parseFloat((item.prices.list_price ?? '').replace('~', ''))
+      const hasDiscount = !isNaN(p) && !isNaN(lp) && lp > p
+
+      return hasActiveCampaign || hasDiscount
+    })
+    .slice(0, hits)
+}
 
 // ------------------------------------
 // 複数リクエストを直列実行（レート制限対策）

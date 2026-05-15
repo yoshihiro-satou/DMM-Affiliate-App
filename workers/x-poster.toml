@@ -1,0 +1,19 @@
+name = "dmm-x-poster"
+main = "x-poster.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 22,3,11 * * *"]
+# UTC 22:00 = JST 07:00
+# UTC 03:00 = JST 12:00
+# UTC 11:00 = JST 20:00
+
+[vars]
+# 機密情報はすべて wrangler secret put で登録する（git にコミットしない）
+# wrangler secret put SUPABASE_URL               --name dmm-x-poster
+# wrangler secret put SUPABASE_SERVICE_ROLE_KEY  --name dmm-x-poster
+# wrangler secret put X_API_KEY                  --name dmm-x-poster
+# wrangler secret put X_API_SECRET               --name dmm-x-poster
+# wrangler secret put X_ACCESS_TOKEN             --name dmm-x-poster
+# wrangler secret put X_ACCESS_TOKEN_SECRET      --name dmm-x-poster

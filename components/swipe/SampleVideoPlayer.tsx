@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import type { DmmItem } from '@/types/dmm'
 
@@ -11,19 +11,24 @@ type Props = {
 
 export function SampleVideoPlayer({ item, isActive }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const isActiveRef = useRef(isActive)
+  useLayoutEffect(() => {
+    isActiveRef.current = isActive
+  }, [isActive])
+
   const videoUrl =
     item.sampleMovieURL?.size_476_306 ??
     item.sampleMovieURL?.size_560_360 ??
     item.sampleMovieURL?.size_644_414 ??
     item.sampleMovieURL?.size_720_480
 
+  // Mount-once observer — reads isActiveRef so no stale closure
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && isActive) {
+        if (entry.isIntersecting && isActiveRef.current) {
           video.play().catch(() => {})
         } else {
           video.pause()
@@ -33,8 +38,9 @@ export function SampleVideoPlayer({ item, isActive }: Props) {
     )
     observer.observe(video)
     return () => observer.disconnect()
-  }, [isActive])
+  }, [])
 
+  // Direct control when card becomes active/inactive
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
