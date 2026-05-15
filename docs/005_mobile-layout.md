@@ -10,8 +10,12 @@
 
 ### ルートレイアウト
 - [x] `app/layout.tsx` 更新（`class="dark"` + `bg-[#080808]`、`lang="ja"`）
-- [x] `next/font` でフォント設定（Geist Sans / Mono、layout shift 防止）
+- [x] `next/font` でフォント設定（**M PLUS Rounded 1c**（丸ゴシック）+ Geist Mono、layout shift 防止）
+  - `weight: ['400', '500', '700']`、`preload: false`（日本語フォントの巨大プリロード回避）
+  - CSS変数 `--font-sans` に直接マップ、Tailwind `font-sans` で全体適用
 - [x] `viewport-fit=cover` を `export const viewport: Viewport` で設定（App Router 方式）
+- [x] `proxy.ts`（プロジェクトルート）でミドルウェア処理（Next.js の新規約）
+  - `middleware.ts` は deprecated → `proxy.ts` + `export async function proxy()` に移行済み
 
 ### ボトムナビゲーション
 - [x] `components/layout/BottomNav.tsx` 作成（Client Component）
@@ -25,7 +29,8 @@
 
 ### 共通コンポーネント
 - [x] `components/ui/Skeleton.tsx` - 汎用スケルトン（className で幅・高さを指定）
-- [x] `components/ui/ProductCardSkeleton.tsx` - 商品カード用スケルトン（2/3アスペクト比）
+- [x] `components/ui/ProductCardSkeleton.tsx` - グリッドカード用スケルトン
+  - `aspect-video`（16:9）+ `featured` prop 対応（`col-span-2 row-span-2` で大カード表示）
 - [x] `app/loading.tsx` 作成（ルートレベルのフォールバック、6枚グリッド）
 
 ### グローバルスタイル

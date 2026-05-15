@@ -38,7 +38,15 @@ export function ProductCard({ item, rank, overlaySlot }: Props) {
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
   const reviewAvg = item.review?.average ? parseFloat(item.review.average) : null
   const reviewCount = item.review?.count ?? 0
-  const rawImageUrl = item.imageURL.list ?? item.imageURL.large ?? item.imageURL.small ?? null
+  const sampleL = item.sampleImageURL?.sample_l?.image
+  const rawImageUrl =
+    sampleL?.[5] ??
+    sampleL?.[4] ??
+    sampleL?.[3] ??
+    item.imageURL.list ??
+    item.imageURL.large ??
+    item.imageURL.small ??
+    null
   const imageProps = rawImageUrl ? buildImageUrl(rawImageUrl) : null
 
   return (

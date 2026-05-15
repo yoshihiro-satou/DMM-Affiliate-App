@@ -3,10 +3,12 @@ import type { Metadata } from 'next'
 import { fetchItemList } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
 import { BentoGrid } from '@/components/layout/BentoGrid'
-import { ProductCard } from '@/components/product/ProductCard'
+import { GridCard } from '@/components/product/GridCard'
 import { ProductCardSkeleton } from '@/components/ui/ProductCardSkeleton'
 
 export const revalidate = 3600
+
+const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
 export const metadata: Metadata = {
   title: 'FANZA おすすめ - セール・ランキング',
@@ -44,21 +46,21 @@ async function RankingSection() {
 }
 
 async function NewArrivalsSection() {
-  const result = await fetchItemList({ sort: 'date', hits: 6, service: 'digital', floor: 'videoa' })
+  const result = await fetchItemList({ sort: 'date', hits: 10, service: 'digital', floor: 'videoa' })
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-      {result.items.map((item) => (
-        <ProductCard key={item.content_id} item={item} />
+    <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
+      {result.items.map((item, i) => (
+        <GridCard key={item.content_id} item={item} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
       ))}
     </div>
   )
 }
 
-function LoadingGrid({ count = 6 }: { count?: number }) {
+function LoadingGrid({ count = 10 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
-        <ProductCardSkeleton key={i} />
+        <ProductCardSkeleton key={i} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
       ))}
     </div>
   )

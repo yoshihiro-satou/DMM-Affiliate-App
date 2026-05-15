@@ -15,18 +15,27 @@
 - [x] `app/ranking/page.tsx` - ランキング（日次/週次/月次/新着タブ切替、searchParamsで動的）
 
 ### 商品カードコンポーネント
-- [x] `components/product/ProductCard.tsx` 作成
+- [x] `components/product/ProductCard.tsx` 作成（ランキング・セールページ用）
   - [x] 取消線定価 + 赤字現在価格 + 割引率バッジ（5%以上のみ表示）
   - [ ] 残時間カウントダウン（DMM APIにセール終了日フィールドなし、将来対応）
   - [x] 星評価（`review.average` + `review.count`）
   - [x] `next/image` で画像表示（SVG blurDataURL プレースホルダー付き）
   - [x] アフィリエイトリンクに `rel="noopener noreferrer"` と PR バッジ
-- [x] `components/product/ProductCardSkeleton.tsx` - 005で実装済み（`components/ui/ProductCardSkeleton.tsx`）
+- [x] `components/product/GridCard.tsx` 作成（ホームページグリッド専用）
+  - [x] **画像選択**: `sampleImageURL.sample_l[5]` → `[4]` → `[3]` → `imageURL.list/large/small` の優先順
+  - [x] **アスペクト比**: `aspect-video`（16:9）+ `object-contain`（サンプル画像がランドスケープのため）
+  - [x] `featured` prop: `true` のとき `col-span-2 row-span-2`（大カード）、タイトル・価格をグラデーションオーバーレイ表示
+  - [x] `featured: false`（小カード）のとき、テキストは画像下に配置
+  - [x] PRバッジ・割引バッジ・ランクバッジを画像上にオーバーレイ
+- [x] `components/ui/ProductCardSkeleton.tsx` - 005で実装済み（`components/ui/ProductCardSkeleton.tsx`）
 
 ### ベントーグリッド
 - [x] `components/layout/BentoGrid.tsx` 作成
-  - [x] 大タイル（hero: col-span-2 / md:row-span-2）・小タイル（1×1）の混在レイアウト
-  - [x] モバイル: 2カラム / タブレット以上: 4カラム
+  - [x] **不規則パターン**: `[true, false, false, false, true, false, false, true, false, false, false, false]` の12要素配列でサイクル
+    - ギャップが 3→2→4 と変化し、等間隔にならずランダム感が出る
+  - [x] `grid-auto-flow: dense` で空きを自動充填
+  - [x] モバイル: 2カラム / デスクトップ: 4カラム
+  - [x] `GridCard` を使用（`ProductCard` から分離）
 - [x] 常時固定バナー: FANZA同人90%OFFクーポン情報（アフィリエイトリンク付き）
 
 ### ランキング生成
