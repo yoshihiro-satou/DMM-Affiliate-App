@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       {/* プロフィールスケルトン */}
       <div className="flex gap-4 border-b border-white/8 px-4 py-5">
         <div className="h-28 w-20 shrink-0 animate-pulse rounded-xl bg-white/8" />

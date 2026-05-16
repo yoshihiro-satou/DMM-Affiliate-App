@@ -95,7 +95,7 @@ function LoadingGrid({ count = 10 }: { count?: number }) {
 // ------------------------------------
 export default function HomePage() {
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       {/* FANZA同人 クーポンバナー（常時固定） */}
       <a
         href="https://al.dmm.co.jp/?lurl=https%3A%2F%2Fwww.dmm.co.jp%2Fdc%2Fdoujin%2F&af_id=fanza-affiliate-001&ch=toolbar&ch_id=tool"
@@ -123,7 +123,7 @@ export default function HomePage() {
           <h2 className="text-[15px] font-black tracking-tight text-white">
             今週のランキング
           </h2>
-          <a href="/ranking" className="text-[12px] text-white/40 hover:text-white/60">
+          <a href="/ranking" className="text-[13px] font-bold text-red-400 hover:text-red-300 active:text-red-500">
             もっと見る →
           </a>
         </div>
@@ -139,7 +139,7 @@ export default function HomePage() {
             <h2 className="text-[15px] font-black tracking-tight text-white">本日のおすすめ</h2>
             <span className="text-[10px] text-white/40">評価が上昇中です</span>
           </div>
-          <a href="/ranking?period=new" className="text-[12px] text-white/40 hover:text-white/60">
+          <a href="/ranking?period=new" className="text-[13px] font-bold text-red-400 hover:text-red-300 active:text-red-500">
             もっと見る →
           </a>
         </div>

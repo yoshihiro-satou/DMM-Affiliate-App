@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation'
 
 export const RANKING_PERIODS = [
-  { key: 'daily', label: '日次' },
-  { key: 'weekly', label: '週次' },
-  { key: 'monthly', label: '月次' },
-  { key: 'new', label: '新着' },
+  { key: 'daily',   label: '日次'   },
+  { key: 'weekly',  label: '週次'   },
+  { key: 'monthly', label: '月次'   },
+  { key: 'actress', label: '人気女優' },
 ] as const
 
 export type RankingPeriod = (typeof RANKING_PERIODS)[number]['key']

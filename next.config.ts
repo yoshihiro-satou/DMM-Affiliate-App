@@ -7,7 +7,9 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "pics.dmm.co.jp" },
+      { protocol: "http",  hostname: "pics.dmm.co.jp" },
       { protocol: "https", hostname: "pics.dmm.com" },
+      { protocol: "http",  hostname: "pics.dmm.com" },
       { protocol: "https", hostname: "awsimgsrc.dmm.co.jp" },
     ],
   },

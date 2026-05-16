@@ -1,6 +1,6 @@
 export default function FavoritesLoading() {
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="border-b border-white/8 px-4 py-4">
         <div className="h-7 w-24 animate-pulse rounded bg-white/10" />
         <div className="mt-1.5 h-3 w-10 animate-pulse rounded bg-white/5" />

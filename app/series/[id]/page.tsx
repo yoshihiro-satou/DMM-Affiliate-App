@@ -88,7 +88,7 @@ export default async function SeriesDetailPage({ params }: Props) {
     null
 
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       {/* ヘッダー */}
       <div className="flex gap-4 border-b border-white/8 px-4 py-5">
         <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-white/5">

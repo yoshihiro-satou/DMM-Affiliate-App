@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: Props) {
     error === 'invalid_link' ? 'リンクが無効または期限切れです。再度お試しください。' : undefined
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#080808]">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden">
       {/* 背景グラデーション */}
       <div
         aria-hidden

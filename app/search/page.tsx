@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function SearchPage() {
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
-      <div className="sticky top-0 z-20 border-b border-white/8 bg-[#080808]/95 px-4 pb-3 pt-4 backdrop-blur-sm">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="sticky top-0 z-20 border-b border-white/8 bg-[#2d0a4e]/90 px-4 pb-3 pt-4 backdrop-blur-sm">
         <span
           className="text-[10px] font-semibold tracking-[0.3em] text-red-600/80"
           style={{ fontFamily: 'ui-monospace, monospace' }}

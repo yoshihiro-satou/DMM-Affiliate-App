@@ -302,7 +302,7 @@ export default async function MyPage() {
   const email = profile?.email ?? (claims.email as string | undefined) ?? ''
 
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"

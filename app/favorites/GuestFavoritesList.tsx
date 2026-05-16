@@ -36,7 +36,7 @@ export function GuestFavoritesList() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="border-b border-white/8 px-4 py-4">
         <h1 className="text-[22px] font-black tracking-tight text-white">お気に入り</h1>
         <p className="mt-0.5 text-[11px] text-white/30">{items.length}件</p>

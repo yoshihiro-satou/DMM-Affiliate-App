@@ -108,22 +108,22 @@ export type DmmItemListResponse = z.infer<typeof DmmItemListResponseSchema>
 export const DmmActressSchema = z.object({
   id: z.string(),
   name: z.string(),
-  ruby: z.string().optional(),
-  bust: z.string().optional(),
-  cup: z.string().optional(),
-  waist: z.string().optional(),
-  hip: z.string().optional(),
-  height: z.string().optional(),
-  birthday: z.string().optional(),
-  blood_type: z.string().optional(),
-  hobby: z.string().optional(),
-  prefectures: z.string().optional(),
+  ruby: z.string().nullish(),
+  bust: z.string().nullish(),
+  cup: z.string().nullish(),
+  waist: z.string().nullish(),
+  hip: z.string().nullish(),
+  height: z.string().nullish(),
+  birthday: z.string().nullish(),
+  blood_type: z.string().nullish(),
+  hobby: z.string().nullish(),
+  prefectures: z.string().nullish(),
   imageURL: z
     .object({
       small: z.string().optional(),
       large: z.string().optional(),
     })
-    .optional(),
+    .nullish(),
   listURL: z
     .object({
       digital: z.string().optional(),
@@ -132,17 +132,17 @@ export const DmmActressSchema = z.object({
       ppm: z.string().optional(),
       rental: z.string().optional(),
     })
-    .optional(),
+    .nullish(),
 })
 
 export type DmmActress = z.infer<typeof DmmActressSchema>
 
 export const DmmActressResponseSchema = z.object({
   result: z.object({
-    status: z.number().optional(),
-    result_count: z.number(),
-    total_count: z.number(),
-    first_position: z.number(),
+    status: z.coerce.number().optional(),
+    result_count: z.coerce.number(),
+    total_count: z.coerce.number(),
+    first_position: z.coerce.number(),
     actress: z.array(DmmActressSchema),
   }),
 })

@@ -5,8 +5,12 @@ import useSWR from 'swr'
 import { useAuth } from '@/components/providers/auth-provider'
 import { getGuestSwipes } from '@/lib/guest-swipes'
 import { parsePrice } from '@/lib/ranking'
+import { GridCard } from '@/components/product/GridCard'
+import { ProductCardSkeleton } from '@/components/ui/ProductCardSkeleton'
 import type { RecommendPayload } from '@/app/api/recommend/route'
 import type { DmmItem } from '@/types/dmm'
+
+const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
 // ── フェッチャー ───────────────────────────────────────────────────────────────
 
@@ -143,46 +147,14 @@ function MainGrid({ items }: { items: DmmItem[] }) {
   if (items.length === 0) return null
 
   return (
-    <div className="grid grid-cols-2 gap-2 px-3 sm:grid-cols-3 md:grid-cols-4">
-      {items.map((item) => {
-        const price = parsePrice(item.prices.price)
-        const img = item.imageURL.list ?? item.imageURL.large ?? item.imageURL.small ?? null
-
-        return (
-          <div key={item.content_id} className="flex flex-col">
-            <a
-              href={item.affiliateURL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackView(item)}
-              className="relative block overflow-hidden rounded-lg bg-white/5"
-            >
-              {img ? (
-                <Image
-                  src={img}
-                  alt={item.title}
-                  width={184}
-                  height={250}
-                  className="aspect-[184/250] w-full object-cover"
-                />
-              ) : (
-                <div className="aspect-[184/250] w-full bg-white/5" />
-              )}
-              <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[8px] font-bold tracking-wider text-white/40 backdrop-blur-sm">
-                PR
-              </span>
-            </a>
-            <div className="mt-1 px-0.5">
-              <p className="line-clamp-2 text-[10px] leading-tight text-white/60">{item.title}</p>
-              {price !== null && (
-                <p className="mt-0.5 text-[10px] font-bold tabular-nums text-white/40">
-                  ¥{price.toLocaleString('ja-JP')}
-                </p>
-              )}
-            </div>
-          </div>
-        )
-      })}
+    <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
+      {items.map((item, i) => (
+        <GridCard
+          key={item.content_id}
+          item={item}
+          featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
+        />
+      ))}
     </div>
   )
 }
@@ -191,17 +163,16 @@ function MainGrid({ items }: { items: DmmItem[] }) {
 
 export function ForYouSkeleton() {
   return (
-    <section>
-      <div className="px-4 pt-8">
-        <div className="h-5 w-44 animate-pulse rounded bg-white/8" />
+    <section className="px-3 pt-8">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <div className="h-5 w-36 animate-pulse rounded bg-white/10" />
+          <div className="mt-1.5 h-3 w-20 animate-pulse rounded bg-white/5" />
+        </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 px-3 sm:grid-cols-3 md:grid-cols-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex flex-col gap-1">
-            <div className="aspect-[184/250] animate-pulse rounded-lg bg-white/8" />
-            <div className="h-2 animate-pulse rounded bg-white/5" />
-            <div className="h-2 w-2/3 animate-pulse rounded bg-white/5" />
-          </div>
+      <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <ProductCardSkeleton key={i} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
         ))}
       </div>
     </section>
@@ -232,15 +203,19 @@ export function ForYouFeed() {
       {data.lastViewed && <ContinueCard item={data.lastViewed} />}
 
       {hasContent && (
-        <section>
-          <div className="px-4 pt-8">
-            <h2 className="text-[15px] font-black tracking-tight text-white">
-              あなたへのおすすめ
-            </h2>
+        <section className="px-3 pt-8">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <h2 className="text-[15px] font-black tracking-tight text-white">
+                あなたへのおすすめ
+              </h2>
+              <span className="text-[10px] text-white/40">あなたの好みに合わせた作品</span>
+            </div>
+            <a href="/ranking" className="text-[13px] font-bold text-red-400 hover:text-red-300 active:text-red-500">
+              もっと見る →
+            </a>
           </div>
-          <div className="mt-3">
-            <MainGrid items={data.items} />
-          </div>
+          <MainGrid items={data.items} />
           <HorizontalCarousel
             title="あなたの好みジャンルの急上昇"
             items={data.genreItems}

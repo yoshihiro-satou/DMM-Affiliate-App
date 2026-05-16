@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="border-b border-white/8 px-4 py-4">
         <div className="h-2.5 w-16 animate-pulse rounded bg-white/8" />
         <div className="mt-2 h-7 w-32 animate-pulse rounded bg-white/8" />

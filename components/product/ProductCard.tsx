@@ -40,9 +40,11 @@ export function ProductCard({ item, rank, overlaySlot }: Props) {
   const reviewCount = item.review?.count ?? 0
   const sampleL = item.sampleImageURL?.sample_l?.image
   const rawImageUrl =
-    sampleL?.[5] ??
-    sampleL?.[4] ??
-    sampleL?.[3] ??
+    sampleL?.[9] ??
+    sampleL?.[8] ??
+    sampleL?.[7] ??
+    sampleL?.[6] ??
+    sampleL?.[0] ??
     item.imageURL.list ??
     item.imageURL.large ??
     item.imageURL.small ??

@@ -99,7 +99,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
   }
 
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -148,8 +148,21 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
         </div>
       </div>
 
-      {/* PR */}
-      <p className="px-4 py-1.5 text-[9px] text-white/20">PR · FANZAアフィリエイトリンク</p>
+      {/* FANZA リンク + PR */}
+      <div className="flex items-center justify-between px-4 py-1.5">
+        <p className="text-[9px] text-white/20">PR · FANZAアフィリエイトリンク</p>
+        {actress.listURL?.digital && (
+          <a
+            href={actress.listURL.digital}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded border border-red-700/50 px-2.5 py-1 text-[11px] font-bold text-red-400 hover:border-red-500 hover:text-red-300 active:opacity-70"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+          >
+            FANZAで全作品を見る →
+          </a>
+        )}
+      </div>
 
       {/* タブ */}
       <WorkTabs actressId={id} currentTab={currentTab} />

@@ -8,9 +8,11 @@ const BLUR_PLACEHOLDER =
 function pickImage(item: DmmItem): string | null {
   const sl = item.sampleImageURL?.sample_l?.image
   return (
-    sl?.[5] ??
-    sl?.[4] ??
-    sl?.[3] ??
+    sl?.[9] ??
+    sl?.[8] ??
+    sl?.[7] ??
+    sl?.[6] ??
+    sl?.[0] ??
     item.imageURL.list ??
     item.imageURL.large ??
     item.imageURL.small ??

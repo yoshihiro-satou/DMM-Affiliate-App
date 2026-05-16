@@ -68,7 +68,7 @@ export default async function ActressPage({ searchParams }: Props) {
   const params = await searchParams
 
   return (
-    <main className="min-h-dvh bg-[#080808] pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       {/* ヘッダー */}
       <div className="border-b border-white/8 px-4 py-4">
         <span

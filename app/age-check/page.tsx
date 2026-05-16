@@ -13,7 +13,7 @@ export default async function AgeCheckPage({ searchParams }: Props) {
   const { from } = await searchParams
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[#080808]">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden">
       {/* 背景グラデーション */}
       <div
         aria-hidden
