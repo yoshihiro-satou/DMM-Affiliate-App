@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fanza-v1'
+const CACHE_NAME = 'fanza-v2'
 const OFFLINE_PAGES = ['/', '/favorites']
 
 // インストール: オフライン用ページをキャッシュ
@@ -31,7 +31,8 @@ self.addEventListener('fetch', (event) => {
     fetch(event.request)
       .then((response) => {
         if (response.ok) {
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()))
+          const toCache = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, toCache))
         }
         return response
       })

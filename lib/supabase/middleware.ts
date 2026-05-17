@@ -9,7 +9,10 @@ export async function updateSession(request: NextRequest) {
   const isPublicAsset =
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname.startsWith('/api/')
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/icons/') ||
+    pathname === '/manifest.webmanifest' ||
+    pathname === '/sw.js'
 
   if (!ageCheckDone && !isAgeCheckPage && !isPublicAsset) {
     const url = request.nextUrl.clone()

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import { useState, useEffect } from 'react'
 import type { DmmItem } from '@/types/dmm'
 
 type Props = {
@@ -9,58 +9,67 @@ type Props = {
   isActive: boolean
 }
 
+function pickPlayerUrl(urls: NonNullable<DmmItem['sampleMovieURL']>): string | undefined {
+  const w = window.innerWidth
+  if (w <= 476) return urls.size_476_306 ?? urls.size_560_360 ?? urls.size_644_414 ?? urls.size_720_480
+  if (w <= 560) return urls.size_560_360 ?? urls.size_644_414 ?? urls.size_720_480 ?? urls.size_476_306
+  if (w <= 644) return urls.size_644_414 ?? urls.size_720_480 ?? urls.size_560_360 ?? urls.size_476_306
+  return urls.size_720_480 ?? urls.size_644_414 ?? urls.size_560_360 ?? urls.size_476_306
+}
+
+// playerUrl に含まれる size=W_H からアスペクト比を取得
+function parseUrlSize(playerUrl: string): { w: number; h: number } {
+  const m = playerUrl.match(/size=(\d+)_(\d+)/)
+  return m ? { w: Number(m[1]), h: Number(m[2]) } : { w: 4, h: 3 }
+}
+
+function toDirectMp4(playerUrl: string): string | undefined {
+  const cid = playerUrl.match(/cid=([^/]+)/)?.[1]
+  const size = playerUrl.match(/size=(\d+)_(\d+)/)
+  if (!cid || !size) return undefined
+  const c1 = cid[0]
+  const c3 = cid.slice(0, 3)
+  const [, w, h] = size
+  return `https://cc3001.dmm.co.jp/litevideo/freepv/${c1}/${c3}/${cid}/${cid}_sm_w${w}h${h}.mp4`
+}
+
 export function SampleVideoPlayer({ item, isActive }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const isActiveRef = useRef(isActive)
-  useLayoutEffect(() => {
-    isActiveRef.current = isActive
-  }, [isActive])
+  const [useFallbackIframe, setUseFallbackIframe] = useState(false)
 
-  const videoUrl =
-    item.sampleMovieURL?.size_476_306 ??
-    item.sampleMovieURL?.size_560_360 ??
-    item.sampleMovieURL?.size_644_414 ??
-    item.sampleMovieURL?.size_720_480
+  const playerUrl = isActive && item.sampleMovieURL
+    ? pickPlayerUrl(item.sampleMovieURL)
+    : undefined
 
-  // Mount-once observer — reads isActiveRef so no stale closure
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && isActiveRef.current) {
-          video.play().catch(() => {})
-        } else {
-          video.pause()
-        }
-      },
-      { threshold: 0.5 }
-    )
-    observer.observe(video)
-    return () => observer.disconnect()
-  }, [])
+  const directMp4 = playerUrl ? toDirectMp4(playerUrl) : undefined
 
-  // Direct control when card becomes active/inactive
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-    if (isActive) {
-      video.play().catch(() => {})
-    } else {
-      video.pause()
-      video.currentTime = 0
-    }
-  }, [isActive])
+  useEffect(() => { setUseFallbackIframe(false) }, [item.content_id])
 
-  if (videoUrl) {
+  if (directMp4 && !useFallbackIframe) {
+    const { w, h } = parseUrlSize(playerUrl!)
     return (
       <video
-        ref={videoRef}
-        src={videoUrl}
-        loop
+        key={item.content_id}
+        src={directMp4}
+        autoPlay
         muted
         playsInline
-        className="h-full w-full object-cover"
+        controls
+        className="w-full bg-black"
+        style={{ aspectRatio: `${w}/${h}` }}
+        onError={() => setUseFallbackIframe(true)}
+      />
+    )
+  }
+
+  if (playerUrl) {
+    const { w, h } = parseUrlSize(playerUrl)
+    return (
+      <iframe
+        key={item.content_id + '-iframe'}
+        src={playerUrl}
+        className="w-full border-0"
+        style={{ aspectRatio: `${w}/${h}` }}
+        allow="autoplay; fullscreen"
       />
     )
   }
@@ -76,13 +85,15 @@ export function SampleVideoPlayer({ item, isActive }: Props) {
   const fallbackUrl = item.imageURL.large ?? item.imageURL.list ?? item.imageURL.small
   if (!fallbackUrl) return null
   return (
-    <Image
-      src={fallbackUrl}
-      alt={item.title}
-      fill
-      className="object-cover"
-      sizes="100vw"
-    />
+    <div className="relative w-full aspect-[3/2]">
+      <Image
+        src={fallbackUrl}
+        alt={item.title}
+        fill
+        className="object-cover"
+        sizes="100vw"
+      />
+    </div>
   )
 }
 
@@ -96,13 +107,15 @@ function ImageSlideshow({ images, isActive }: { images: string[]; isActive: bool
   }, [isActive, images.length])
 
   return (
-    <Image
-      src={images[idx]}
-      alt=""
-      fill
-      className="object-cover"
-      sizes="100vw"
-      unoptimized
-    />
+    <div className="relative w-full aspect-[3/2]">
+      <Image
+        src={images[idx]}
+        alt=""
+        fill
+        className="object-cover"
+        sizes="100vw"
+        unoptimized
+      />
+    </div>
   )
 }
