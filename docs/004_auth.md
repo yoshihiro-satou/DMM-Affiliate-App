@@ -225,6 +225,15 @@ redirect('/login?updated=1')
 - [x] 新規登録フロー（バリデーション・正常登録→トップページ遷移）
 - [x] エラーハンドリング（無効トークン・`?updated=1` メッセージ）
 
+### Playwright テスト（`tests/mypage.spec.ts`）
+- [x] 未認証アクセス（`/mypage` → `/login` リダイレクト）
+- [x] MY PAGE ラベル・display_name・伏せ字メールの表示確認
+- [x] ACTIVITY セクション（いいね / スキップ / お気に入り / シリーズ数）
+- [x] 直近14日の閲覧数チャート・BADGES セクションの表示確認
+- [x] 「パスワードを変更する」リンク → `/forgot-password` 遷移
+- [x] ログアウト後に `/` へリダイレクト
+- [x] ログアウト後に `/mypage` → `/login` リダイレクト
+
 ---
 
 ## 備考
