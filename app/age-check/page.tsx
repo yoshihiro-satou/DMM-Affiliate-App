@@ -50,7 +50,7 @@ export default async function AgeCheckPage({ searchParams }: Props) {
         <div className="flex flex-col items-center gap-5 text-center">
           <h1
             className="text-4xl font-black tracking-tight text-white"
-            style={{ fontFamily: '"Hiragino Mincho ProN", "Yu Mincho", Georgia, serif' }}
+            
           >
             年齢確認
           </h1>

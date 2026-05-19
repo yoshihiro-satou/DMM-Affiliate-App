@@ -13,6 +13,11 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) {
+      // パスワードリセットはパスワード更新ページへ（ストリーク更新しない）
+      if (type === 'recovery') {
+        return NextResponse.redirect(new URL('/update-password', request.url))
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         await updateLoginStreak(user.id)

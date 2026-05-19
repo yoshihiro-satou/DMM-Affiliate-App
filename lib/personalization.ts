@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 export type UserProfile = {
   genreScores: Map<number, number>
   actressScores: Map<number, number>
+  actressNames: Map<number, string>
   makerScores: Map<number, number>
   seenItemIds: Set<string>
 }
@@ -75,6 +76,7 @@ export async function buildUserProfile(userId: string): Promise<UserProfile> {
 
   const genreScores = new Map<number, number>()
   const actressScores = new Map<number, number>()
+  const actressNames = new Map<number, string>()
   const makerScores = new Map<number, number>()
 
   // プロフィール構築用シード（右スワイプ 5件 + お気に入り 5件、最大 8 DMM API calls）
@@ -106,12 +108,15 @@ export async function buildUserProfile(userId: string): Promise<UserProfile> {
         if (g.id) genreScores.set(g.id, (genreScores.get(g.id) ?? 0) + weight)
       }
       for (const a of item.iteminfo?.actress ?? []) {
-        if (a.id) actressScores.set(a.id, (actressScores.get(a.id) ?? 0) + weight)
+        if (a.id) {
+          actressScores.set(a.id, (actressScores.get(a.id) ?? 0) + weight)
+          if (a.name && !actressNames.has(a.id)) actressNames.set(a.id, a.name)
+        }
       }
       const mid = item.iteminfo?.maker?.[0]?.id
       if (mid) makerScores.set(mid, (makerScores.get(mid) ?? 0) + weight)
     }
   }
 
-  return { genreScores, actressScores, makerScores, seenItemIds }
+  return { genreScores, actressScores, actressNames, makerScores, seenItemIds }
 }

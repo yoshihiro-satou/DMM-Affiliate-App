@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { GuestFavItem } from '@/lib/guest-favorites'
 
@@ -10,31 +9,26 @@ export async function signIn(
   formData: FormData
 ): Promise<{ error: string }> {
   const email = (formData.get('email') as string)?.trim()
-  const display_name = (formData.get('display_name') as string)?.trim()
+  const password = (formData.get('password') as string) ?? ''
 
-  if (!email || !display_name) {
-    return { error: '名前とメールアドレスを入力してください' }
+  if (!email || !password) {
+    return { error: 'メールアドレスとパスワードを入力してください' }
   }
 
-  const headersList = await headers()
-  const host = headersList.get('host') ?? 'localhost:3000'
-  const protocol = host.includes('localhost') ? 'http' : 'https'
-  const emailRedirectTo = `${protocol}://${host}/auth/confirm`
-
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      data: { display_name },
-      emailRedirectTo,
-    },
-  })
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    if (error.message.includes('Invalid login credentials')) {
+      return { error: 'メールアドレスまたはパスワードが正しくありません' }
+    }
+    if (error.message.includes('Email not confirmed')) {
+      return { error: 'メールアドレスが確認されていません。登録メールのリンクをタップしてください' }
+    }
     return { error: error.message }
   }
 
-  redirect('/login/sent')
+  redirect('/')
 }
 
 export async function migrateGuestData(data: {

@@ -1,25 +1,11 @@
-import { LoginForm } from './_components/login-form'
-
-type Props = {
-  searchParams: Promise<{ error?: string; registered?: string; updated?: string }>
-}
+import { RegisterForm } from './_components/register-form'
 
 export const metadata = {
-  title: 'ログイン',
+  title: '新規登録',
   robots: 'noindex,nofollow',
 }
 
-export default async function LoginPage({ searchParams }: Props) {
-  const { error, registered, updated } = await searchParams
-  const initialError =
-    error === 'invalid_link' ? 'リンクが無効または期限切れです。再度お試しください。' : undefined
-  const initialMessage =
-    registered === '1'
-      ? 'アカウントを作成しました。確認メールのリンクをタップしてログインしてください。'
-      : updated === '1'
-        ? 'パスワードを更新しました。新しいパスワードでログインしてください。'
-        : undefined
-
+export default function RegisterPage() {
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden">
       {/* 背景グラデーション */}
@@ -50,7 +36,7 @@ export default async function LoginPage({ searchParams }: Props) {
             className="text-[10px] font-semibold tracking-[0.35em] text-red-600/80"
             style={{ fontFamily: 'ui-monospace, monospace' }}
           >
-            MEMBER LOGIN
+            NEW ACCOUNT
           </span>
         </div>
 
@@ -60,7 +46,7 @@ export default async function LoginPage({ searchParams }: Props) {
             className="text-4xl font-black tracking-tight text-white"
             
           >
-            ログイン
+            新規登録
           </h1>
           <p className="text-[13px] leading-6 text-white/40">
             お気に入り・スワイプ履歴・通知を
@@ -73,7 +59,7 @@ export default async function LoginPage({ searchParams }: Props) {
         <div className="h-px w-full bg-white/8" />
 
         {/* フォーム */}
-        <LoginForm initialError={initialError} initialMessage={initialMessage} />
+        <RegisterForm />
       </div>
     </main>
   )

@@ -1,5 +1,7 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { createClient, getCurrentUser } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { Heart, X, Bookmark, BookOpen } from 'lucide-react'
 import { buildUserProfile, topEntries } from '@/lib/personalization'
@@ -250,7 +252,7 @@ async function TopActresses({ userId }: { userId: string }) {
                 href={`/actress/${id}`}
                 className="text-[12px] text-white/60 hover:text-white"
               >
-                女優 #{id}
+                {profile.actressNames.get(id) ?? `女優 #${id}`}
               </a>
             </div>
             <div className="flex items-center gap-1">
@@ -287,6 +289,14 @@ function TopActressesSkeleton() {
 
 // ── ページ本体 ────────────────────────────────────────────────────────────────
 
+function maskEmail(email: string): string {
+  const atIdx = email.indexOf('@')
+  if (atIdx < 0) return email
+  const local = email.slice(0, atIdx)
+  const domain = email.slice(atIdx)
+  return `${local.slice(0, 2)}***${domain}`
+}
+
 export default async function MyPage() {
   const claims = await getCurrentUser()
   if (!claims) redirect('/login')
@@ -298,8 +308,22 @@ export default async function MyPage() {
     .eq('id', claims.sub)
     .single()
 
-  const displayName = profile?.display_name ?? 'ゲスト'
-  const email = profile?.email ?? (claims.email as string | undefined) ?? ''
+  const metaDisplayName = (
+    (claims as Record<string, unknown>).user_metadata as Record<string, string> | undefined
+  )?.display_name
+  const displayName = profile?.display_name ?? metaDisplayName ?? 'ゲスト'
+  const rawEmail = profile?.email ?? (claims.email as string | undefined) ?? ''
+
+  // profiles に display_name が未設定の既存ユーザーをサイレント修正
+  if (!profile?.display_name && metaDisplayName) {
+    const admin = createAdminClient()
+    void admin.from('profiles').upsert({
+      id: claims.sub,
+      email: rawEmail,
+      display_name: metaDisplayName,
+    })
+  }
+  const email = maskEmail(rawEmail)
 
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -312,60 +336,64 @@ export default async function MyPage() {
         }}
       />
 
-      <div className="relative z-10 flex w-full flex-col gap-6 px-6 py-10">
-        {/* ヘッダー */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-px w-12 bg-red-700" />
-          <span
-            className="text-[10px] font-semibold tracking-[0.35em] text-red-600/80"
-            style={{ fontFamily: 'ui-monospace, monospace' }}
-          >
-            MY PAGE
-          </span>
-        </div>
+      {/* モバイル: flex col / デスクトップ: 2カラムグリッドで全体をビューポートに収める */}
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col gap-6 px-6 py-10 md:grid md:grid-cols-2 md:grid-rows-[auto_1fr_auto] md:gap-x-10 md:gap-y-5 md:py-8">
 
-        {/* プロフィール */}
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl font-black text-white/60">
-            {displayName.charAt(0)}
+        {/* ヘッダー + プロフィール: 常に2列全幅 */}
+        <div className="flex flex-col gap-5 md:col-span-2">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-px w-12 bg-red-700" />
+            <span
+              className="text-[10px] font-semibold tracking-[0.35em] text-red-600/80"
+              style={{ fontFamily: 'ui-monospace, monospace' }}
+            >
+              MY PAGE
+            </span>
           </div>
-          <div>
+          <div className="flex flex-col items-center gap-1 text-center">
             <p
               className="text-2xl font-black tracking-tight text-white"
-              style={{ fontFamily: '"Hiragino Mincho ProN", "Yu Mincho", Georgia, serif' }}
+              
             >
               {displayName}
             </p>
-            <p className="mt-1 text-[12px] text-white/30">{email}</p>
+            <p className="text-[12px] text-white/30">{email}</p>
           </div>
+          <div className="h-px w-full bg-white/8" />
         </div>
 
-        <div className="h-px w-full bg-white/8" />
-
-        {/* 活動統計 */}
+        {/* 左カラム上: 活動統計 */}
         <ActivityStats userId={claims.sub} />
 
-        {/* バッジ・ストリーク */}
+        {/* 右カラム上: バッジ・ストリーク */}
         <BadgesSection userId={claims.sub} />
 
-        {/* よく見る女優 TOP5（DMM API 呼び出しがあるので Suspense） */}
+        {/* 左カラム下: よく見る女優 */}
         <Suspense fallback={<TopActressesSkeleton />}>
           <TopActresses userId={claims.sub} />
         </Suspense>
 
-        {/* プッシュ通知 */}
-        <PushSubscribeButton />
-
-        {/* ログアウト */}
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/40 transition-colors duration-150 hover:border-white/20 hover:text-white/60"
+        {/* 右カラム下: ボタン群 */}
+        <div className="flex flex-col gap-3">
+          <PushSubscribeButton />
+          <Link
+            href="/forgot-password"
+            className="block w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/40 transition-colors duration-150 hover:border-white/20 hover:text-white/60"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            ログアウト
-          </button>
-        </form>
+            パスワードを変更する
+          </Link>
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/40 transition-colors duration-150 hover:border-white/20 hover:text-white/60"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              ログアウト
+            </button>
+          </form>
+        </div>
+
       </div>
     </main>
   )

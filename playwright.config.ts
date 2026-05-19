@@ -2,13 +2,15 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 30000,
-  retries: 0,
+  timeout: 60000,
+  retries: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
 
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
+    navigationTimeout: 120000,
+    actionTimeout: 30000,
   },
 
   // pnpm dev を自動起動

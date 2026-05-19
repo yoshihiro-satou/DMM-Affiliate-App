@@ -81,7 +81,7 @@ export async function searchItems(params: {
 
   const result = await fetchItemList({
     keyword: q || undefined,
-    sort: q ? 'match' : DMM_SORT[sort],
+    sort: q && sort === 'rank' ? 'match' : DMM_SORT[sort],
     hits: hitsPerPage,
     offset: offset + 1,
     service: 'digital',
