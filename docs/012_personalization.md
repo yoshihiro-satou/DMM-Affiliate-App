@@ -15,6 +15,7 @@
   - [x] `buildUserProfile(userId)`: Supabase からスワイプ履歴（50件）・お気に入り（20件）を取得し、ジャンル・女優・メーカーのスコアを集計
     - [x] 右スワイプ/お気に入り = +2点、左スワイプ = -1点
     - [x] DMM API で上位 8 件のアイテム詳細を取得（Next.js データキャッシュで 3600 秒キャッシュ）
+    - [x] `actressNames: Map<number, string>` を収集（DMM API レスポンスの `actress.name` を保持）
   - [x] `scoreItem(item, userProfile)`: 商品とプロフィールの親和性スコアを計算（ジャンル/女優/メーカーの重み付き合計）
   - [x] `topEntries(scores, n)`: スコアマップから上位 N 件を抽出
 

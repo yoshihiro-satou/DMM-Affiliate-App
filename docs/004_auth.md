@@ -123,6 +123,12 @@ export async function signUp(_prev, formData): Promise<{ error: string }> {
   })
   if (createError) return { error: ... }
 
+  // profiles テーブルに display_name を保存
+  // on_auth_user_created トリガーは id/email のみ INSERT するため、upsert で display_name を補完
+  if (data.user) {
+    await admin.from('profiles').upsert({ id: data.user.id, email, display_name })
+  }
+
   // セッション確立
   const supabase = await createClient()
   await supabase.auth.signInWithPassword({ email, password })
