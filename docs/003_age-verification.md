@@ -24,7 +24,10 @@ FANZAコンテンツへのアクセス前に年齢確認を必須化する。`mi
 - [x] `app/age-check/actions.ts` 作成
   - [x] `confirmAge()`: `age_check_done=1` Cookie をセット（有効期限: 1年）し元のページへリダイレクト
 
-### テスト
-- [x] Cookie なしでアクセス → `/age-check` にリダイレクトされることを確認
-- [x] 確認後にリロードしてもゲートが出ないことを確認
-- [x] `/age-check` への直接アクセスが機能することを確認
+### Playwright テスト（`tests/age-check.spec.ts`）
+- [x] 初回訪問（Cookie なし）で `/age-check` にリダイレクトされる
+- [x] ページ UI 確認（タイトル・説明文・18歳以上/未満ボタン）
+- [x] 「18歳未満です」リンクが `https://www.yahoo.co.jp` を向いている
+- [x] 「18歳以上です」ボタン押下で `age_check_done=1` Cookie が設定され `/` に遷移する
+- [x] `?from=` パラメータの遷移先に正しく戻る
+- [x] Cookie 設定済みユーザーは `/age-check` にリダイレクトされない
