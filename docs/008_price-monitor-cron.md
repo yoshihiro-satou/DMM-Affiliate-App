@@ -58,6 +58,57 @@ echo "$DMM_AFFILIATE_ID" | pnpm wrangler secret put DMM_AFFILIATE_ID --name dmm-
 - [ ] Supabase で `favorites` にダミーデータを挿入し `price_history` に記録されることを確認
 - [ ] 手動で `price_history` に低い価格を INSERT して `sale_queue` に積まれることを確認
 
+---
+
+## 日替わりリバリデート Worker（daily-revalidate）
+
+### 概要
+
+FANZA 日替わり商品は毎日 0:00 JST に切り替わる。ISR キャッシュを 0:01 JST に自動破棄してトップページを再生成するために、別の Cloudflare Worker Cron を用意する。
+
+### ファイル
+
+| ファイル | 内容 |
+|--------|------|
+| `workers/daily-revalidate.ts` | Cron ハンドラ — `/api/revalidate` を POST 呼び出し |
+| `workers/daily-revalidate.toml` | wrangler 設定 — cron `"1 15 * * *"` (0:01 JST) |
+| `app/api/revalidate/route.ts` | Next.js Route Handler — `x-revalidate-secret` ヘッダー認証 + `revalidatePath('/')` |
+
+### TODO
+
+- [x] `workers/daily-revalidate.ts` 作成
+  - [x] `scheduled()` ハンドラで `env.SITE_URL/api/revalidate` を POST
+  - [x] `x-revalidate-secret: env.REVALIDATE_SECRET` ヘッダーで認証
+  - [x] `ctx.waitUntil()` で非同期完走を保証
+- [x] `workers/daily-revalidate.toml` 作成
+  - [x] `name = "dmm-daily-revalidate"`
+  - [x] `crons = ["1 15 * * *"]` （JST 0:01 = UTC 15:01）
+  - [x] シークレットのコメント注記
+- [x] `app/api/revalidate/route.ts` 作成
+  - [x] `runtime = 'nodejs'`（Edge では `revalidatePath` 不可）
+  - [x] `REVALIDATE_SECRET` 環境変数との照合（不一致なら 401）
+  - [x] `revalidatePath('/')` で ISR キャッシュを破棄
+- [ ] 本番デプロイ（下記コマンド参照）
+
+### シークレット登録 & デプロイ
+
+```bash
+# シークレット生成（初回のみ）
+openssl rand -hex 32   # → REVALIDATE_SECRET として .env.local と wrangler secret の両方に設定
+
+wrangler secret put SITE_URL           --config workers/daily-revalidate.toml
+wrangler secret put REVALIDATE_SECRET  --config workers/daily-revalidate.toml
+wrangler deploy --config workers/daily-revalidate.toml
+```
+
+### キャッシュ戦略
+
+- `revalidatePath('/')` はページレベルの ISR キャッシュのみ破棄する
+- 日替わり商品データは `React.cache()` でリクエスト内重複排除（`unstable_cache` は POST フェッチと相性が悪いため不使用）
+- 日替わりデータの GraphQL フェッチ自体は POST なので Next.js はデフォルトでキャッシュしない
+
+---
+
 ## アーキテクチャ上の注意点
 
 ### Worker とNext.js の分離

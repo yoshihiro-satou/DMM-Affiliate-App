@@ -170,7 +170,7 @@ export const fetchFloorList = cache(
 // 日替わりセール商品（JST深夜0時でキャッシュ失効）
 // ------------------------------------
 
-function secondsUntilMidnightJST(): number {
+export function secondsUntilMidnightJST(): number {
   const now = new Date()
   const jstOffset = 9 * 60 * 60 * 1000
   const nowJST = new Date(now.getTime() + jstOffset)

@@ -72,9 +72,44 @@
   - セクション注記: `PR · レビュー上位作品への出演数順`
   - 表示: `ActressCard` で `grid-cols-2 gap-3` グリッド
 
+### 日替わり商品セクション（トップページ）
+
+- [x] `components/home/DailyDealsSection.tsx` — Server Component、`BentoGrid` で統一デザイン表示
+- [x] `lib/dmm/daily-deals.ts` — `React.cache()` でリクエスト内重複排除、GraphQL失敗時は `fetchDailySaleItems` にフォールバック
+- [x] `lib/dmm/scraper.ts` — `api.video.dmm.co.jp/graphql` への POST（`AvSearch` / `legacySearchPPV`）
+  - フィルタ: `saleIds: { ids: [{ id: "daily" }], op: "AND" }, floor: "AV"`
+  - **なぜ GraphQL か**: `video.dmm.co.jp/av/list/?campaign=daily` は CSR（Next.js App Router）のため HTML スクレイピング不可。Playwright でネットワークキャプチャして内部 GraphQL エンドポイントを特定
+  - **クエリは元のまま使用**: サーバーがスキーマ検証するため簡略化クエリは 422 になる
+  - **`cache: 'no-store'` は不要**: POST リクエストは Next.js がデフォルトでキャッシュしない。指定すると ISR と競合して静的生成が失敗する
+- [x] `app/api/revalidate/route.ts` — `x-revalidate-secret` ヘッダーで認証し `revalidatePath('/')` を実行するエンドポイント
+- [x] `workers/daily-revalidate.ts` + `workers/daily-revalidate.toml` — 毎日 0:01 JST（`"1 15 * * *"` UTC）にリバリデートエンドポイントを呼び出す Cloudflare Worker Cron
+
+#### デプロイ手順（daily-revalidate）
+```bash
+# シークレット生成
+openssl rand -hex 32   # → REVALIDATE_SECRET
+
+wrangler secret put SITE_URL           --config workers/daily-revalidate.toml
+wrangler secret put REVALIDATE_SECRET  --config workers/daily-revalidate.toml
+wrangler deploy --config workers/daily-revalidate.toml
+```
+
+#### GraphQL レスポンスの DmmItem マッピング
+| GraphQL フィールド | DmmItem フィールド |
+|---|---|
+| `id` | `content_id` |
+| `packageImage.mediumUrl` | `imageURL.list` / `small` |
+| `packageImage.largeUrl` | `imageURL.large` |
+| `salesInfo.lowestPrice.discountPrice` | `prices.price`（セール価格） |
+| `salesInfo.lowestPrice.price` | `prices.list_price`（定価） |
+| `salesInfo.campaign.endAt` | `campaign[].date_end`（ISO→YYYY-MM-DD） |
+| `review.average`（number） | `review.average`（String に変換） |
+| `sampleMovie.mp4Url` | `sampleMovieURL.size_560_360` |
+
 ### データフェッチ
-- [x] ランキング・おすすめを Suspense で独立ストリーミング（バナーは即表示）
+- [x] ランキング・おすすめ・日替わりを Suspense で独立ストリーミング（バナーは即表示）
 - [x] ISR revalidate: 3600（トップ・セールページ）
+- [x] 日替わりデータは 0:01 JST に Cloudflare Worker Cron が `revalidatePath('/')` を呼び出して最新化
 
 ### SEO・OGP
 - [x] `app/page.tsx` / `app/ranking/page.tsx` に `metadata` export でメタ情報設定

@@ -6,6 +6,7 @@ import { BentoGrid } from '@/components/layout/BentoGrid'
 import { GridCard } from '@/components/product/GridCard'
 import { ProductCardSkeleton } from '@/components/ui/ProductCardSkeleton'
 import { ForYouFeedLazy } from '@/components/recommend/ForYouFeedWrapper'
+import { DailyDealsSection } from '@/components/home/DailyDealsSection'
 
 export const revalidate = 3600
 
@@ -129,6 +130,21 @@ export default function HomePage() {
         </div>
         <Suspense fallback={<LoadingGrid count={6} />}>
           <RankingSection />
+        </Suspense>
+      </section>
+
+      {/* 日替わり商品 */}
+      <section className="px-3 pt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <h2 className="text-[15px] font-black tracking-tight text-white">
+              今日だけの特別価格
+            </h2>
+            <span className="text-[10px] text-white/40">日替わり · 本日限り</span>
+          </div>
+        </div>
+        <Suspense fallback={<LoadingGrid count={5} />}>
+          <DailyDealsSection />
         </Suspense>
       </section>
 

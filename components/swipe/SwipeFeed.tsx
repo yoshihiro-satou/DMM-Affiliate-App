@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useTransition, useRef, useCallback, useMemo } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'motion/react'
 import type { DmmItem } from '@/types/dmm'
 import { recordSwipe } from '@/actions/swipe'
@@ -28,10 +28,16 @@ export function SwipeFeed({ initialItems }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [newBadges, setNewBadges] = useState<BadgeType[]>([])
+  const [hintVisible, setHintVisible] = useState(true)
   const isFetchingRef = useRef(false)
   const guestSwipeCountRef = useRef(0)
   const nextOffset = useRef(initialItems.length + 1)
   const [, startTransition] = useTransition()
+
+  useEffect(() => {
+    const t = setTimeout(() => setHintVisible(false), 3000)
+    return () => clearTimeout(t)
+  }, [])
 
   const fetchMore = useCallback(async () => {
     if (isFetchingRef.current) return
@@ -54,6 +60,7 @@ export function SwipeFeed({ initialItems }: Props) {
 
   const handleSwipe = useCallback(
     (itemId: string, direction: 'like' | 'skip', item: DmmItem) => {
+      setHintVisible(false)
       navigator.vibrate?.(10)
 
       if (!isLoggedIn) {
@@ -105,7 +112,7 @@ export function SwipeFeed({ initialItems }: Props) {
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-zinc-950">
       {/* デスクトップでは中央寄せ・最大幅制限 */}
-      <div className="relative mx-auto h-full w-full max-w-[480px]">
+      <div className="relative mx-auto h-dvh w-full max-w-[480px]">
         {[...visibleItems].reverse().map((item, reverseIdx) => {
           const stackIdx = visibleItems.length - 1 - reverseIdx
           return (
@@ -115,6 +122,7 @@ export function SwipeFeed({ initialItems }: Props) {
               isTop={stackIdx === 0}
               stackIdx={stackIdx}
               onSwipe={(dir) => handleSwipe(item.content_id, dir, item)}
+              showHint={stackIdx === 0 && hintVisible}
             />
           )
         })}
@@ -139,9 +147,10 @@ type SwipeCardProps = {
   isTop: boolean
   stackIdx: number
   onSwipe: (direction: 'like' | 'skip') => void
+  showHint: boolean
 }
 
-function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
+function SwipeCard({ item, isTop, stackIdx, onSwipe, showHint }: SwipeCardProps) {
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const rotate = useTransform(x, [-300, 300], [-15, 15])
@@ -171,10 +180,9 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
     <div
       className="absolute inset-x-4 overflow-hidden rounded-2xl bg-zinc-900 shadow-2xl"
       style={{
-        // ステータスバー分 + 余白を上に、ナビ分 + 余白を下に → 画面中央より少し上に配置
+        // 高さ = min(カード幅の2倍, 利用可能な画面高さ) → 幅が広がるほど高さも比例して増える
         top: `calc(env(safe-area-inset-top, 0px) + ${14 + stackIdx * 6}px)`,
-        bottom: `calc(64px + env(safe-area-inset-bottom) + ${8 - stackIdx * 2}px)`,
-        maxHeight: 680,
+        height: `min(calc(200vw - 64px), calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${86 + stackIdx * 4}px))`,
         zIndex: 10 - stackIdx,
       }}
     >
@@ -194,7 +202,7 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
       >
         {/* 動画エリア: ここにタッチしてもドラッグ開始しない */}
         <div
-          className="relative w-full shrink-0"
+          className="relative w-full shrink-0 overflow-hidden rounded-t-2xl"
           onPointerDown={isTop ? (e) => e.stopPropagation() : undefined}
           style={{ touchAction: 'auto' }}
         >
@@ -219,7 +227,7 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
 
         {/* 情報 + スワイプヒント + CTA */}
         <div className="flex flex-1 flex-col px-4 pt-3 pb-4">
-          {/* 作品情報 — 上部固定 */}
+          {/* 作品情報 */}
           <div className="space-y-1.5">
             {item.iteminfo?.actress?.[0]?.name && (
               <p className="text-xs font-medium text-white/50">
@@ -274,31 +282,9 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
               </div>
             )}
 
-            {/* サンプル画像ストリップ */}
-            {(() => {
-              const imgs =
-                item.sampleImageURL?.sample_s?.image ??
-                item.sampleImageURL?.sample_l?.image ??
-                []
-              if (imgs.length === 0) return null
-              return (
-                <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {imgs.slice(0, 8).map((url, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={i}
-                      src={url}
-                      alt=""
-                      className="h-14 w-auto flex-none rounded object-cover"
-                      loading="lazy"
-                    />
-                  ))}
-                </div>
-              )
-            })()}
           </div>
 
-          {/* CTA — mt-auto で下部に寄せる */}
+          {/* CTA */}
           <div className="mt-auto pt-3">
             <a
               href={item.affiliateURL}
@@ -311,6 +297,60 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe }: SwipeCardProps) {
           </div>
         </div>
       </motion.div>
+
+      {/* スワイプヒントオーバーレイ — motion.div の外なので回転しない */}
+      {showHint && (
+        <motion.div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-5 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70" />
+
+          <p className="relative text-white font-black text-lg tracking-wider drop-shadow-lg">
+            スワイプして探そう！
+          </p>
+
+          <div className="relative flex items-center gap-10">
+            {/* SKIP */}
+            <motion.div
+              className="flex flex-col items-center gap-2"
+              animate={{ x: [-14, 0, -14] }}
+              transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+            >
+              <span className="text-4xl">👈</span>
+              <div className="rounded-lg border-[3px] border-red-400 bg-red-400/15 px-3 py-0.5">
+                <span className="text-xl font-black tracking-widest text-red-400">SKIP</span>
+              </div>
+            </motion.div>
+
+            <motion.span
+              className="text-4xl"
+              animate={{ scale: [1, 1.18, 1] }}
+              transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+            >
+              🤳
+            </motion.span>
+
+            {/* LIKE */}
+            <motion.div
+              className="flex flex-col items-center gap-2"
+              animate={{ x: [14, 0, 14] }}
+              transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+            >
+              <span className="text-4xl">👉</span>
+              <div className="rounded-lg border-[3px] border-green-400 bg-green-400/15 px-3 py-0.5">
+                <span className="text-xl font-black tracking-widest text-green-400">LIKE</span>
+              </div>
+            </motion.div>
+          </div>
+
+          <p className="relative text-white/50 text-xs tracking-wide">
+            スワイプすると閉じます
+          </p>
+        </motion.div>
+      )}
     </div>
   )
 }
