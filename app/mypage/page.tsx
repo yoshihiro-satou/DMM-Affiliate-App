@@ -5,8 +5,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { Heart, X, Bookmark, BookOpen } from 'lucide-react'
 import { buildUserProfile, topEntries } from '@/lib/personalization'
-import { BADGE_DEFS, ALL_BADGE_TYPES } from '@/lib/badges'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
+import { OshiActressSetting } from './_components/OshiActressSetting'
 import { signOut } from './actions'
 
 export const metadata = {
@@ -135,82 +135,30 @@ async function ActivityStats({ userId }: { userId: string }) {
   )
 }
 
-// ── バッジ・ストリーク ────────────────────────────────────────────────────────
+// ── ストリーク ────────────────────────────────────────────────────────────────
 
-function getIsNew(earnedAt: string) {
-  return Date.now() - new Date(earnedAt).getTime() < 86_400_000
-}
-
-async function BadgesSection({ userId }: { userId: string }) {
+async function StreakSection({ userId }: { userId: string }) {
   const supabase = await createClient()
-  const [badgesRes, streakRes] = await Promise.all([
-    supabase.from('user_badges').select('badge_type, earned_at').eq('user_id', userId),
-    supabase
-      .from('login_streaks')
-      .select('current_streak')
-      .eq('user_id', userId)
-      .maybeSingle(),
-  ])
+  const { data } = await supabase
+    .from('login_streaks')
+    .select('current_streak')
+    .eq('user_id', userId)
+    .maybeSingle()
 
-  const earnedMap = new Map(
-    (badgesRes.data ?? []).map((b) => [b.badge_type, b.earned_at])
-  )
-  const currentStreak = streakRes.data?.current_streak ?? 0
-  const earnedCount = earnedMap.size
+  const currentStreak = data?.current_streak ?? 0
+  if (currentStreak === 0) return null
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* ストリーク */}
-      {currentStreak > 0 && (
-        <div className="flex items-center justify-between rounded-lg border border-white/8 bg-white/3 px-5 py-4">
-          <div>
-            <p
-              className="mb-1 text-[10px] font-semibold tracking-[0.2em] text-white/30"
-              style={{ fontFamily: 'ui-monospace, monospace' }}
-            >
-              STREAK
-            </p>
-            <p className="text-[22px] font-black text-white">
-              🔥 {currentStreak}日連続
-            </p>
-          </div>
-          <p className="text-[11px] text-white/30">
-            {earnedCount}/{ALL_BADGE_TYPES.length} バッジ
-          </p>
-        </div>
-      )}
-
-      {/* バッジグリッド */}
-      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
-        <p
-          className="mb-4 text-[10px] font-semibold tracking-[0.2em] text-white/30"
-          style={{ fontFamily: 'ui-monospace, monospace' }}
-        >
-          BADGES
-        </p>
-        <div className="grid grid-cols-4 gap-y-5">
-          {ALL_BADGE_TYPES.map((type) => {
-            const def = BADGE_DEFS[type]
-            const earnedAt = earnedMap.get(type)
-            const earned = !!earnedAt
-            const fresh = earned && getIsNew(earnedAt)
-            return (
-              <div
-                key={type}
-                className={`relative flex flex-col items-center gap-1.5 text-center transition-opacity ${earned ? 'opacity-100' : 'opacity-20'}`}
-              >
-                {fresh && (
-                  <span className="absolute -right-1 -top-1 rounded-full bg-yellow-500 px-1.5 py-px text-[8px] font-black text-black leading-tight">
-                    NEW
-                  </span>
-                )}
-                <span className="text-[28px] leading-none">{def.emoji}</span>
-                <span className="text-[9px] leading-tight text-white/60">{def.label}</span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+    <div className="rounded-lg border border-white/8 bg-white/3 px-5 py-4">
+      <p
+        className="mb-1 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        style={{ fontFamily: 'ui-monospace, monospace' }}
+      >
+        STREAK
+      </p>
+      <p className="text-[22px] font-black text-white">
+        🔥 {currentStreak}日連続
+      </p>
     </div>
   )
 }
@@ -304,7 +252,7 @@ export default async function MyPage() {
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, email')
+    .select('display_name, email, oshi_actress_id, oshi_actress_name')
     .eq('id', claims.sub)
     .single()
 
@@ -324,6 +272,10 @@ export default async function MyPage() {
     })
   }
   const email = maskEmail(rawEmail)
+  const oshiActress =
+    profile?.oshi_actress_id && profile?.oshi_actress_name
+      ? { id: profile.oshi_actress_id, name: profile.oshi_actress_name }
+      : null
 
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -336,8 +288,8 @@ export default async function MyPage() {
         }}
       />
 
-      {/* モバイル: flex col / デスクトップ: 2カラムグリッドで全体をビューポートに収める */}
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col gap-6 px-6 py-10 md:grid md:grid-cols-2 md:grid-rows-[auto_1fr_auto] md:gap-x-10 md:gap-y-5 md:py-8">
+      {/* モバイル: flex col / デスクトップ: 2カラムグリッド */}
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col gap-6 px-6 py-10 md:grid md:grid-cols-2 md:gap-x-10 md:gap-y-5 md:py-8">
 
         {/* ヘッダー + プロフィール: 常に2列全幅 */}
         <div className="flex flex-col gap-5 md:col-span-2">
@@ -351,10 +303,7 @@ export default async function MyPage() {
             </span>
           </div>
           <div className="flex flex-col items-center gap-1 text-center">
-            <p
-              className="text-2xl font-black tracking-tight text-white"
-              
-            >
+            <p className="text-2xl font-black tracking-tight text-white">
               {displayName}
             </p>
             <p className="text-[12px] text-white/30">{email}</p>
@@ -362,18 +311,23 @@ export default async function MyPage() {
           <div className="h-px w-full bg-white/8" />
         </div>
 
-        {/* 左カラム上: 活動統計 */}
+        {/* 推し女優設定: 常に2列全幅 */}
+        <div className="md:col-span-2">
+          <OshiActressSetting current={oshiActress} />
+        </div>
+
+        {/* 左カラム: 活動統計 */}
         <ActivityStats userId={claims.sub} />
 
-        {/* 右カラム上: バッジ・ストリーク */}
-        <BadgesSection userId={claims.sub} />
+        {/* 右カラム: ストリーク */}
+        <StreakSection userId={claims.sub} />
 
-        {/* 左カラム下: よく見る女優 */}
+        {/* 左カラム: よく見る女優 */}
         <Suspense fallback={<TopActressesSkeleton />}>
           <TopActresses userId={claims.sub} />
         </Suspense>
 
-        {/* 右カラム下: ボタン群 */}
+        {/* 右カラム: ボタン群 */}
         <div className="flex flex-col gap-3">
           <PushSubscribeButton />
           <Link

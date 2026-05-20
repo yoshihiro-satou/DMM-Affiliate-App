@@ -15,6 +15,8 @@ export type Database = {
           display_name: string | null
           email: string | null
           points: number
+          oshi_actress_id: string | null
+          oshi_actress_name: string | null
           created_at: string
           updated_at: string
         }
@@ -23,6 +25,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           points?: number
+          oshi_actress_id?: string | null
+          oshi_actress_name?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -31,6 +35,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           points?: number
+          oshi_actress_id?: string | null
+          oshi_actress_name?: string | null
           created_at?: string
           updated_at?: string
         }
