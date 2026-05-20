@@ -48,12 +48,12 @@
   - [x] それ以前 → 1 にリセット
 
 ### UI
-- [x] `app/mypage/page.tsx` にバッジグリッド・ストリーク表示を追加
-  - [x] ストリーク表示（🔥 X日連続）+ 取得バッジ数
-  - [x] 全バッジをグリッド表示（未取得はグレーアウト）
-  - [x] 24時間以内に取得したバッジに「NEW」ピル表示
-  - [ ] ポイント残高表示 ← 未公開のため非表示（旧 POINTS セクションも削除）
-- [x] バッジ取得時のトースト通知（`components/ui/BadgeToast.tsx`）
+- [x] `app/mypage/page.tsx` にストリーク表示を追加
+  - [x] ストリーク表示（🔥 X日連続）
+  - ~~[x] バッジグリッド・取得バッジ数表示~~ → 2026-05-20 マイページから削除
+  - ~~[x] 24時間以内に取得したバッジに「NEW」ピル表示~~ → 同上
+  - [ ] ポイント残高表示 ← 未公開のため非表示
+- [x] バッジ取得時のトースト通知（`components/ui/BadgeToast.tsx`）は引き続き有効
   - [x] `motion` による slide-in/out アニメーション
   - [x] 3秒後に自動消去
   - [x] お気に入りボタン（`FavoriteButton`）・読了ボタン（`ReadToggleButton`）・スワイプフィード（`SwipeFeed`）に統合
@@ -70,7 +70,7 @@ actions/favorites.ts                    ← newBadges 返却追加
 actions/swipe.ts                        ← newBadges 返却追加
 actions/series.ts                       ← totalCount パラメータ追加 + newBadges 返却
 app/auth/confirm/route.ts               ← ストリーク更新 + バッジチェック追加
-app/mypage/page.tsx                     ← BadgesSection 追加
+app/mypage/page.tsx                     ← StreakSection のみ（BadgesSection は削除）
 components/product/FavoriteButton.tsx   ← BadgeToast 統合
 app/series/[id]/_components/ReadToggleButton.tsx ← totalCount + BadgeToast 統合
 app/series/[id]/page.tsx                ← totalCount を ReadToggleButton に渡す

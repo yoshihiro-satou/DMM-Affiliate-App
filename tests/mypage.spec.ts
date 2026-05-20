@@ -108,10 +108,6 @@ test.describe('マイページ UI', () => {
     await expect(page.getByText('直近14日の閲覧数')).toBeVisible()
   })
 
-  test('BADGES セクションが表示される', async ({ page }) => {
-    await expect(page.getByText('BADGES')).toBeVisible()
-  })
-
   test('「パスワードを変更する」リンクが /forgot-password へ遷移する', async ({ page }) => {
     await page.getByRole('link', { name: 'パスワードを変更する' }).click()
     await expect(page).toHaveURL(/\/forgot-password/, { timeout: 10000 })

@@ -216,6 +216,9 @@ redirect('/login?updated=1')
 - [x] `app/mypage/page.tsx` 作成（ユーザー名・ポイント表示）
 - [x] `app/mypage/actions.ts` に `signOut()` Server Action 追加
 - [x] ログアウト後は `/` へリダイレクト
+- [x] `app/mypage/_components/OshiActressSetting.tsx` 作成（推し女優設定・ACTIVITY 上に配置）
+- [x] `profiles` テーブルに `oshi_actress_id` / `oshi_actress_name` 列追加
+- [x] `app/mypage/actions.ts` に `setOshiActress` / `clearOshiActress` Server Action 追加
 
 ### Playwright テスト（`tests/login.spec.ts` / `tests/register.spec.ts`）
 - [x] ログインページ UI 確認（メール・パスワードフィールド、各リンク）
@@ -229,7 +232,7 @@ redirect('/login?updated=1')
 - [x] 未認証アクセス（`/mypage` → `/login` リダイレクト）
 - [x] MY PAGE ラベル・display_name・伏せ字メールの表示確認
 - [x] ACTIVITY セクション（いいね / スキップ / お気に入り / シリーズ数）
-- [x] 直近14日の閲覧数チャート・BADGES セクションの表示確認
+- [x] 直近14日の閲覧数チャートの表示確認
 - [x] 「パスワードを変更する」リンク → `/forgot-password` 遷移
 - [x] ログアウト後に `/` へリダイレクト
 - [x] ログアウト後に `/mypage` → `/login` リダイレクト
