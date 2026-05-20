@@ -107,11 +107,9 @@ export type FetchActressListParams = {
 
 export const fetchActressList = cache(
   async (params: FetchActressListParams = {}): Promise<DmmActressResponse['result']> => {
+    // ActressSearch は site / sort / offset を受け付けない（400 になる）
     const searchParams = buildParams({
-      site: 'FANZA',
       hits: params.hits ?? 20,
-      offset: params.offset ?? 1,
-      sort: params.sort,
       initial: params.initial,
       keyword: params.keyword,
       actress_id: params.actress_id,
