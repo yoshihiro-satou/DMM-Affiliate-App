@@ -272,10 +272,9 @@ export default async function MyPage() {
     })
   }
   const email = maskEmail(rawEmail)
-  const oshiActress =
-    profile?.oshi_actress_id && profile?.oshi_actress_name
-      ? { id: profile.oshi_actress_id, name: profile.oshi_actress_name }
-      : null
+  const oshiActress = profile?.oshi_actress_name
+    ? { id: profile.oshi_actress_id ?? null, name: profile.oshi_actress_name }
+    : null
 
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">

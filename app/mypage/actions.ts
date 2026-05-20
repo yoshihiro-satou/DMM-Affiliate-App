@@ -16,7 +16,10 @@ export async function setOshiActress(actressId: string, actressName: string) {
   const supabase = await createClient()
   await supabase
     .from('profiles')
-    .update({ oshi_actress_id: actressId, oshi_actress_name: actressName })
+    .update({
+      oshi_actress_id: actressId || null,
+      oshi_actress_name: actressName || null,
+    })
     .eq('id', claims.sub)
   revalidatePath('/mypage')
 }
