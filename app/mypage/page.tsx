@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { createClient, getCurrentUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -35,7 +36,7 @@ async function ActivityStats({ userId }: { userId: string }) {
   const supabase = await createClient()
   const { thirtyDaysAgo, days: dayTemplate } = getDateRanges()
 
-  const [likeRes, skipRes, favRes, seriesRes, activityRes] = await Promise.all([
+  const [likeRes, skipRes, favRes, seriesRes, activityRes, viewHistRes] = await Promise.all([
     supabase
       .from('swipe_history')
       .select('*', { count: 'exact', head: true })
@@ -60,6 +61,12 @@ async function ActivityStats({ userId }: { userId: string }) {
       .eq('user_id', userId)
       .gte('created_at', thirtyDaysAgo)
       .order('created_at', { ascending: true }),
+    supabase
+      .from('view_history')
+      .select('item_id, item_title, affiliate_url, image_url')
+      .eq('user_id', userId)
+      .order('viewed_at', { ascending: false })
+      .limit(20),
   ])
 
   const likeCount = likeRes.count ?? 0
@@ -81,6 +88,7 @@ async function ActivityStats({ userId }: { userId: string }) {
   }))
 
   const maxCount = Math.max(...days.map((d) => d.count), 1)
+  const recentViews = viewHistRes.data ?? []
 
   return (
     <div className="flex flex-col gap-5">
@@ -131,6 +139,47 @@ async function ActivityStats({ userId }: { userId: string }) {
           <span className="text-[9px] text-white/20">今日</span>
         </div>
       </div>
+
+      {/* 直近の閲覧履歴 */}
+      {recentViews.length > 0 && (
+        <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+          <p
+            className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+            style={{ fontFamily: 'ui-monospace, monospace' }}
+          >
+            直近の閲覧履歴
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {recentViews.map((v) => (
+              <a
+                key={v.item_id}
+                href={v.affiliate_url ?? '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative shrink-0 w-20 overflow-hidden rounded-lg bg-white/5"
+              >
+                {v.image_url ? (
+                  <Image
+                    src={v.image_url}
+                    alt={v.item_title ?? ''}
+                    width={80}
+                    height={107}
+                    className="aspect-[80/107] w-full object-cover"
+                  />
+                ) : (
+                  <div className="aspect-[80/107] w-full bg-white/5" />
+                )}
+                <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+                  PR
+                </span>
+                <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
+                  {v.item_title}
+                </p>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -327,7 +376,7 @@ export default async function MyPage() {
         </Suspense>
 
         {/* 右カラム: ボタン群 */}
-        <div className="flex flex-col gap-3">
+        <div className="flex h-full flex-col gap-3">
           <PushSubscribeButton />
           <Link
             href="/forgot-password"
@@ -345,9 +394,26 @@ export default async function MyPage() {
               ログアウト
             </button>
           </form>
+          <div className="mt-auto flex flex-col items-center gap-1.5 pt-2">
+            <p className="text-[10px] text-white/20">お問い合わせ</p>
+            <a
+              href="https://x.com/yoshihirock0710"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 text-white/30 transition-colors hover:border-white/25 hover:text-white/60"
+              aria-label="お問い合わせ"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" aria-hidden>
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.912-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117Z" />
+              </svg>
+            </a>
+          </div>
         </div>
 
+
       </div>
+
     </main>
   )
 }

@@ -31,20 +31,31 @@ export function PushSubscribeButton() {
   async function subscribe() {
     if (!isLoggedIn) { setShowPrompt(true); return }
 
-    const reg = await navigator.serviceWorker.ready
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') { setState('denied'); return }
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') { setState('denied'); return }
 
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    })
-    const json = sub.toJSON()
-    if (!json.endpoint) return
-    startTransition(async () => {
-      await saveSubscription({ endpoint: json.endpoint!, keys: json.keys })
-      setState('subscribed')
-    })
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) {
+        console.error('[PushSubscribeButton] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set')
+        return
+      }
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKey,
+      })
+      const json = sub.toJSON()
+      if (!json.endpoint) return
+      startTransition(async () => {
+        await saveSubscription({ endpoint: json.endpoint!, keys: json.keys })
+        setState('subscribed')
+      })
+    } catch (err) {
+      console.error('[PushSubscribeButton] subscribe error:', err)
+      setState('unsubscribed')
+    }
   }
 
   async function unsubscribe() {

@@ -24,9 +24,11 @@ function formatDeadline(dateEnd: string): string {
   const end = new Date(dateEnd.replace(' ', 'T'))
   const now = new Date()
   const diffMs = end.getTime() - now.getTime()
-  const diffH = Math.ceil(diffMs / (1000 * 60 * 60))
-  if (diffH <= 0) return '本日まで！'
-  if (diffH <= 24) return `残り${diffH}時間`
+  if (diffMs <= 0) return '本日まで！'
+  const totalMin = Math.floor(diffMs / (1000 * 60))
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  if (h < 24) return `残り${h}時間${m}分`
   const diffD = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
   if (diffD <= 1) return '明日まで'
   return `${end.getMonth() + 1}/${end.getDate()}まで`
@@ -74,8 +76,8 @@ export function GridCard({ item, rank, featured = false, dateEnd }: Props) {
           PR
         </span>
 
-        {/* 割引バッジ */}
-        {discount !== null && discount >= 5 && (
+        {/* 割引バッジ（dateEnd があるときはカウントダウンを優先） */}
+        {!dateEnd && discount !== null && discount >= 5 && (
           <span
             className={`absolute right-1 top-1 rounded bg-red-600 px-1.5 py-px font-black tabular-nums text-white ${featured ? 'text-[12px]' : 'text-[10px]'}`}
           >

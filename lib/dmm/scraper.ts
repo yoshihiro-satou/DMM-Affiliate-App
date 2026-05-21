@@ -303,7 +303,9 @@ export type DailyDealContent = {
   id: string
   title: string
   packageImage: { mediumUrl: string; largeUrl: string }
+  sampleImages: { number: number; largeUrl: string }[]
   sampleMovie: { mp4Url: string | null; hlsUrl: string | null } | null
+  actresses: { id: string; name: string }[]
   review: { average: number; count: number } | null
   salesInfo: {
     lowestPrice: { price: number; discountPrice: number | null } | null

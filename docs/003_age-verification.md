@@ -19,6 +19,7 @@ FANZAコンテンツへのアクセス前に年齢確認を必須化する。`mi
   - [x] `age_check_done=1` Cookie がない場合は `/age-check` へリダイレクト
   - [x] `/age-check` 自体・`/_next/` は除外（無限リダイレクト防止）
   - [x] Supabase のトークンリフレッシュと共存（`updateSession` の後で判定）
+  - [x] **ログイン済みユーザーは年齢確認をスキップ**（`getClaims()` でセッション確認 → Cookie を自動付与して通過）
 
 ### Server Action
 - [x] `app/age-check/actions.ts` 作成

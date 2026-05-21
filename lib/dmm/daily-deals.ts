@@ -11,7 +11,7 @@ function buildAffiliateUrl(cid: string): string {
 }
 
 // React.cache() でリクエスト内の重複呼び出しを排除（ページキャッシュは app/page.tsx の revalidate=3600 が担う）
-export const fetchDailyDeals = cache(async (hits = 12): Promise<DmmItem[]> => {
+export const fetchDailyDeals = cache(async (hits = 50): Promise<DmmItem[]> => {
   const contents = await fetchDailyDealContents(hits)
 
   if (contents.length === 0) {
@@ -33,6 +33,14 @@ export const fetchDailyDeals = cache(async (hits = 12): Promise<DmmItem[]> => {
         small: c.packageImage.mediumUrl,
         large: c.packageImage.largeUrl,
       },
+      sampleImageURL: c.sampleImages.length > 0 ? {
+        sample_l: {
+          image: c.sampleImages.reduce<string[]>((arr, si) => {
+            arr[si.number - 1] = si.largeUrl
+            return arr
+          }, []),
+        },
+      } : undefined,
       sampleMovieURL: c.sampleMovie?.mp4Url ? {
         size_560_360: c.sampleMovie.mp4Url,
         size_476_306: c.sampleMovie.hlsUrl ?? undefined,
@@ -51,7 +59,7 @@ export const fetchDailyDeals = cache(async (hits = 12): Promise<DmmItem[]> => {
       } : undefined,
       campaign: campaign ? [{
         date_begin: today,
-        date_end: campaign.endAt.slice(0, 10),
+        date_end: campaign.endAt,  // フルISO文字列を保持してカウントダウンの時間精度を維持
         title: campaign.name,
       }] : undefined,
       date: c.deliveryStartAt?.slice(0, 10),

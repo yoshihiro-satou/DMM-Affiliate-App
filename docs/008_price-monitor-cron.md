@@ -77,7 +77,9 @@ FANZA 日替わり商品は毎日 0:00 JST に切り替わる。ISR キャッシ
 ### TODO
 
 - [x] `workers/daily-revalidate.ts` 作成
-  - [x] `scheduled()` ハンドラで `env.SITE_URL/api/revalidate` を POST
+  - [x] `scheduled()` ハンドラで以下を `Promise.all` で並列実行
+    - `POST /api/revalidate`（ISR キャッシュ破棄）
+    - `POST /api/oshi-notify`（推し女優日替わり通知キュー投入）
   - [x] `x-revalidate-secret: env.REVALIDATE_SECRET` ヘッダーで認証
   - [x] `ctx.waitUntil()` で非同期完走を保証
 - [x] `workers/daily-revalidate.toml` 作成

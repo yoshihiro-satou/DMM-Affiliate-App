@@ -2,20 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Compass, Heart, Search, User } from 'lucide-react'
+import { Home, Compass, Heart, Search, User, LogIn } from 'lucide-react'
+import { useAuth } from '@/components/providers/auth-provider'
 
 const NO_NAV_PREFIXES = ['/age-check', '/login', '/auth']
 
-const tabs = [
+const BASE_TABS = [
   { href: '/', label: 'ホーム', Icon: Home, exact: true },
   { href: '/discover', label: '探す', Icon: Compass, exact: false },
   { href: '/favorites', label: 'お気に入り', Icon: Heart, exact: false },
   { href: '/search', label: '検索', Icon: Search, exact: false },
-  { href: '/mypage', label: 'マイページ', Icon: User, exact: false },
 ] as const
 
 export function BottomNav() {
   const pathname = usePathname()
+  const { isLoggedIn } = useAuth()
 
   if (NO_NAV_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
     return null
@@ -27,7 +28,12 @@ export function BottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex h-16 items-stretch">
-        {tabs.map(({ href, label, Icon, exact }) => {
+        {[
+          ...BASE_TABS,
+          isLoggedIn
+            ? { href: '/mypage', label: 'マイページ', Icon: User, exact: false }
+            : { href: '/login', label: 'ログイン', Icon: LogIn, exact: false },
+        ].map(({ href, label, Icon, exact }) => {
           const isActive = exact
             ? pathname === href
             : pathname === href || pathname.startsWith(href + '/')

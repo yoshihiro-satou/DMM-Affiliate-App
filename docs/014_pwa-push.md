@@ -1,70 +1,71 @@
 # 014 PWA・プッシュ通知
 
 ## 概要
-PWAとしてホーム画面に追加できるようにし、値下げ・新作・シリーズ新刊のプッシュ通知を Web Push API で送信する。
+PWAとしてホーム画面に追加できるようにし、値下げ・新作・推し女優日替わりのプッシュ通知を Web Push API で送信する。
 
 ## 依存
-- 001 Supabase 初期設定（`notification_subscriptions` テーブル）
+- 001 Supabase 初期設定（`notification_subscriptions` / `notification_queue` テーブル）
 - 004 認証
 - 008 価格監視 Cron
 
-## 実装済み（2026-05-15）
+## 実装済み
 
 ### PWA 設定
 - [x] `app/manifest.ts` を完成させる
-  - [x] `name` / `short_name` / `description` / `start_url`
-  - [x] `theme_color` / `background_color` (#080808)
-  - [x] `display: "standalone"` でアプリ風表示
 - [x] アイコン（192×192 / 512×512 PNG）を `public/icons/` に配置
-  - [x] `scripts/generate-vapid-keys.mjs` と同様、`node` で生成（`scripts/` に生成スクリプト相当）
-  - デザイン用途では差し替え推奨（現状は赤枠＋F字のプレースホルダー）
 - [x] `public/sw.js` に Service Worker を作成
   - [x] オフラインキャッシュ（`/` と `/favorites` をネットワーク優先でキャッシュ）
   - [x] `push` イベントハンドラ（プッシュ通知受信・`showNotification`）
   - [x] `notificationclick` ハンドラ（通知タップで対象ページへ遷移）
 - [x] `components/ServiceWorkerRegistration.tsx`（Client Component）で SW を登録
-  - [x] `app/layout.tsx` に追加済み（全ページ共通）
 
 ### プッシュ通知の購読
 - [x] VAPID 鍵ペアを生成
-  - [x] `scripts/generate-vapid-keys.mjs` で生成コマンドを提供
-  - [x] `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY_JWK` を環境変数へ追加（`.env.example` 参照）
+  - 公開鍵: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`（base64url 形式、ブラウザの `pushManager.subscribe` に渡す）
+  - 秘密鍵: `VAPID_PRIVATE_KEY_JWK`（JWK JSON 形式で `.env.local` に保存）
+  - 生成方法: `node -e "const {webcrypto}=require('crypto'); ..."`（下記参照）
 - [x] `components/PushSubscribeButton.tsx` 作成（Client Component）
   - [x] `Notification.requestPermission()` で許可を取得
-  - [x] `serviceWorker.ready.pushManager.subscribe()` で購読
+  - [x] `NEXT_PUBLIC_VAPID_PUBLIC_KEY` が未設定の場合は早期 return（エラーを防ぐ）
+  - [x] `pushManager.subscribe()` を try/catch でラップ（unhandled rejection 防止）
   - [x] 購読情報を `actions/push.ts` の Server Action 経由で Supabase `notification_subscriptions` に保存
   - [x] 購読解除も対応（`unsubscribe()` + DB 削除）
-  - [x] 状態表示: 通知オン / 通知オフ / ブロック済み / 非対応（非対応の場合は非表示）
 - [x] 通知ベルボタンをマイページに配置
-  - [x] 未ログインでタップ → ログイン促進モーダル（`LoginPromptSheet`）
+
+### 通知送信（Next.js Route Handler）
+- [x] `app/api/push/test/route.ts` — テスト用プッシュ送信エンドポイント
+  - `x-revalidate-secret` ヘッダーで認証
+  - `userId` を受け取り `notification_subscriptions` からサブスクリプションを取得
+  - `web-push` ライブラリで暗号化・送信（RFC 8291/8292 準拠）
+  - VAPID 秘密鍵は JWK の `d` フィールドを `web-push.setVapidDetails` に渡す
+- [x] `app/api/oshi-notify/route.ts` — 推し女優日替わり通知エンドポイント
+  - `x-revalidate-secret` ヘッダーで認証
+  - `fetchDailyDealContents(50)` で日替わり商品の出演女優一覧を取得
+  - `profiles.oshi_actress_id` と照合してマッチしたユーザーを抽出
+  - 当日既に同タイプの通知を送ったユーザーはスキップ（`notification_queue` で確認）
+  - マッチしたユーザーの通知を `notification_queue` に INSERT（`type: 'oshi_daily_deal'`）
 
 ### 通知送信（Cloudflare Workers）
-- [x] `workers/push-notify.ts` 作成
-  - [x] RFC 8292 (VAPID) JWT を Web Crypto API (`ECDSA P-256`) で生成
-  - [x] RFC 8291 (aes128gcm) ペイロード暗号化を Web Crypto API のみで実装（外部ライブラリ不要）
-    - ECDH 共有秘密 → HKDF で CEK + Nonce 導出 → AES-128-GCM 暗号化
-  - [x] `notification_queue` から `pending` レコードを取得 → ユーザーの購読情報へ送信
-  - [x] 送信成功 → status を `sent` に更新
-  - [x] 送信失敗（410/404 Gone）→ 期限切れ購読情報を自動削除
-  - [x] HTTP GET でも手動実行可能（`fetch` ハンドラ）
-- [x] `workers/push-notify.toml` 作成（cron: 15分ごと）
+- [x] `workers/push-notify.ts` — `notification_queue` から `pending` レコードを送信
+- [x] `workers/daily-revalidate.ts` — 毎日 0:01 JST に以下を並列実行
+  - `POST /api/revalidate`（トップページ ISR キャッシュ破棄）
+  - `POST /api/oshi-notify`（推し女優日替わり通知キュー投入）
 
 ## ファイル構成
 
 ```
-public/sw.js                            ← 新規（Service Worker）
-public/icons/icon-192.png               ← 新規（PWA アイコン 192×192）
-public/icons/icon-512.png               ← 新規（PWA アイコン 512×512）
-scripts/generate-vapid-keys.mjs         ← 新規（VAPID キー生成スクリプト）
-components/ServiceWorkerRegistration.tsx ← 新規（SW 登録 Client Component）
-components/PushSubscribeButton.tsx       ← 新規（通知購読 UI）
-actions/push.ts                         ← 新規（saveSubscription / removeSubscription）
-workers/push-notify.ts                  ← 新規（Web Push 送信 Worker）
-workers/push-notify.toml                ← 新規（Worker 設定）
-app/layout.tsx                          ← ServiceWorkerRegistration 追加
-app/mypage/page.tsx                     ← PushSubscribeButton 追加
-.env.example                            ← VAPID 環境変数ドキュメント追加
-tsconfig.json                           ← workers/ を exclude に追加（wrangler が個別コンパイル）
+public/sw.js                             ← Service Worker
+public/icons/icon-192.png                ← PWA アイコン
+public/icons/icon-512.png                ← PWA アイコン
+components/ServiceWorkerRegistration.tsx ← SW 登録 Client Component
+components/PushSubscribeButton.tsx        ← 通知購読 UI
+actions/push.ts                          ← saveSubscription / removeSubscription
+app/api/push/test/route.ts               ← テスト通知送信エンドポイント
+app/api/oshi-notify/route.ts             ← 推し女優日替わり通知エンドポイント
+workers/push-notify.ts                   ← Web Push 送信 Worker
+workers/push-notify.toml                 ← Worker 設定（cron: 15分ごと）
+workers/daily-revalidate.ts              ← 日次リバリデート + 推し女優通知 Worker
+workers/daily-revalidate.toml            ← Worker 設定（cron: 1 15 * * * = JST 0:01）
 ```
 
 ## 初期セットアップ
@@ -72,55 +73,89 @@ tsconfig.json                           ← workers/ を exclude に追加（wra
 ### VAPID キー生成（初回のみ）
 
 ```bash
-node scripts/generate-vapid-keys.mjs
+node -e "
+const { webcrypto } = require('crypto');
+const subtle = webcrypto.subtle;
+async function main() {
+  const kp = await subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const pubRaw = new Uint8Array(await subtle.exportKey('raw', kp.publicKey));
+  const b64url = (buf) => Buffer.from(buf).toString('base64url');
+  const privJwk = await subtle.exportKey('jwk', kp.privateKey);
+  console.log('NEXT_PUBLIC_VAPID_PUBLIC_KEY=' + b64url(pubRaw));
+  console.log('VAPID_PRIVATE_KEY_JWK=' + JSON.stringify(privJwk));
+}
+main();
+"
 ```
 
-出力された値を以下に設定する:
-- `.env.local`: `NEXT_PUBLIC_VAPID_PUBLIC_KEY=<公開鍵>`
-- Cloudflare Workers secrets:
-  ```bash
-  wrangler secret put VAPID_PUBLIC_KEY     --name dmm-push-notify
-  wrangler secret put VAPID_PRIVATE_KEY_JWK --name dmm-push-notify
-  wrangler secret put VAPID_SUBJECT        --name dmm-push-notify  # mailto:xxx or https://xxx
-  wrangler secret put SUPABASE_URL         --name dmm-push-notify
-  wrangler secret put SUPABASE_SERVICE_ROLE_KEY --name dmm-push-notify
-  ```
+出力された値を `.env.local` に設定する。
 
-### Worker デプロイ
+**重要**: ブラウザでサブスクライブ後に VAPID 公開鍵を変更すると、既存のサブスクリプションが無効になる。変更した場合はユーザーに再サブスクライブを促すこと（通知ボタン OFF → ON）。
+
+### web-push ライブラリ
 
 ```bash
-wrangler deploy --config workers/push-notify.toml
+pnpm add web-push @types/web-push
+```
+
+`app/api/push/test/route.ts` での使い方:
+```typescript
+import webpush from 'web-push'
+
+const jwk = JSON.parse(process.env.VAPID_PRIVATE_KEY_JWK!) as { d?: string }
+webpush.setVapidDetails(
+  process.env.VAPID_SUBJECT!,
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+  jwk.d!  // JWK の d フィールドが raw 秘密鍵（base64url）
+)
+await webpush.sendNotification({ endpoint, keys }, payload, { TTL: 60 })
+```
+
+### テスト送信
+
+```bash
+node -e "
+const secret = 'YOUR_REVALIDATE_SECRET';
+const payload = JSON.stringify({userId:'USER_ID',title:'テスト',message:'通知テスト'});
+fetch('http://localhost:3000/api/push/test',{
+  method:'POST',
+  headers:{'x-revalidate-secret':secret,'Content-Type':'application/json'},
+  body:payload
+}).then(r=>r.json()).then(console.log);
+"
+```
+
+※ curl の `-d` でマルチバイト文字を渡すとターミナルのエンコーディング次第で文字化けする。Node.js 経由で送ること。
+
+### Worker シークレット登録
+
+```bash
+wrangler secret put SITE_URL           --config workers/daily-revalidate.toml
+wrangler secret put REVALIDATE_SECRET  --config workers/daily-revalidate.toml
+wrangler deploy --config workers/daily-revalidate.toml
 ```
 
 ## アーキテクチャ補足
 
-### Service Worker の登録
-`components/ServiceWorkerRegistration.tsx` が `app/layout.tsx` に組み込まれ全ページで実行される。
-`useEffect` 内で `navigator.serviceWorker.register('/sw.js')` を呼び出す。
-
-### Web Push 暗号化（RFC 8291 aes128gcm）
-外部ライブラリなし・Web Crypto API のみで実装:
-1. サーバー一時 ECDH キーペアを生成
-2. ECDH でユーザー公開鍵との共有秘密を導出
-3. HKDF（HMAC-SHA-256）で CEK (16 bytes) と Nonce (12 bytes) を導出
-4. AES-128-GCM でペイロードを暗号化
-5. aes128gcm コンテンツヘッダ（salt + rs + keyid）を付加
+### Web Push 暗号化
+`web-push` ライブラリが RFC 8291 (aes128gcm) + RFC 8292 (VAPID) を実装済み。手動実装は不要。
 
 ### PushSubscribeButton の状態管理
 - `unsupported`: Service Worker / Push Manager 非対応 → ボタン非表示
 - `loading`: 購読状態確認中
-- `denied`: 通知がブロック → 操作不可の状態表示のみ
+- `denied`: 通知がブロック済み → 操作不可の状態表示のみ
 - `unsubscribed`: 未購読 → 購読ボタン表示
 - `subscribed`: 購読済み → 解除ボタン表示
 
-## テスト
-- [ ] Chrome DevTools → Application → Service Workers でプッシュをシミュレート
-- [ ] ホーム画面に追加してスプラッシュ画面が表示されることを確認
-- [ ] オフライン時にキャッシュされたページ（`/`・`/favorites`）が表示されることを確認
-- [ ] マイページで通知ボタンを押し、`notification_subscriptions` テーブルにレコードが作成されることを確認
+### 推し女優通知フロー
+1. Cloudflare Worker（daily-revalidate）が毎日 0:01 JST に `/api/oshi-notify` を POST
+2. oshi-notify が日替わり商品の出演女優と `profiles.oshi_actress_id` を照合
+3. マッチしたユーザーを `notification_queue`（type: `oshi_daily_deal`）に INSERT
+4. push-notify Worker（15分ごと）が `notification_queue` を消化して Web Push 送信
 
-## 制限・既知の挙動
-- iOS Safari (16.4+) は Web Push 対応だが、必ずホーム画面に追加済みの PWA として動作していないと受信不可
-- Firefox (Android) は `PushManager` を要求するが VAPID 必須
-- `public/icons/` のアイコンはプレースホルダー。本番前にデザインされた PNG に差し替えること
-- ペイロードの最大サイズ: 4080 bytes（aes128gcm の 1 レコードサイズ制限）
+## 既知の制限・注意事項
+- iOS Safari は Web Push 対応だが、ホーム画面追加済みの PWA として動作している場合のみ受信可能
+- Windows では「設定 → システム → 通知 → Google Chrome」が ON になっている必要がある
+- Playwright は incognito モードで動作するため `pushManager.subscribe()` が失敗する（Chrome の制限）
+- ペイロードの最大サイズ: 4080 bytes
+- curl で日本語を含む JSON を送ると文字化けする場合がある。Node.js の `fetch` を使うこと

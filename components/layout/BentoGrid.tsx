@@ -18,7 +18,13 @@ export function BentoGrid({ items }: Props) {
   return (
     <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
       {items.map((item, i) => (
-        <GridCard key={item.content_id} item={item} rank={i + 1} featured={isFeatured(i)} />
+        <GridCard
+          key={item.content_id}
+          item={item}
+          rank={i + 1}
+          featured={isFeatured(i)}
+          dateEnd={item.campaign?.[0]?.date_end}
+        />
       ))}
     </div>
   )

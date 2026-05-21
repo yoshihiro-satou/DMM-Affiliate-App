@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Search, X } from 'lucide-react'
 import type { DmmActress } from '@/types/dmm'
 import { setOshiActress, clearOshiActress } from '../actions'
@@ -16,24 +16,26 @@ export function OshiActressSetting({ current }: Props) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [oshi, setOshi] = useState(current)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const search = (q: string) => {
-    setQuery(q)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (!q.trim()) { setResults([]); return }
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const res = await fetch(`/api/dmm/actresses?keyword=${encodeURIComponent(q)}&hits=8`)
-        const data = await res.json()
-        setResults(data.result?.actress ?? [])
-      } catch {
-        setResults([])
-      } finally {
-        setLoading(false)
-      }
-    }, 400)
+  const search = async (q = query) => {
+    if (!q.trim()) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/dmm/actresses?keyword=${encodeURIComponent(q)}&hits=8`)
+      const data = await res.json()
+      setResults(data.result?.actress ?? [])
+    } catch {
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      search()
+    }
   }
 
   const select = async (actress: DmmActress) => {
@@ -103,17 +105,23 @@ export function OshiActressSetting({ current }: Props) {
       ) : (
         <div className="flex flex-col gap-3">
           <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-              <input
-                autoFocus
-                type="text"
-                value={query}
-                onChange={(e) => search(e.target.value)}
-                placeholder="女優名で検索..."
-                className="w-full rounded-md border border-white/12 bg-white/5 py-2 pl-8 pr-3 text-[13px] text-white placeholder:text-white/20 focus:border-red-600/50 focus:outline-none"
-              />
-            </div>
+            <input
+              autoFocus
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="女優名を入力してEnter..."
+              className="min-w-0 flex-1 rounded-md border border-white/12 bg-white/5 py-2 px-3 text-[13px] text-white placeholder:text-white/20 focus:border-red-600/50 focus:outline-none"
+            />
+            <button
+              onClick={() => search()}
+              disabled={loading || !query.trim()}
+              className="flex items-center justify-center rounded-md border border-white/12 px-3 text-white/50 transition-colors hover:border-white/20 hover:text-white disabled:opacity-30"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Search size={13} />
+            </button>
             <button
               onClick={cancelEdit}
               className="flex items-center justify-center rounded-md border border-white/8 px-3 text-white/30 transition-colors hover:text-white/60"

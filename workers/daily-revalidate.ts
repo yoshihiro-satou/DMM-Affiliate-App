@@ -16,15 +16,23 @@ export interface Env {
 }
 
 async function revalidateHome(env: Env): Promise<void> {
-  const res = await fetch(`${env.SITE_URL}/api/revalidate`, {
-    method: 'POST',
-    headers: {
-      'x-revalidate-secret': env.REVALIDATE_SECRET,
-      'Content-Type': 'application/json',
-    },
-  })
-  const body = await res.text()
-  console.log('[daily-revalidate] status:', res.status, body)
+  const headers = {
+    'x-revalidate-secret': env.REVALIDATE_SECRET,
+    'Content-Type': 'application/json',
+  }
+
+  const [revalidateRes, notifyRes] = await Promise.all([
+    fetch(`${env.SITE_URL}/api/revalidate`, { method: 'POST', headers }),
+    fetch(`${env.SITE_URL}/api/oshi-notify`, { method: 'POST', headers }),
+  ])
+
+  const [revalidateBody, notifyBody] = await Promise.all([
+    revalidateRes.text(),
+    notifyRes.text(),
+  ])
+
+  console.log('[daily-revalidate] revalidate:', revalidateRes.status, revalidateBody)
+  console.log('[daily-revalidate] oshi-notify:', notifyRes.status, notifyBody)
 }
 
 const handler = {

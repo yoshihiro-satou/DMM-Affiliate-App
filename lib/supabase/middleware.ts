@@ -14,13 +14,6 @@ export async function updateSession(request: NextRequest) {
     pathname === '/manifest.webmanifest' ||
     pathname === '/sw.js'
 
-  if (!ageCheckDone && !isAgeCheckPage && !isPublicAsset) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/age-check'
-    url.searchParams.set('from', pathname + request.nextUrl.search)
-    return NextResponse.redirect(url)
-  }
-
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -44,7 +37,27 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getClaims()
+  const { data } = await supabase.auth.getClaims()
+  const claims = data?.claims ?? null
+
+  // ログイン済みなら年齢確認済みとみなして Cookie を自動付与
+  if (!ageCheckDone && claims) {
+    supabaseResponse.cookies.set(AGE_CHECK_COOKIE, AGE_CHECK_VALUE, {
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    })
+    return supabaseResponse
+  }
+
+  if (!ageCheckDone && !isAgeCheckPage && !isPublicAsset) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/age-check'
+    url.searchParams.set('from', pathname + request.nextUrl.search)
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }
