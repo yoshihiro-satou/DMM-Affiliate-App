@@ -26,9 +26,9 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 | フレームワーク | Next.js App Router + Server Components + TypeScript |
 | スタイル | Tailwind CSS v4 + shadcn/ui |
 | ホスティング | Cloudflare Pages（opennextjs-cloudflare） |
-| DB / 認証 | Supabase（お気に入り・スワイプ履歴・価格履歴・マジックリンク認証） |
+| DB / 認証 | Supabase（お気に入り・スワイプ履歴・価格履歴・パスワード認証） |
 | キャッシュ | Cloudflare KV（ISRキャッシュ） |
-| 検索 | MeiliSearch（日本語対応） |
+| 検索 | DMM API キーワード検索（外部サービス不要）+ nuqs URL管理 |
 | PWA | manifest.json + Service Worker（プッシュ通知・オフラインキャッシュ） |
 | 自動化 | Cloudflare Workers cron（価格監視・X自動投稿） |
 
@@ -42,6 +42,7 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 - **アフィリエイトID**: API用途では末尾 990〜997 のID（yoshihirock-990 〜 yoshihirock-997）を使用。末尾が 990〜999 以外はエラーになる
 - **1リクエストあたりの最大取得件数**: 100件（`hits` パラメータの上限）。`offset` 最大値は 50000
 - **クレジット表示必須**: FANZAコンテンツ利用時は規定のクレジット（`Powered by FANZA Webサービス` またはバナー画像）を全ページに表示する（`docs/dmm-affiliate-api-terms.md` 参照）
+- **ActressSearch の制限**: `site` / `sort` / `offset` パラメータは非対応（送ると 400 エラー）。`lib/dmm/client.ts` の `fetchActressList` ではこれらを除外済み
 
 #### 提供中 API エンドポイント一覧
 
@@ -87,11 +88,12 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 
 ### 認証フロー
 
-Supabase Auth のマジックリンク（名前 + メールアドレス）。パスワードなし。
+メールアドレス + パスワード認証（マジックリンクは廃止。Supabase 無料プランのメール送信上限 3通/時 を回避するため admin API で登録）。
 
-- ゲスト: LocalStorage でお気に入り5件・スワイプ履歴を管理
-- ログイン後: LocalStorage のデータを Supabase に移行してからクリア
-- ゲートではなく誘導: お気に入り6件目・スワイプ10枚後・通知ベルタップ時に登録を促す
+- **新規登録**: `admin.auth.admin.createUser({ email_confirm: true })` でメール確認なしに確認済みユーザーを作成 → 即座に `signInWithPassword` でセッション確立
+- **ゲスト**: LocalStorage でお気に入り5件・スワイプ履歴を管理
+- **ログイン後**: LocalStorage のデータを Supabase に移行してからクリア
+- **ゲートではなく誘導**: お気に入り6件目・スワイプ10枚後・通知ベルタップ時に登録を促す
 
 ### モバイルファースト実装ルール
 
@@ -115,13 +117,40 @@ Supabase Auth のマジックリンク（名前 + メールアドレス）。パ
 
 ### X 自動投稿
 
-- X Developer Account: Free プラン（月1500投稿上限、1日3回×30日=90投稿で余裕あり）
+- X Developer Account: Free プラン（月1500投稿上限、1日3回×最大3件×30日=最大270投稿で余裕あり）
+- cron: UTC 22時/3時/11時（JST 7時/12時/20時）
 - APIキーは `wrangler secret put` で Cloudflare 環境変数に登録
 - 同一作品は72時間以内に再投稿しない。割引率10%未満はスキップ。1回の実行で最大3件まで
+- OAuth 1.0a (HMAC-SHA1) を Web Crypto API のみで実装（外部ライブラリ不要）
 
-### ゲーミフィケーション・ポイント
+### ゲーミフィケーション・バッジ・ポイント
 
-金銭換算なしの独自ポイント・バッジ（資金決済法の対象外）。毎日ログイン・お気に入り10件・シリーズ完走などでバッジ付与。将来的な独自ポイントへの移行は弁護士確認が必要。
+金銭換算なしの独自バッジ（資金決済法の対象外）。毎日ログイン・お気に入り10件・シリーズ完走などでバッジ付与。将来的な独自ポイントへの移行は弁護士確認が必要。
+
+- バッジ定義: `lib/badges.ts`（WELCOME / STREAK_3/7/30 / COLLECTOR_10/50 / SERIES_COMPLETE / REACTOR_10）
+- 付与ロジック: `lib/badge-engine.ts`（サービスロールキーで RLS バイパス）
+- **ポイント機能は現在停止中**: スキーマ・DB関数は存在するが付与ロジックをコメントアウト中。UIにも非表示。`lib/badge-engine.ts` のコメント1行を外すと再開できる
+
+### シリーズ完走トラッカー
+
+- `app/series/[id]/page.tsx` でシリーズ全巻一覧・進捗バー表示
+- フォロー中シリーズは `followed_series` テーブルで管理
+- 既読は `series_progress` テーブル（user_id / series_id / item_id / status）
+- 新刊監視: `workers/series-monitor.ts`（毎朝9時 cron）→ `notification_queue` に追加
+
+### パーソナライズ・レコメンド
+
+- `lib/personalization.ts` でスワイプ履歴・お気に入りからジャンル/女優/メーカーのスコアを計算
+- 右スワイプ/お気に入り = +2点、左スワイプ = -1点
+- `app/api/recommend/route.ts` でスコア順のおすすめ商品・急上昇・女優新作を返す
+- 閲覧履歴は `view_history` テーブル（`app/api/view/route.ts` で記録）
+
+### PWA・プッシュ通知
+
+- Service Worker: `public/sw.js`（オフラインキャッシュ・プッシュ受信）
+- VAPID 鍵ペアが必要: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`（公開）/ `VAPID_PRIVATE_KEY_JWK`（秘密・JWK形式）
+- 推し女優日替わり通知フロー: daily-revalidate Worker（JST 0:01）→ `/api/oshi-notify` → `notification_queue` → push-notify Worker（15分ごと）→ Web Push 送信
+- iOS Safari は PWA（ホーム画面追加済み）としての動作時のみ受信可能
 
 ## Next.js App Router ベストプラクティス
 
@@ -317,6 +346,54 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 ```
 
+## Supabase テーブル一覧
+
+| テーブル | 用途 | RLS |
+|---------|------|-----|
+| `profiles` | id / display_name / email / oshi_actress_id / oshi_actress_name / points | 本人のみ読み書き |
+| `favorites` | お気に入り（item_id / item_title / image_url / price） | 本人のみ読み書き |
+| `swipe_history` | スワイプ履歴（item_id / direction） | 本人のみ読み書き |
+| `price_history` | 価格履歴（item_id / price / fetched_at） | 全員読み取り・書き込みはサービスロールのみ |
+| `sale_queue` | X投稿キュー（item_id / original_price / sale_price / discount_rate / status） | サービスロールのみ |
+| `user_badges` | バッジ付与記録（badge_type / earned_at） | 本人のみ読み取り・書き込みはサービスロールのみ |
+| `user_points` | ポイント（amount / reason）— 現在停止中 | サービスロールのみ |
+| `login_streaks` | 連続ログイン日数（current_streak / last_login_date） | サービスロールのみ |
+| `notification_subscriptions` | Web Push 購読情報（endpoint / keys） | 本人のみ読み書き |
+| `notification_queue` | 通知送信キュー（type / payload / status） | サービスロールのみ |
+| `series_progress` | シリーズ既読（series_id / item_id / status） | 本人のみ読み書き |
+| `followed_series` | フォロー中シリーズ（series_id / series_name / latest_item_id） | 本人のみ読み書き |
+| `view_history` | 閲覧履歴（item_id / item_title / viewed_at） | 本人のみ読み書き |
+
+DB関数（RPC）:
+- `get_top_favorited_items(limit_count)` — お気に入り上位 N 件の item_id を返す
+- `get_latest_prices(item_ids)` — 各 item_id の最新価格のみを返す（DISTINCT ON）
+- `get_pending_sale_items(max_count)` — X投稿対象（pending・10%以上・72時間未投稿）を返す
+- `increment_user_points(p_user_id, p_amount)` — ポイントをアトミックに加算（現在停止中）
+
+## ドキュメント一覧
+
+各機能の詳細実装仕様は `docs/` フォルダを参照:
+
+| ドキュメント | 内容 |
+|------------|------|
+| `docs/001_supabase-setup.md` | Supabase 初期設定・DB設計・RLS |
+| `docs/002_dmm-api-client.md` | DMM API クライアント・型定義・APIリファレンス |
+| `docs/003_age-verification.md` | 年齢確認ゲート |
+| `docs/004_auth.md` | 認証フロー（パスワード認証・新規登録・リセット） |
+| `docs/005_mobile-layout.md` | モバイルレイアウト・ボトムナビ |
+| `docs/006_sale-ranking.md` | セール・ランキング・日替わり商品・ベントーグリッド |
+| `docs/007_favorites.md` | お気に入り機能 |
+| `docs/008_price-monitor-cron.md` | 価格監視 Cloudflare Workers Cron |
+| `docs/009_swipe-feed.md` | スワイプフィード・サンプル動画再生 |
+| `docs/010_actress-hub.md` | 女優ハブ・ファセット検索・SEO |
+| `docs/011_series-tracker.md` | シリーズ完走トラッカー |
+| `docs/012_personalization.md` | パーソナライズ・レコメンド |
+| `docs/013_gamification.md` | バッジ・ゲーミフィケーション・ポイント（停止中） |
+| `docs/014_pwa-push.md` | PWA・Web Push 通知 |
+| `docs/015_x-auto-post.md` | X（Twitter）自動投稿 |
+| `docs/016_search-meilisearch.md` | 検索（DMM API キーワード検索） |
+| `docs/dmm-affiliate-api-terms.md` | DMM アフィリエイト利用規約リファレンス |
+
 ## 法務・規約の絶対ルール
 
 - **PR表記**: すべてのページのリンク近辺に「PR」または「広告」表記を入れる（景表法）
@@ -347,22 +424,25 @@ const supabase = createServerClient(url, key, { cookies: { ... } })
 
 ### middleware の役割
 
-`middleware.ts`（プロジェクトルート）で必ずトークンリフレッシュを行う。これをしないと Server Components が古いセッションを参照する。
+**Next.js 16 では `middleware.ts` が非推奨**。プロジェクトルートの `proxy.ts` を使用する（`middleware.ts` と両方存在するとエラー）。
 
 ```ts
-// middleware.ts
-export async function middleware(request: NextRequest) {
+// proxy.ts（middleware.ts ではなく）
+export async function proxy(request: NextRequest) {
   return await updateSession(request) // lib/supabase/middleware.ts のロジック
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|icons/|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
 ```
 
 - `request.cookies.set` → リフレッシュ済みトークンを Server Components に渡す
 - `response.cookies.set` → 新トークンをブラウザに返す
 - 年齢確認ゲート（`/age-check`）への振り分けもここで行う
+- **matcher**: `sw.js` / `manifest.webmanifest` / `icons/` を除外（年齢確認リダイレクト対象外にするため）
 
 ### 認証の使い分け
 
@@ -437,6 +517,34 @@ X_API_KEY=
 X_API_SECRET=
 X_ACCESS_TOKEN=
 X_ACCESS_TOKEN_SECRET=
+
+# PWA プッシュ通知（VAPID）
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=   # base64url 形式の公開鍵（ブラウザに渡す）
+VAPID_PRIVATE_KEY_JWK=          # JWK JSON 形式の秘密鍵（サーバー専用・公開禁止）
+VAPID_SUBJECT=                  # mailto:your@email.com 形式
+
+# ISR リバリデート認証
+REVALIDATE_SECRET=              # openssl rand -hex 32 で生成
+
+# サイトURL（サイトマップ・OGP等）
+NEXT_PUBLIC_SITE_URL=           # 例: https://your-site.pages.dev
 ```
 
 本番環境変数は `wrangler secret put <KEY>` で Cloudflare に登録する。
+
+VAPID 鍵の生成方法:
+```bash
+node -e "
+const { webcrypto } = require('crypto');
+const subtle = webcrypto.subtle;
+async function main() {
+  const kp = await subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const pubRaw = new Uint8Array(await subtle.exportKey('raw', kp.publicKey));
+  const b64url = (buf) => Buffer.from(buf).toString('base64url');
+  const privJwk = await subtle.exportKey('jwk', kp.privateKey);
+  console.log('NEXT_PUBLIC_VAPID_PUBLIC_KEY=' + b64url(pubRaw));
+  console.log('VAPID_PRIVATE_KEY_JWK=' + JSON.stringify(privJwk));
+}
+main();
+"
+```
