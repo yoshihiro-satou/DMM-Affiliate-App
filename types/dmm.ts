@@ -143,7 +143,7 @@ export const DmmActressResponseSchema = z.object({
     result_count: z.coerce.number(),
     total_count: z.coerce.number(),
     first_position: z.coerce.number(),
-    actress: z.array(DmmActressSchema),
+    actress: z.array(DmmActressSchema).optional().default([]),
   }),
 })
 

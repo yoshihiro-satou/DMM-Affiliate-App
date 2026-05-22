@@ -23,6 +23,12 @@ export async function GET(request: NextRequest) {
     })
   } catch (err) {
     console.error('[DMM Actresses API]', err)
-    return NextResponse.json({ error: 'DMM API fetch failed' }, { status: 502 })
+    // エラー時は空の結果を返す（UIで「見つかりませんでした」を正常表示）
+    return NextResponse.json({
+      result_count: 0,
+      total_count: 0,
+      first_position: 1,
+      actress: [],
+    })
   }
 }

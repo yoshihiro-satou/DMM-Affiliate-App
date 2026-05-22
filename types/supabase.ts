@@ -17,6 +17,7 @@ export type Database = {
           points: number
           oshi_actress_id: string | null
           oshi_actress_name: string | null
+          oshi_director_name: string | null
           created_at: string
           updated_at: string
         }
@@ -27,6 +28,7 @@ export type Database = {
           points?: number
           oshi_actress_id?: string | null
           oshi_actress_name?: string | null
+          oshi_director_name?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -37,6 +39,7 @@ export type Database = {
           points?: number
           oshi_actress_id?: string | null
           oshi_actress_name?: string | null
+          oshi_director_name?: string | null
           created_at?: string
           updated_at?: string
         }

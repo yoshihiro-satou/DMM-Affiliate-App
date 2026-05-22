@@ -136,6 +136,17 @@ export const fetchActressList = cache(
     const json = await res.json()
     const parsed = DmmActressResponseSchema.safeParse(json)
     if (!parsed.success) {
+      // actress フィールドが存在しない場合（0件時）は空配列で返す
+      const raw = json?.result
+      if (raw && typeof raw === 'object') {
+        return {
+          status: raw.status,
+          result_count: Number(raw.result_count ?? 0),
+          total_count: Number(raw.total_count ?? 0),
+          first_position: Number(raw.first_position ?? 1),
+          actress: Array.isArray(raw.actress) ? raw.actress : [],
+        }
+      }
       throw new Error(`DMM ActressSearch レスポンスパースエラー: ${parsed.error.message}`)
     }
     return parsed.data.result

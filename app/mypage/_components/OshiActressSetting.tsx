@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { Search } from 'lucide-react'
 import type { DmmActress } from '@/types/dmm'
 import { setOshiActress, clearOshiActress } from '../actions'
 
@@ -10,35 +11,40 @@ interface Props {
 }
 
 export function OshiActressSetting({ current }: Props) {
+  const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<DmmActress[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [oshi, setOshi] = useState(current)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const search = async (q = query) => {
-    if (!q.trim()) return
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/dmm/actresses?keyword=${encodeURIComponent(q)}&hits=8`)
-      const data = await res.json()
-      setResults(data.result?.actress ?? [])
-    } catch {
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!query.trim()) {
       setResults([])
-    } finally {
       setLoading(false)
+      return
     }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      search()
+    setLoading(true)
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/dmm/actresses?keyword=${encodeURIComponent(query.trim())}&hits=8`)
+        const data = await res.json()
+        setResults(data.actress ?? [])
+      } catch {
+        setResults([])
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }
+  }, [query])
 
-  const select = async (actress: DmmActress) => {
+  const confirm = async (actress: DmmActress) => {
     setSaving(true)
     await setOshiActress(actress.id, actress.name)
     setOshi({ id: actress.id, name: actress.name })
@@ -46,6 +52,7 @@ export function OshiActressSetting({ current }: Props) {
     setQuery('')
     setResults([])
     setSaving(false)
+    router.refresh()
   }
 
   const clear = async () => {
@@ -53,10 +60,11 @@ export function OshiActressSetting({ current }: Props) {
     await clearOshiActress()
     setOshi(null)
     setSaving(false)
+    router.refresh()
   }
 
-  const cancelEdit = () => {
-    setEditing(false)
+  const startEditing = () => {
+    setEditing(true)
     setQuery('')
     setResults([])
   }
@@ -67,7 +75,7 @@ export function OshiActressSetting({ current }: Props) {
         className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
         style={{ fontFamily: 'ui-monospace, monospace' }}
       >
-        OSHI ACTRESS
+        推し女優
       </p>
 
       {!editing ? (
@@ -84,7 +92,7 @@ export function OshiActressSetting({ current }: Props) {
           )}
           <div className="flex shrink-0 gap-2">
             <button
-              onClick={() => setEditing(true)}
+              onClick={startEditing}
               className="rounded-md border border-white/12 px-3 py-1.5 text-[11px] text-white/50 transition-colors hover:border-white/20 hover:text-white"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
@@ -104,31 +112,16 @@ export function OshiActressSetting({ current }: Props) {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/30" />
             <input
               autoFocus
-              type="text"
+              type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="女優名を入力してEnter..."
-              className="min-w-0 flex-1 rounded-md border border-white/12 bg-white/5 py-2 px-3 text-[13px] text-white placeholder:text-white/20 focus:border-red-600/50 focus:outline-none"
+              placeholder="女優名で検索"
+              className="w-full rounded-lg bg-white/8 py-2.5 pl-9 pr-4 text-[13px] text-white outline-none placeholder:text-white/30 focus:bg-white/12 transition-colors"
             />
-            <button
-              onClick={() => search()}
-              disabled={loading || !query.trim()}
-              className="flex items-center justify-center rounded-md border border-white/12 px-3 text-white/50 transition-colors hover:border-white/20 hover:text-white disabled:opacity-30"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Search size={13} />
-            </button>
-            <button
-              onClick={cancelEdit}
-              className="flex items-center justify-center rounded-md border border-white/8 px-3 text-white/30 transition-colors hover:text-white/60"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              <X size={13} />
-            </button>
           </div>
 
           {loading && <p className="text-[11px] text-white/30">検索中...</p>}
@@ -136,14 +129,15 @@ export function OshiActressSetting({ current }: Props) {
           {results.length > 0 && (
             <ul className="flex flex-col divide-y divide-white/5">
               {results.map((a) => (
-                <li key={a.id}>
+                <li key={a.id} className="flex items-center justify-between gap-2 py-1.5">
+                  <span className="text-[13px] text-white/70 px-2">{a.name}</span>
                   <button
-                    onClick={() => select(a)}
+                    onClick={() => confirm(a)}
                     disabled={saving}
-                    className="w-full px-2 py-2.5 text-left text-[13px] text-white/70 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40"
+                    className="shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white transition-opacity disabled:opacity-50"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    {a.name}
+                    設定する
                   </button>
                 </li>
               ))}
