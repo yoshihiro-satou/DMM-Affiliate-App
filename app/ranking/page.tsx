@@ -15,6 +15,12 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'ランキング',
   description: 'FANZAの人気作品ランキング。日次・週次・月次・人気女優で絞り込み可能。',
+  openGraph: {
+    title: 'ランキング | FANZA おすすめ',
+    description: 'FANZAの人気作品ランキング。日次・週次・月次・人気女優で絞り込み可能。',
+    url: '/ranking',
+  },
+  alternates: { canonical: '/ranking' },
 }
 
 // ------------------------------------

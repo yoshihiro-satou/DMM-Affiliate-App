@@ -29,8 +29,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: data.seriesName,
     description: `${data.seriesName} 全${data.items.length}巻のシリーズ完走トラッカー`,
+    alternates: { canonical: `/series/${id}` },
     openGraph: {
+      url: `/series/${id}`,
       title: `${data.seriesName} | シリーズトラッカー`,
+      description: `${data.seriesName} 全${data.items.length}巻のシリーズ完走トラッカー`,
       images: thumbnail ? [thumbnail] : undefined,
     },
   }

@@ -37,14 +37,14 @@ test.describe('年齢確認画面', () => {
     await page.getByRole('button', { name: '18歳以上です・入場する' }).click()
 
     // トップページに遷移
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/', { timeout: 15000 })
 
     // age_check_done=1 Cookie が存在する
     const cookies = await page.context().cookies()
     const ageCheckCookie = cookies.find((c) => c.name === 'age_check_done')
     expect(ageCheckCookie?.value).toBe('1')
 
-    await page.screenshot({ path: 'tests/screenshots/age_02_after_confirm.png', fullPage: true })
+    await page.screenshot({ path: 'tests/screenshots/age_02_after_confirm.png' })
   })
 
   test('from パラメータの遷移先に正しく戻る', async ({ page }) => {

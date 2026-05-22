@@ -30,7 +30,7 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 | キャッシュ | Cloudflare KV（ISRキャッシュ） |
 | 検索 | DMM API キーワード検索（外部サービス不要）+ nuqs URL管理 |
 | PWA | manifest.json + Service Worker（プッシュ通知・オフラインキャッシュ） |
-| 自動化 | Cloudflare Workers cron（価格監視・X自動投稿） |
+| 自動化 | Cloudflare Workers cron（価格監視） |
 
 ## アーキテクチャ
 
@@ -113,15 +113,7 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 
 ### お気に入り・値下げ通知
 
-価格監視は Cloudflare Workers cron（毎時）で DMM API → Supabase `price_history` テーブルと比較。値下がりを `sale_queue` に積み、1日3回の定時 cron で X API v2 へ投稿。
-
-### X 自動投稿
-
-- X Developer Account: Free プラン（月1500投稿上限、1日3回×最大3件×30日=最大270投稿で余裕あり）
-- cron: UTC 22時/3時/11時（JST 7時/12時/20時）
-- APIキーは `wrangler secret put` で Cloudflare 環境変数に登録
-- 同一作品は72時間以内に再投稿しない。割引率10%未満はスキップ。1回の実行で最大3件まで
-- OAuth 1.0a (HMAC-SHA1) を Web Crypto API のみで実装（外部ライブラリ不要）
+価格監視は Cloudflare Workers cron（毎時）で DMM API → Supabase `price_history` テーブルに記録。
 
 ### ゲーミフィケーション・バッジ・ポイント
 
@@ -354,7 +346,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 | `favorites` | お気に入り（item_id / item_title / image_url / price） | 本人のみ読み書き |
 | `swipe_history` | スワイプ履歴（item_id / direction） | 本人のみ読み書き |
 | `price_history` | 価格履歴（item_id / price / fetched_at） | 全員読み取り・書き込みはサービスロールのみ |
-| `sale_queue` | X投稿キュー（item_id / original_price / sale_price / discount_rate / status） | サービスロールのみ |
 | `user_badges` | バッジ付与記録（badge_type / earned_at） | 本人のみ読み取り・書き込みはサービスロールのみ |
 | `user_points` | ポイント（amount / reason）— 現在停止中 | サービスロールのみ |
 | `login_streaks` | 連続ログイン日数（current_streak / last_login_date） | サービスロールのみ |
@@ -367,7 +358,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 DB関数（RPC）:
 - `get_top_favorited_items(limit_count)` — お気に入り上位 N 件の item_id を返す
 - `get_latest_prices(item_ids)` — 各 item_id の最新価格のみを返す（DISTINCT ON）
-- `get_pending_sale_items(max_count)` — X投稿対象（pending・10%以上・72時間未投稿）を返す
 - `increment_user_points(p_user_id, p_amount)` — ポイントをアトミックに加算（現在停止中）
 
 ## ドキュメント一覧
@@ -390,7 +380,6 @@ DB関数（RPC）:
 | `docs/012_personalization.md` | パーソナライズ・レコメンド |
 | `docs/013_gamification.md` | バッジ・ゲーミフィケーション・ポイント（停止中） |
 | `docs/014_pwa-push.md` | PWA・Web Push 通知 |
-| `docs/015_x-auto-post.md` | X（Twitter）自動投稿 |
 | `docs/016_search-meilisearch.md` | 検索（DMM API キーワード検索） |
 | `docs/dmm-affiliate-api-terms.md` | DMM アフィリエイト利用規約リファレンス |
 
@@ -511,12 +500,6 @@ DMM_AFFILIATE_ID=        # 末尾は -990 〜 -999
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=   # サーバー専用・絶対に公開しない
-
-# X API（サーバー専用）
-X_API_KEY=
-X_API_SECRET=
-X_ACCESS_TOKEN=
-X_ACCESS_TOKEN_SECRET=
 
 # PWA プッシュ通知（VAPID）
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=   # base64url 形式の公開鍵（ブラウザに渡す）

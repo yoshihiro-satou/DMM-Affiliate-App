@@ -2,14 +2,19 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'FANZA おすすめ',
-    short_name: 'FANZAおすすめ',
-    description: 'FANZAのセール・ランキング・お気に入り管理アプリ',
+    name: 'おしランク',
+    short_name: 'おしランク',
+    description: 'FANZAのセール・ランキング・推し女優を管理するアプリ',
     start_url: '/',
     display: 'standalone',
     background_color: '#080808',
     theme_color: '#080808',
     icons: [
+      {
+        src: '/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+      },
       {
         src: '/icons/icon-192.png',
         sizes: '192x192',

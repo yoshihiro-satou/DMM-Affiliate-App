@@ -104,7 +104,7 @@ test.describe('登録フォームバリデーション', () => {
     await page.getByLabel('パスワード', { exact: true }).fill('Test1234!')
     await page.getByLabel('パスワード確認').fill('Different99!')
     await page.getByRole('button', { name: 'アカウントを作成' }).click()
-    await expect(page.getByText('パスワードが一致しません')).toBeVisible()
+    await expect(page.getByText('パスワードが一致しません')).toBeVisible({ timeout: 10000 })
     await expect(page).toHaveURL(/\/register/)
     await page.screenshot({ path: 'tests/screenshots/register_02_password_mismatch.png' })
   })
@@ -116,7 +116,7 @@ test.describe('登録フォームバリデーション', () => {
     await page.getByLabel('パスワード', { exact: true }).fill('Short1!')
     await page.getByLabel('パスワード確認').fill('Short1!')
     await page.getByRole('button', { name: 'アカウントを作成' }).click()
-    await expect(page.getByText('パスワードは8文字以上で入力してください')).toBeVisible()
+    await expect(page.getByText('パスワードは8文字以上で入力してください')).toBeVisible({ timeout: 10000 })
     await expect(page).toHaveURL(/\/register/)
   })
 

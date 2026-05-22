@@ -104,8 +104,29 @@ test.describe('マイページ UI', () => {
     await expect(main.getByText('シリーズ', { exact: true })).toBeVisible()
   })
 
-  test('直近14日の閲覧数チャートが表示される', async ({ page }) => {
-    await expect(page.getByText('直近14日の閲覧数')).toBeVisible()
+  test('みんなの推し女優ランキングセクションが表示される', async ({ page }) => {
+    await expect(page.getByText('みんなの推し女優ランキング').first()).toBeVisible()
+  })
+
+  test('みんなの推し監督ランキングセクションが表示される', async ({ page }) => {
+    await expect(page.getByText('みんなの推し監督ランキング').first()).toBeVisible()
+  })
+
+  test('ユーザーが15人未満の場合は女優の「準備中」メッセージが表示される', async ({ page }) => {
+    await expect(page.getByText('準備中。みんな！推し女優を登録してね！')).toBeVisible()
+    await page.screenshot({ path: 'tests/screenshots/mypage_04_community_oshi.png' })
+  })
+
+  test('ユーザーが15人未満の場合は監督の「準備中」メッセージが表示される', async ({ page }) => {
+    await expect(page.getByText('準備中。みんな！推し監督を登録してね！')).toBeVisible()
+  })
+
+  test('推し女優設定セクションが表示される', async ({ page }) => {
+    await expect(page.getByText('推し女優', { exact: true })).toBeVisible()
+  })
+
+  test('推し監督設定セクションが表示される', async ({ page }) => {
+    await expect(page.getByText('推し監督', { exact: true })).toBeVisible()
   })
 
   test('「パスワードを変更する」リンクが /forgot-password へ遷移する', async ({ page }) => {

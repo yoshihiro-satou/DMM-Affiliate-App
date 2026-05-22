@@ -9,6 +9,12 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'セール・値引き作品',
   description: 'FANZAで現在値引き中の作品一覧。割引率の高い順に表示。',
+  openGraph: {
+    title: 'セール・値引き作品 | FANZA おすすめ',
+    description: 'FANZAで現在値引き中の作品一覧。割引率の高い順に表示。',
+    url: '/sale',
+  },
+  alternates: { canonical: '/sale' },
 }
 
 export default async function SalePage() {

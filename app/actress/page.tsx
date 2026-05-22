@@ -9,6 +9,12 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: '女優一覧',
   description: 'FANZAの人気女優一覧。スリーサイズ・身長で絞り込み検索。',
+  openGraph: {
+    title: '女優一覧 | FANZA おすすめ',
+    description: 'FANZAの人気女優一覧。スリーサイズ・身長で絞り込み検索。',
+    url: '/actress',
+  },
+  alternates: { canonical: '/actress' },
 }
 
 type SearchParams = {

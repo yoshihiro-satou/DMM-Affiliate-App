@@ -6,8 +6,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { Heart, X, Bookmark, BookOpen } from 'lucide-react'
 import { buildUserProfile, topEntries } from '@/lib/personalization'
+import { fetchItemList } from '@/lib/dmm/client'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
 import { OshiActressSetting } from './_components/OshiActressSetting'
+import { OshiDirectorSetting } from './_components/OshiDirectorSetting'
 import { signOut } from './actions'
 
 export const metadata = {
@@ -15,28 +17,12 @@ export const metadata = {
   robots: 'noindex,nofollow',
 }
 
-// サーバーコンポーネント内で Date.now() を直接呼ぶと react-hooks/purity に引っかかるため
-// コンポーネント外の通常関数に切り出す
-function getDateRanges() {
-  const now = Date.now()
-  const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const days = Array.from({ length: 14 }, (_, idx) => {
-    const d = new Date(now - (13 - idx) * 24 * 60 * 60 * 1000)
-    return {
-      date: d.toISOString().slice(0, 10),
-      label: `${d.getMonth() + 1}/${d.getDate()}`,
-    }
-  })
-  return { thirtyDaysAgo, days }
-}
-
 // ── 活動統計（高速・Supabase のみ） ──────────────────────────────────────────
 
 async function ActivityStats({ userId }: { userId: string }) {
   const supabase = await createClient()
-  const { thirtyDaysAgo, days: dayTemplate } = getDateRanges()
 
-  const [likeRes, skipRes, favRes, seriesRes, activityRes, viewHistRes] = await Promise.all([
+  const [likeRes, skipRes, favRes, seriesRes, viewHistRes] = await Promise.all([
     supabase
       .from('swipe_history')
       .select('*', { count: 'exact', head: true })
@@ -56,12 +42,6 @@ async function ActivityStats({ userId }: { userId: string }) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId),
     supabase
-      .from('swipe_history')
-      .select('created_at')
-      .eq('user_id', userId)
-      .gte('created_at', thirtyDaysAgo)
-      .order('created_at', { ascending: true }),
-    supabase
       .from('view_history')
       .select('item_id, item_title, affiliate_url, image_url')
       .eq('user_id', userId)
@@ -73,21 +53,6 @@ async function ActivityStats({ userId }: { userId: string }) {
   const skipCount = skipRes.count ?? 0
   const favCount = favRes.count ?? 0
   const seriesCount = seriesRes.count ?? 0
-
-  // 直近14日間の日別スワイプ数を集計
-  const dailyCounts = new Map<string, number>()
-  for (const row of activityRes.data ?? []) {
-    const day = (row.created_at as string).slice(0, 10)
-    dailyCounts.set(day, (dailyCounts.get(day) ?? 0) + 1)
-  }
-
-  const days = dayTemplate.map(({ date, label }) => ({
-    date,
-    label,
-    count: dailyCounts.get(date) ?? 0,
-  }))
-
-  const maxCount = Math.max(...days.map((d) => d.count), 1)
   const recentViews = viewHistRes.data ?? []
 
   return (
@@ -113,30 +78,6 @@ async function ActivityStats({ userId }: { userId: string }) {
               <p className="text-[9px] text-white/30">{label}</p>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* 直近14日アクティビティチャート */}
-      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
-        <p
-          className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
-          style={{ fontFamily: 'ui-monospace, monospace' }}
-        >
-          直近14日の閲覧数
-        </p>
-        <div className="flex h-16 items-end gap-px">
-          {days.map(({ date, count }) => (
-            <div key={date} className="flex flex-1 flex-col items-center gap-px">
-              <div
-                className="w-full rounded-t-sm bg-red-600/60 transition-all"
-                style={{ height: `${Math.max(2, (count / maxCount) * 100)}%` }}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="mt-1 flex justify-between">
-          <span className="text-[9px] text-white/20">{days[0]?.label}</span>
-          <span className="text-[9px] text-white/20">今日</span>
         </div>
       </div>
 
@@ -178,6 +119,361 @@ async function ActivityStats({ userId }: { userId: string }) {
               </a>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── コミュニティランキング共通ヘルパー ────────────────────────────────────────
+
+const MEDAL_COLORS = [
+  'bg-yellow-400 text-black',
+  'bg-white/60 text-black',
+  'bg-orange-400 text-black',
+]
+
+function RankingSkeleton({ label }: { label: string }) {
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <div className="mb-2 h-3 w-40 animate-pulse rounded bg-white/10" />
+      <p className="text-[9px] text-white/20">{label}</p>
+      <div className="mt-3 flex flex-col gap-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="h-6 w-6 animate-pulse rounded-full bg-white/10" />
+            <div className="h-3 flex-1 animate-pulse rounded bg-white/8" />
+            <div className="h-3 w-8 animate-pulse rounded bg-white/8" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── みんなの推し女優ランキング ─────────────────────────────────────────────────
+
+async function CommunityActressRanking() {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('profiles')
+    .select('oshi_actress_id, oshi_actress_name')
+    .not('oshi_actress_id', 'is', null)
+
+  const THRESHOLD = 15
+
+  if (!data || data.length < THRESHOLD) {
+    return (
+      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+        <p
+          className="mb-2 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+          style={{ fontFamily: 'ui-monospace, monospace' }}
+        >
+          みんなの推し女優ランキング
+        </p>
+        <p className="text-[13px] text-white/40">
+          準備中。みんな！推し女優を登録してね！
+        </p>
+      </div>
+    )
+  }
+
+  const counts = new Map<string, { name: string; count: number }>()
+  for (const row of data) {
+    if (!row.oshi_actress_id || !row.oshi_actress_name) continue
+    const existing = counts.get(row.oshi_actress_id)
+    if (existing) existing.count++
+    else counts.set(row.oshi_actress_id, { name: row.oshi_actress_name, count: 1 })
+  }
+
+  const top3 = Array.from(counts.entries())
+    .map(([id, { name, count }]) => ({ id, name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3)
+
+  if (top3.length === 0) return null
+
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <p
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        style={{ fontFamily: 'ui-monospace, monospace' }}
+      >
+        みんなの推し女優ランキング
+      </p>
+      <ol className="flex flex-col gap-3">
+        {top3.map(({ id, name, count }, i) => (
+          <li key={id} className="flex items-center gap-3">
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${MEDAL_COLORS[i]}`}>
+              {i + 1}
+            </span>
+            <a href={`/actress/${id}`} className="flex-1 text-[13px] text-white/70 hover:text-white">
+              {name}
+            </a>
+            <span className="text-[11px] tabular-nums text-white/30">{count}人</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+// ── みんなの推し監督ランキング ─────────────────────────────────────────────────
+
+async function CommunityDirectorRanking() {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('profiles')
+    .select('oshi_director_name')
+    .not('oshi_director_name', 'is', null)
+
+  const THRESHOLD = 15
+
+  if (!data || data.length < THRESHOLD) {
+    return (
+      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+        <p
+          className="mb-2 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+          style={{ fontFamily: 'ui-monospace, monospace' }}
+        >
+          みんなの推し監督ランキング
+        </p>
+        <p className="text-[13px] text-white/40">
+          準備中。みんな！推し監督を登録してね！
+        </p>
+      </div>
+    )
+  }
+
+  const counts = new Map<string, number>()
+  for (const row of data) {
+    const name = row.oshi_director_name
+    if (!name) continue
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+
+  const top3 = Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3)
+
+  if (top3.length === 0) return null
+
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <p
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        style={{ fontFamily: 'ui-monospace, monospace' }}
+      >
+        みんなの推し監督ランキング
+      </p>
+      <ol className="flex flex-col gap-3">
+        {top3.map(({ name, count }, i) => (
+          <li key={name} className="flex items-center gap-3">
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${MEDAL_COLORS[i]}`}>
+              {i + 1}
+            </span>
+            <span className="flex-1 text-[13px] text-white/70">{name}</span>
+            <span className="text-[11px] tabular-nums text-white/30">{count}人</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+// ── 推し作品一覧（横スクロール帯） ────────────────────────────────────────────
+
+function WorksScrollSkeleton({ label }: { label: string }) {
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <div className="mb-3 h-3 w-32 animate-pulse rounded bg-white/10" />
+      <p className="mb-2 text-[9px] text-white/20">{label}</p>
+      <div className="flex gap-2 overflow-hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-[107px] w-20 shrink-0 animate-pulse rounded-lg bg-white/8" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+async function OshiActressWorks({
+  actressId,
+  actressName,
+}: {
+  actressId: string | null
+  actressName: string
+}) {
+  if (!actressId) return null
+  const id = parseInt(actressId, 10)
+  if (isNaN(id)) return null
+
+  const result = await fetchItemList({
+    article: 'actress',
+    article_id: id,
+    sort: 'date',
+    hits: 12,
+    service: 'digital',
+    floor: 'videoa',
+  }).catch(() => null)
+
+  if (!result?.items?.length) return null
+
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <p
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        style={{ fontFamily: 'ui-monospace, monospace' }}
+      >
+        {actressName} の最新作
+      </p>
+      <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {result.items.map((item) => (
+          <a
+            key={item.content_id}
+            href={item.affiliateURL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative shrink-0 w-20 overflow-hidden rounded-lg bg-white/5"
+          >
+            {item.imageURL?.list && (
+              <Image
+                src={item.imageURL.list}
+                alt={item.title}
+                width={80}
+                height={107}
+                className="aspect-[80/107] w-full object-cover"
+              />
+            )}
+            <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+              PR
+            </span>
+            <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
+              {item.title}
+            </p>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+async function OshiDirectorWorks({ directorName }: { directorName: string }) {
+  const result = await fetchItemList({
+    keyword: directorName,
+    sort: 'date',
+    hits: 12,
+    service: 'digital',
+    floor: 'videoa',
+  }).catch(() => null)
+
+  if (!result?.items?.length) return null
+
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <p
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        style={{ fontFamily: 'ui-monospace, monospace' }}
+      >
+        {directorName} の最新作
+      </p>
+      <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {result.items.map((item) => (
+          <a
+            key={item.content_id}
+            href={item.affiliateURL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative shrink-0 w-20 overflow-hidden rounded-lg bg-white/5"
+          >
+            {item.imageURL?.list && (
+              <Image
+                src={item.imageURL.list}
+                alt={item.title}
+                width={80}
+                height={107}
+                className="aspect-[80/107] w-full object-cover"
+              />
+            )}
+            <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+              PR
+            </span>
+            <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
+              {item.title}
+            </p>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+async function OshiCombinedWorks({
+  actressId,
+  actressName,
+  directorName,
+}: {
+  actressId: string | null
+  actressName: string
+  directorName: string
+}) {
+  if (!actressId) return null
+  const id = parseInt(actressId, 10)
+  if (isNaN(id)) return null
+
+  const result = await fetchItemList({
+    article: 'actress',
+    article_id: id,
+    keyword: directorName,
+    sort: 'date',
+    hits: 12,
+    service: 'digital',
+    floor: 'videoa',
+  }).catch(() => null)
+
+  const items = result?.items ?? []
+
+  return (
+    <div className="rounded-lg border border-rose-900/30 bg-rose-950/20 p-4">
+      <p
+        className="mb-1 text-[10px] font-semibold tracking-[0.2em] text-rose-400/60"
+        style={{ fontFamily: 'ui-monospace, monospace' }}
+      >
+        推し女優 × 推し監督
+      </p>
+      <p className="mb-3 text-[11px] text-white/40">
+        {actressName} × {directorName}
+      </p>
+      {items.length === 0 ? (
+        <p className="text-[13px] text-white/30">コラボなし（登録データ上）</p>
+      ) : (
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {items.map((item) => (
+            <a
+              key={item.content_id}
+              href={item.affiliateURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative shrink-0 w-20 overflow-hidden rounded-lg bg-white/5"
+            >
+              {item.imageURL?.list && (
+                <Image
+                  src={item.imageURL.list}
+                  alt={item.title}
+                  width={80}
+                  height={107}
+                  className="aspect-[80/107] w-full object-cover"
+                />
+              )}
+              <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+                PR
+              </span>
+              <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
+                {item.title}
+              </p>
+            </a>
+          ))}
         </div>
       )}
     </div>
@@ -301,7 +597,7 @@ export default async function MyPage() {
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, email, oshi_actress_id, oshi_actress_name')
+    .select('display_name, email, oshi_actress_id, oshi_actress_name, oshi_director_name')
     .eq('id', claims.sub)
     .single()
 
@@ -324,6 +620,7 @@ export default async function MyPage() {
   const oshiActress = profile?.oshi_actress_name
     ? { id: profile.oshi_actress_id ?? null, name: profile.oshi_actress_name }
     : null
+  const oshiDirector = profile?.oshi_director_name ?? null
 
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -359,10 +656,46 @@ export default async function MyPage() {
           <div className="h-px w-full bg-white/8" />
         </div>
 
-        {/* 推し女優設定: 常に2列全幅 */}
-        <div className="md:col-span-2">
-          <OshiActressSetting current={oshiActress} />
-        </div>
+        {/* 推し女優設定 */}
+        <OshiActressSetting current={oshiActress} />
+
+        {/* 推し女優の最新作 */}
+        {oshiActress && (
+          <Suspense fallback={<WorksScrollSkeleton label={`${oshiActress.name} の最新作`} />}>
+            <OshiActressWorks actressId={oshiActress.id} actressName={oshiActress.name} />
+          </Suspense>
+        )}
+
+        {/* みんなの推し女優ランキング */}
+        <Suspense fallback={<RankingSkeleton label="みんなの推し女優ランキング" />}>
+          <CommunityActressRanking />
+        </Suspense>
+
+        {/* 推し監督設定 */}
+        <OshiDirectorSetting current={oshiDirector} />
+
+        {/* 推し監督の最新作 */}
+        {oshiDirector && (
+          <Suspense fallback={<WorksScrollSkeleton label={`${oshiDirector} の最新作`} />}>
+            <OshiDirectorWorks directorName={oshiDirector} />
+          </Suspense>
+        )}
+
+        {/* 推し女優 × 推し監督 */}
+        {oshiActress && oshiDirector && (
+          <Suspense fallback={<WorksScrollSkeleton label={`${oshiActress.name} × ${oshiDirector}`} />}>
+            <OshiCombinedWorks
+              actressId={oshiActress.id}
+              actressName={oshiActress.name}
+              directorName={oshiDirector}
+            />
+          </Suspense>
+        )}
+
+        {/* みんなの推し監督ランキング */}
+        <Suspense fallback={<RankingSkeleton label="みんなの推し監督ランキング" />}>
+          <CommunityDirectorRanking />
+        </Suspense>
 
         {/* 左カラム: 活動統計 */}
         <ActivityStats userId={claims.sub} />

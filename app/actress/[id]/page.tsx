@@ -8,6 +8,8 @@ import { WorkTabs, type WorkTab } from './WorkTabs'
 export const revalidate = 3600
 export const dynamicParams = true
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanza-osusume.pages.dev'
+
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
 export async function generateStaticParams() {
@@ -47,9 +49,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: actress.name,
     description: `${actress.name}の全作品一覧。${stats}`,
+    alternates: { canonical: `/actress/${id}` },
     openGraph: {
+      type: 'profile',
+      url: `/actress/${id}`,
       title: `${actress.name} | FANZA おすすめ`,
-      images: actress.imageURL?.large ? [actress.imageURL.large] : undefined,
+      description: `${actress.name}の全作品一覧。${stats}`,
+      images: actress.imageURL?.large ? [{ url: actress.imageURL.large, alt: actress.name }] : undefined,
     },
   }
 }
@@ -96,6 +102,8 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     name: actress.name,
     ...(actress.ruby ? { alternateName: actress.ruby } : {}),
     ...(imageUrl ? { image: imageUrl } : {}),
+    jobTitle: '女優',
+    url: `${SITE_URL}/actress/${id}`,
   }
 
   return (

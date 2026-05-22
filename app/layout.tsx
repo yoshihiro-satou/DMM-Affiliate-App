@@ -24,13 +24,26 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanza-osusume.pages.dev'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'FANZA おすすめ',
-    template: '%s | FANZA おすすめ',
+    default: 'おしランク',
+    template: '%s | おしランク',
   },
-  description: 'FANZAのセール・ランキング・お気に入り管理アプリ',
-  applicationName: 'FANZA おすすめ',
+  description: 'FANZAのセール・ランキング・推し女優を管理するアプリ。スワイプで作品発見、値下げ通知、お気に入り管理。',
+  applicationName: 'おしランク',
+  openGraph: {
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: 'FANZA おすすめ',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@yoshihirock0710',
+    creator: '@yoshihirock0710',
+  },
 }
 
 export const viewport: Viewport = {
@@ -59,6 +72,23 @@ export default async function RootLayout({
           backgroundAttachment: 'fixed',
         }}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'FANZA おすすめ',
+              url: SITE_URL,
+              description: 'FANZAのセール・ランキング・お気に入り管理アプリ',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/search?q={search_term_string}` },
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
         {/* ゲストお気に入り件数をハイドレーション前にバッジへ反映 */}
         <script
           dangerouslySetInnerHTML={{

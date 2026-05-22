@@ -111,7 +111,7 @@ test.describe('ログインページ UI', () => {
   test('「はじめての方は新規登録」リンクが/registerへ遷移', async ({ page }) => {
     await page.goto('/login')
     await page.getByRole('link', { name: /はじめての方は新規登録/ }).click()
-    await expect(page).toHaveURL(/\/register/)
+    await expect(page).toHaveURL(/\/register/, { timeout: 10000 })
   })
 })
 

@@ -13,8 +13,14 @@ export const revalidate = 3600
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
 export const metadata: Metadata = {
-  title: 'FANZA おすすめ - セール・ランキング',
-  description: 'FANZAの人気作品・セール・ランキングをアプリ感覚でチェック。',
+  title: 'おしランク - FANZAセール・ランキング・推し女優',
+  description: 'FANZAの人気作品ランキング・セール情報をアプリ感覚でチェック。推し女優の新作通知や値下げアラートも。スワイプで好みの作品を発見。',
+  openGraph: {
+    title: 'おしランク - FANZAセール・ランキング・推し女優',
+    description: 'FANZAの人気作品ランキング・セール情報をアプリ感覚でチェック。推し女優の新作通知や値下げアラートも。',
+    url: '/',
+  },
+  alternates: { canonical: '/' },
 }
 
 // ------------------------------------
@@ -97,26 +103,37 @@ function LoadingGrid({ count = 10 }: { count?: number }) {
 export default function HomePage() {
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
-      {/* FANZA同人 クーポンバナー（常時固定） */}
-      <a
-        href="https://al.dmm.co.jp/?lurl=https%3A%2F%2Fwww.dmm.co.jp%2Fdc%2Fdoujin%2F&af_id=fanza-affiliate-001&ch=toolbar&ch_id=tool"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-between gap-2 border-b border-red-900/30 bg-linear-to-r from-red-950/60 to-black/0 px-4 py-2.5"
-        style={{ WebkitTapHighlightColor: 'transparent' }}
-      >
-        <div className="flex flex-col">
-          <span className="text-[10px] font-semibold tracking-widest text-red-500/80">
-            PR · PICKUP
-          </span>
-          <span className="text-[13px] font-bold text-white">
-            FANZA同人 最大90%OFFクーポン配布中
+      {/* サイトヘッダー */}
+      <div className="relative flex items-center justify-between overflow-hidden border-b border-rose-900/40 px-4 py-2.5">
+        {/* 背景：深紅×ローズ×パープル */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-red-950/80 via-rose-950/50 to-purple-950/30" />
+        {/* 右側の温かみのある光 */}
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-48 bg-gradient-to-l from-rose-500/20 to-transparent" />
+        {/* 上部アクセントライン：ゴールド〜ローズ */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-amber-400/50 via-rose-300/40 to-transparent" />
+        {/* 下部うっすらグロー */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-rose-600/30 via-pink-500/20 to-transparent" />
+
+        {/* 左：サイト名 */}
+        <div className="relative flex items-baseline gap-2">
+          <h1 className="bg-gradient-to-r from-amber-200 via-rose-100 to-pink-300 bg-clip-text text-[22px] font-black tracking-tight text-transparent">
+            おしランク
+          </h1>
+          <span className="text-[9px] font-bold tracking-[0.25em] text-rose-400/70">
+            OSHI RANK
           </span>
         </div>
-        <span className="shrink-0 rounded border border-red-600 px-2 py-1 text-[11px] font-bold text-red-400">
-          詳細 →
-        </span>
-      </a>
+
+        {/* 右：キャッチフレーズ */}
+        <div className="relative flex flex-col items-end gap-px">
+          <span className="text-[9px] font-semibold tracking-[0.2em] text-pink-300/60">
+            FANZA GUIDE
+          </span>
+          <span className="text-[10px] text-white/25">
+            推し女優 · セール · ランキング
+          </span>
+        </div>
+      </div>
 
       {/* ランキング */}
       <section className="px-3 pt-5">

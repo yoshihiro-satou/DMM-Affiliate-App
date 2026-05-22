@@ -34,3 +34,25 @@ export async function clearOshiActress() {
     .eq('id', claims.sub)
   revalidatePath('/mypage')
 }
+
+export async function setOshiDirector(directorName: string) {
+  const claims = await getCurrentUser()
+  if (!claims) return
+  const supabase = await createClient()
+  await supabase
+    .from('profiles')
+    .update({ oshi_director_name: directorName || null })
+    .eq('id', claims.sub)
+  revalidatePath('/mypage')
+}
+
+export async function clearOshiDirector() {
+  const claims = await getCurrentUser()
+  if (!claims) return
+  const supabase = await createClient()
+  await supabase
+    .from('profiles')
+    .update({ oshi_director_name: null })
+    .eq('id', claims.sub)
+  revalidatePath('/mypage')
+}
