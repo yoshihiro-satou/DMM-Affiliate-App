@@ -28,16 +28,23 @@ export function SwipeFeed({ initialItems }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [newBadges, setNewBadges] = useState<BadgeType[]>([])
-  const [hintVisible, setHintVisible] = useState(true)
+  const [hintVisible, setHintVisible] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return !localStorage.getItem('swipe_hint_seen')
+  })
   const isFetchingRef = useRef(false)
   const guestSwipeCountRef = useRef(0)
   const nextOffset = useRef(initialItems.length + 1)
   const [, startTransition] = useTransition()
 
   useEffect(() => {
-    const t = setTimeout(() => setHintVisible(false), 3000)
+    if (!hintVisible) return
+    const t = setTimeout(() => {
+      setHintVisible(false)
+      localStorage.setItem('swipe_hint_seen', '1')
+    }, 3000)
     return () => clearTimeout(t)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchMore = useCallback(async () => {
     if (isFetchingRef.current) return
@@ -61,6 +68,7 @@ export function SwipeFeed({ initialItems }: Props) {
   const handleSwipe = useCallback(
     (itemId: string, direction: 'like' | 'skip', item: DmmItem) => {
       setHintVisible(false)
+      localStorage.setItem('swipe_hint_seen', '1')
       navigator.vibrate?.(10)
 
       if (!isLoggedIn) {

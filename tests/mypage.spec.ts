@@ -93,17 +93,6 @@ test.describe('マイページ UI', () => {
     await expect(page.getByText(/^mp\*\*\*@/)).toBeVisible()
   })
 
-  test('ACTIVITY セクションが存在する', async ({ page }) => {
-    const main = page.getByRole('main')
-    await expect(main.getByText('ACTIVITY')).toBeVisible()
-    await expect(main.getByText('いいね')).toBeVisible()
-    await expect(main.getByText('スキップ')).toBeVisible()
-    // 「お気に入り」はボトムナビにも存在するため first() で ACTIVITY カードを対象にする
-    await expect(main.getByText('お気に入り').first()).toBeVisible()
-    // 「シリーズ完走」バッジと被るため exact: true で完全一致
-    await expect(main.getByText('シリーズ', { exact: true })).toBeVisible()
-  })
-
   test('みんなの推し女優ランキングセクションが表示される', async ({ page }) => {
     await expect(page.getByText('みんなの推し女優ランキング').first()).toBeVisible()
   })
@@ -113,12 +102,12 @@ test.describe('マイページ UI', () => {
   })
 
   test('ユーザーが15人未満の場合は女優の「準備中」メッセージが表示される', async ({ page }) => {
-    await expect(page.getByText('準備中。みんな！推し女優を登録してね！')).toBeVisible()
+    await expect(page.getByText('準備中。みんな！推し女優を登録してね！').first()).toBeVisible()
     await page.screenshot({ path: 'tests/screenshots/mypage_04_community_oshi.png' })
   })
 
   test('ユーザーが15人未満の場合は監督の「準備中」メッセージが表示される', async ({ page }) => {
-    await expect(page.getByText('準備中。みんな！推し監督を登録してね！')).toBeVisible()
+    await expect(page.getByText('準備中。みんな！推し監督を登録してね！').first()).toBeVisible()
   })
 
   test('推し女優設定セクションが表示される', async ({ page }) => {

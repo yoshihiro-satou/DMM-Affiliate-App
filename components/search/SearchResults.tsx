@@ -5,6 +5,7 @@ import useSWR from 'swr'
 import Image from 'next/image'
 import { searchQueryParser, searchSortParser } from './searchParsers'
 import type { SearchResponse } from '@/lib/search'
+import { SearchFavoriteButton } from './SearchFavoriteButton'
 
 const BLUR_PLACEHOLDER =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTg0IiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMTExMTExIi8+PC9zdmc+'
@@ -49,6 +50,7 @@ function ResultCard({ item }: { item: ResultItem }) {
             {item.discount_rate}%OFF
           </span>
         )}
+        <SearchFavoriteButton item={item} />
       </a>
 
       <div className="mt-1.5 flex flex-col gap-1">
