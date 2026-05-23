@@ -182,7 +182,7 @@ function WorksScrollSkeleton({ label }: { label: string }) {
       <p className="mb-2 text-[9px] text-white/20">{label}</p>
       <div className="flex gap-2 overflow-hidden">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-[107px] w-20 shrink-0 animate-pulse rounded-lg bg-white/8" />
+          <div key={i} className="h-26.75 w-20 shrink-0 animate-pulse rounded-lg bg-white/8" />
         ))}
       </div>
     </div>
@@ -234,7 +234,7 @@ async function OshiActressWorks({
                 alt={item.title}
                 width={80}
                 height={107}
-                className="aspect-[80/107] w-full object-cover"
+                className="aspect-80/107 w-full object-cover"
               />
             )}
             <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
@@ -284,7 +284,7 @@ async function OshiDirectorWorks({ directorName }: { directorName: string }) {
                 alt={item.title}
                 width={80}
                 height={107}
-                className="aspect-[80/107] w-full object-cover"
+                className="aspect-80/107 w-full object-cover"
               />
             )}
             <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
@@ -354,7 +354,7 @@ async function OshiCombinedWorks({
                   alt={item.title}
                   width={80}
                   height={107}
-                  className="aspect-[80/107] w-full object-cover"
+                  className="aspect-80/107 w-full object-cover"
                 />
               )}
               <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
