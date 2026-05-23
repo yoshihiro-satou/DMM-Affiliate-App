@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { createClient, getCurrentUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
-import { Heart, X, Bookmark, BookOpen } from 'lucide-react'
 import { buildUserProfile, topEntries } from '@/lib/personalization'
 import { fetchItemList } from '@/lib/dmm/client'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
@@ -15,114 +14,6 @@ import { signOut } from './actions'
 export const metadata = {
   title: 'マイページ',
   robots: 'noindex,nofollow',
-}
-
-// ── 活動統計（高速・Supabase のみ） ──────────────────────────────────────────
-
-async function ActivityStats({ userId }: { userId: string }) {
-  const supabase = await createClient()
-
-  const [likeRes, skipRes, favRes, seriesRes, viewHistRes] = await Promise.all([
-    supabase
-      .from('swipe_history')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('direction', 'like'),
-    supabase
-      .from('swipe_history')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('direction', 'skip'),
-    supabase
-      .from('favorites')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId),
-    supabase
-      .from('followed_series')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId),
-    supabase
-      .from('view_history')
-      .select('item_id, item_title, affiliate_url, image_url')
-      .eq('user_id', userId)
-      .order('viewed_at', { ascending: false })
-      .limit(20),
-  ])
-
-  const likeCount = likeRes.count ?? 0
-  const skipCount = skipRes.count ?? 0
-  const favCount = favRes.count ?? 0
-  const seriesCount = seriesRes.count ?? 0
-  const recentViews = viewHistRes.data ?? []
-
-  return (
-    <div className="flex flex-col gap-5">
-      {/* 統計カード */}
-      <div className="rounded-lg border border-white/8 bg-white/3 p-4">
-        <p
-          className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
-          style={{ fontFamily: 'ui-monospace, monospace' }}
-        >
-          ACTIVITY
-        </p>
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { Icon: Heart, label: 'いいね', count: likeCount, color: 'text-red-400' },
-            { Icon: X, label: 'スキップ', count: skipCount, color: 'text-white/30' },
-            { Icon: Bookmark, label: 'お気に入り', count: favCount, color: 'text-yellow-400' },
-            { Icon: BookOpen, label: 'シリーズ', count: seriesCount, color: 'text-blue-400' },
-          ].map(({ Icon, label, count, color }) => (
-            <div key={label} className="flex flex-col items-center gap-1 text-center">
-              <Icon size={16} className={color} />
-              <p className="text-[18px] font-black tabular-nums text-white">{count}</p>
-              <p className="text-[9px] text-white/30">{label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 直近の閲覧履歴 */}
-      {recentViews.length > 0 && (
-        <div className="rounded-lg border border-white/8 bg-white/3 p-4">
-          <p
-            className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
-            style={{ fontFamily: 'ui-monospace, monospace' }}
-          >
-            直近の閲覧履歴
-          </p>
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {recentViews.map((v) => (
-              <a
-                key={v.item_id}
-                href={v.affiliate_url ?? '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative shrink-0 w-20 overflow-hidden rounded-lg bg-white/5"
-              >
-                {v.image_url ? (
-                  <Image
-                    src={v.image_url}
-                    alt={v.item_title ?? ''}
-                    width={80}
-                    height={107}
-                    className="aspect-[80/107] w-full object-cover"
-                  />
-                ) : (
-                  <div className="aspect-[80/107] w-full bg-white/5" />
-                )}
-                <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
-                  PR
-                </span>
-                <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
-                  {v.item_title}
-                </p>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 
 // ── コミュニティランキング共通ヘルパー ────────────────────────────────────────
@@ -426,7 +317,7 @@ async function OshiCombinedWorks({
     article: 'actress',
     article_id: id,
     keyword: directorName,
-    sort: 'date',
+    sort: 'review',
     hits: 12,
     service: 'digital',
     floor: 'videoa',
@@ -476,34 +367,6 @@ async function OshiCombinedWorks({
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-// ── ストリーク ────────────────────────────────────────────────────────────────
-
-async function StreakSection({ userId }: { userId: string }) {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('login_streaks')
-    .select('current_streak')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const currentStreak = data?.current_streak ?? 0
-  if (currentStreak === 0) return null
-
-  return (
-    <div className="rounded-lg border border-white/8 bg-white/3 px-5 py-4">
-      <p
-        className="mb-1 text-[10px] font-semibold tracking-[0.2em] text-white/30"
-        style={{ fontFamily: 'ui-monospace, monospace' }}
-      >
-        STREAK
-      </p>
-      <p className="text-[22px] font-black text-white">
-        🔥 {currentStreak}日連続
-      </p>
     </div>
   )
 }
@@ -681,6 +544,11 @@ export default async function MyPage() {
           </Suspense>
         )}
 
+        {/* みんなの推し監督ランキング */}
+        <Suspense fallback={<RankingSkeleton label="みんなの推し監督ランキング" />}>
+          <CommunityDirectorRanking />
+        </Suspense>
+
         {/* 推し女優 × 推し監督 */}
         {oshiActress && oshiDirector && (
           <Suspense fallback={<WorksScrollSkeleton label={`${oshiActress.name} × ${oshiDirector}`} />}>
@@ -692,18 +560,7 @@ export default async function MyPage() {
           </Suspense>
         )}
 
-        {/* みんなの推し監督ランキング */}
-        <Suspense fallback={<RankingSkeleton label="みんなの推し監督ランキング" />}>
-          <CommunityDirectorRanking />
-        </Suspense>
-
-        {/* 左カラム: 活動統計 */}
-        <ActivityStats userId={claims.sub} />
-
-        {/* 右カラム: ストリーク */}
-        <StreakSection userId={claims.sub} />
-
-        {/* 左カラム: よく見る女優 */}
+        {/* よく見る女優 */}
         <Suspense fallback={<TopActressesSkeleton />}>
           <TopActresses userId={claims.sub} />
         </Suspense>
@@ -730,7 +587,7 @@ export default async function MyPage() {
           <div className="mt-auto flex flex-col items-center gap-1.5 pt-2">
             <p className="text-[10px] text-white/20">お問い合わせ</p>
             <a
-              href="https://x.com/yoshihirock0710"
+              href="https://x.com/zenyuu1978"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 text-white/30 transition-colors hover:border-white/25 hover:text-white/60"
