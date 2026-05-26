@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { fetchActressList, fetchItemList } from '@/lib/dmm/client'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanza-osusume.pages.dev'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [

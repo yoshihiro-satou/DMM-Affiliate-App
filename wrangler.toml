@@ -3,12 +3,23 @@ main = ".open-next/worker.js"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
+workers_dev = true
+
+routes = [
+  { pattern = "fanzapicks.com", custom_domain = true },
+  { pattern = "www.fanzapicks.com", custom_domain = true },
+]
+
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
 [alias]
 "@opentelemetry/api" = "./scripts/stub-otel.js"
+"next/dist/server/load-manifest.external.js" = "./scripts/load-manifest-stub.js"
+"next/dist/server/lib/router-utils/instrumentation-globals.external.js" = "./scripts/stub-instrumentation-globals.js"
+"next/dist/server/app-render/work-unit-async-storage-instance" = "./scripts/stub-work-unit-async-storage-instance.js"
+"next/dist/server/app-render/work-async-storage-instance" = "./scripts/stub-work-async-storage-instance.js"
 
 [vars]
 # 本番環境変数は Cloudflare Dashboard または wrangler secret put で設定

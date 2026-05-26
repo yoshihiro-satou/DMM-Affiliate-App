@@ -8,12 +8,19 @@ export const metadata: Metadata = {
 }
 
 export default async function DiscoverPage() {
-  const result = await fetchItemList({
-    service: 'digital',
-    floor: 'videoa',
-    hits: 20,
-    sort: 'rank',
-  })
-
-  return <SwipeFeedClient initialItems={result.items} />
+  try {
+    const result = await fetchItemList({
+      service: 'digital',
+      floor: 'videoa',
+      hits: 20,
+      sort: 'rank',
+    })
+    return <SwipeFeedClient initialItems={result.items} />
+  } catch {
+    return (
+      <main className="flex min-h-dvh flex-col items-center justify-center pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <p className="text-[13px] text-white/30">コンテンツを準備中です。しばらくお待ちください。</p>
+      </main>
+    )
+  }
 }

@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanza-osusume.pages.dev'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

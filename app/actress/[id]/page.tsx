@@ -8,7 +8,7 @@ import { WorkTabs, type WorkTab } from './WorkTabs'
 export const revalidate = 3600
 export const dynamicParams = true
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanza-osusume.pages.dev'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 

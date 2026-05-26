@@ -30,30 +30,38 @@ type Props = {
 }
 
 async function ActressResults(params: SearchParams) {
-  const result = await fetchActressList({
-    hits: 40,
-    keyword: params.keyword || undefined,
-    gte_bust: params.gte_bust ? parseInt(params.gte_bust) : undefined,
-    lte_bust: params.lte_bust ? parseInt(params.lte_bust) : undefined,
-    gte_height: params.gte_height ? parseInt(params.gte_height) : undefined,
-    lte_height: params.lte_height ? parseInt(params.lte_height) : undefined,
-  })
+  try {
+    const result = await fetchActressList({
+      hits: 40,
+      keyword: params.keyword || undefined,
+      gte_bust: params.gte_bust ? parseInt(params.gte_bust) : undefined,
+      lte_bust: params.lte_bust ? parseInt(params.lte_bust) : undefined,
+      gte_height: params.gte_height ? parseInt(params.gte_height) : undefined,
+      lte_height: params.lte_height ? parseInt(params.lte_height) : undefined,
+    })
 
-  if (result.actress.length === 0) {
+    if (result.actress.length === 0) {
+      return (
+        <p className="py-16 text-center text-[13px] text-white/30">
+          該当する女優が見つかりませんでした
+        </p>
+      )
+    }
+
+    return (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        {result.actress.map((actress) => (
+          <ActressCard key={actress.id} actress={actress} />
+        ))}
+      </div>
+    )
+  } catch {
     return (
       <p className="py-16 text-center text-[13px] text-white/30">
-        該当する女優が見つかりませんでした
+        コンテンツを準備中です。しばらくお待ちください。
       </p>
     )
   }
-
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-      {result.actress.map((actress) => (
-        <ActressCard key={actress.id} actress={actress} />
-      ))}
-    </div>
-  )
 }
 
 function ActressGridSkeleton() {

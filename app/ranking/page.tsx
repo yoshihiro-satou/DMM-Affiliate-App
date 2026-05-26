@@ -94,7 +94,7 @@ export default async function RankingPage({ searchParams }: Props) {
   const isActress = validPeriod === 'actress'
 
   if (isActress) {
-    const actresses = await fetchPopularActresses()
+    const actresses = await fetchPopularActresses().catch(() => [])
 
     return (
       <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -124,35 +124,8 @@ export default async function RankingPage({ searchParams }: Props) {
   }
 
   // 作品ランキング（daily / weekly / monthly）
-  const config = ITEM_PERIOD_CONFIG[validPeriod]!
-  const result = await fetchItemList({
-    ...config.fetchParams,
-    hits: 40,
-    service: 'digital',
-    floor: 'videoa',
-  })
-  const items = config.applyScore ? sortByRankingScore(result.items) : result.items
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: label,
-    itemListElement: items.slice(0, 10).map((item, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      name: item.title,
-      url: item.affiliateURL,
-    })),
-  }
-
-  return (
-    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
-      {/* ヘッダー */}
+  const pageHeader = (
+    <>
       <div className="border-b border-white/8 px-4 py-4">
         <span
           className="text-[10px] font-semibold tracking-[0.3em] text-red-600/80"
@@ -161,23 +134,63 @@ export default async function RankingPage({ searchParams }: Props) {
           RANKING
         </span>
         <h1 className="mt-1 text-[22px] font-black tracking-tight text-white">{label}</h1>
-        <p className="mt-0.5 text-[11px] text-white/30">
+      </div>
+      <RankingTabs currentPeriod={validPeriod} />
+    </>
+  )
+
+  try {
+    const config = ITEM_PERIOD_CONFIG[validPeriod]!
+    const result = await fetchItemList({
+      ...config.fetchParams,
+      hits: 40,
+      service: 'digital',
+      floor: 'videoa',
+    })
+    const items = config.applyScore ? sortByRankingScore(result.items) : result.items
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: label,
+      itemListElement: items.slice(0, 10).map((item, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: item.title,
+        url: item.affiliateURL,
+      })),
+    }
+
+    return (
+      <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {pageHeader}
+        <p className="px-4 pb-2 text-[11px] text-white/30">
           PR · {result.total_count.toLocaleString('ja-JP')}件以上
         </p>
-      </div>
-
-      <RankingTabs currentPeriod={validPeriod} />
-
-      <div className="grid grid-cols-2 grid-flow-dense gap-2 px-3 pb-2 md:grid-cols-4">
-        {items.map((item, i) => (
-          <GridCard
-            key={item.content_id}
-            item={item}
-            rank={i + 1}
-            featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
-          />
-        ))}
-      </div>
-    </main>
-  )
+        <div className="grid grid-cols-2 grid-flow-dense gap-2 px-3 pb-2 md:grid-cols-4">
+          {items.map((item, i) => (
+            <GridCard
+              key={item.content_id}
+              item={item}
+              rank={i + 1}
+              featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
+            />
+          ))}
+        </div>
+      </main>
+    )
+  } catch {
+    return (
+      <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        {pageHeader}
+        <p className="py-16 text-center text-[13px] text-white/30">
+          コンテンツを準備中です。しばらくお待ちください。
+        </p>
+      </main>
+    )
+  }
 }

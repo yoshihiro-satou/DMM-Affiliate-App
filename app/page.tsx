@@ -27,63 +27,78 @@ export const metadata: Metadata = {
 // 非同期セクション（Suspenseで個別ストリーミング）
 // ------------------------------------
 async function RankingSection() {
-  const result = await fetchItemList({ sort: 'rank', hits: 10, service: 'digital', floor: 'videoa' })
-  const ranked = sortByRankingScore(result.items)
+  try {
+    const result = await fetchItemList({ sort: 'rank', hits: 10, service: 'digital', floor: 'videoa' })
+    const ranked = sortByRankingScore(result.items)
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: '今週のランキング',
-    itemListElement: ranked.slice(0, 10).map((item, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      name: item.title,
-      url: item.affiliateURL,
-    })),
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: '今週のランキング',
+      itemListElement: ranked.slice(0, 10).map((item, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: item.title,
+        url: item.affiliateURL,
+      })),
+    }
+
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <BentoGrid items={ranked} />
+      </>
+    )
+  } catch {
+    return <ApiUnavailable />
   }
-
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <BentoGrid items={ranked} />
-    </>
-  )
 }
 
 async function DailySaleSection() {
-  const saleItems = await fetchDailySaleItems(10)
+  try {
+    const saleItems = await fetchDailySaleItems(10)
 
-  if (saleItems.length === 0) {
-    const result = await fetchItemList({ sort: 'date', hits: 10, service: 'digital', floor: 'videoa' })
+    if (saleItems.length === 0) {
+      const result = await fetchItemList({ sort: 'date', hits: 10, service: 'digital', floor: 'videoa' })
+      return (
+        <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
+          {result.items.map((item, i) => (
+            <GridCard key={item.content_id} item={item} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
+          ))}
+        </div>
+      )
+    }
+
     return (
       <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
-        {result.items.map((item, i) => (
-          <GridCard key={item.content_id} item={item} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
-        ))}
+        {saleItems.map((item, i) => {
+          const soonest = item.campaign
+            ?.slice()
+            .sort((a, b) => a.date_end.localeCompare(b.date_end))[0]
+          return (
+            <GridCard
+              key={item.content_id}
+              item={item}
+              featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
+              dateEnd={soonest?.date_end}
+            />
+          )
+        })}
       </div>
     )
+  } catch {
+    return <ApiUnavailable />
   }
+}
 
+function ApiUnavailable() {
   return (
-    <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
-      {saleItems.map((item, i) => {
-        // 最も早く終わるキャンペーンの期限を dateEnd として渡す
-        const soonest = item.campaign
-          ?.slice()
-          .sort((a, b) => a.date_end.localeCompare(b.date_end))[0]
-        return (
-          <GridCard
-            key={item.content_id}
-            item={item}
-            featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
-            dateEnd={soonest?.date_end}
-          />
-        )
-      })}
-    </div>
+    <p className="py-8 text-center text-[13px] text-white/30">
+      コンテンツを準備中です。しばらくお待ちください。
+    </p>
   )
 }
 
