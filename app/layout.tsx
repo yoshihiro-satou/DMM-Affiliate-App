@@ -44,6 +44,9 @@ export const metadata: Metadata = {
     site: '@yoshihirock0710',
     creator: '@yoshihirock0710',
   },
+  verification: {
+    google: 'd2702fb0af647cea',
+  },
 }
 
 export const viewport: Viewport = {
