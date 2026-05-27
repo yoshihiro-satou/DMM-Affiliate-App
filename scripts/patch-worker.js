@@ -511,12 +511,69 @@ function overwriteInProjectNodeModules(exportName, globalKey, fileName, patchLab
   }
 }
 
+// Patch 7: next-env.mjs からサーバー秘密情報を除去
+// opennextjs-cloudflare build は .env.local の全値を next-env.mjs にハードコードする。
+// NEXT_PUBLIC_ 以外のキー（DMM_API_ID, SUPABASE_SERVICE_ROLE_KEY 等）をここで削除し、
+// Cloudflare シークレット（wrangler secret put）だけが本番の正の情報源になるようにする。
+// これにより「デプロイ後に API が壊れる」問題と秘密情報のバンドル混入を両方解決する。
+function stripSecretsFromNextEnv() {
+  const NEXT_ENV_PATH = path.join('.open-next', 'cloudflare', 'next-env.mjs')
+  if (!fs.existsSync(NEXT_ENV_PATH)) {
+    console.warn('[Patch 7] next-env.mjs not found — skipping')
+    return
+  }
+
+  const content = fs.readFileSync(NEXT_ENV_PATH, 'utf8')
+  let patchCount = 0
+
+  // 1行ずつ処理。各行は "export const NAME = {...};" 形式
+  // .*（貪欲）で文字列値内の } を含む JSON オブジェクト全体を正確にキャプチャする
+  const newContent = content.split('\n').map(line => {
+    const m = line.match(/^(export const (\w+) = )(\{.*\});$/)
+    if (!m) return line
+
+    const [, prefix, exportName, jsonStr] = m
+
+    let obj
+    try {
+      obj = JSON.parse(jsonStr)
+    } catch {
+      console.warn(`[Patch 7] Failed to parse ${exportName} — skipping`)
+      return line
+    }
+
+    // NEXT_PUBLIC_ 以外のキーを削除（サーバー秘密情報）
+    const keysRemoved = []
+    for (const key of Object.keys(obj)) {
+      if (!key.startsWith('NEXT_PUBLIC_')) {
+        delete obj[key]
+        keysRemoved.push(key)
+      }
+    }
+
+    if (keysRemoved.length === 0) return line
+    patchCount += keysRemoved.length
+    console.log(`[Patch 7] ${exportName}: removed ${keysRemoved.length} key(s): ${keysRemoved.join(', ')}`)
+    return `${prefix}${JSON.stringify(obj)};`
+  }).join('\n')
+
+  fs.writeFileSync(NEXT_ENV_PATH, newContent, 'utf8')
+  if (patchCount > 0) {
+    console.log(`[Patch 7] next-env.mjs patched — ${patchCount} secret(s) removed from bundle ✓`)
+  } else {
+    console.log('[Patch 7] next-env.mjs — no secret keys found (already clean) ✓')
+  }
+}
+
 // Main
 if (!fs.existsSync(HANDLER_PATH)) {
   console.error(`handler.mjs not found: ${HANDLER_PATH}`)
   console.error('先に opennextjs-cloudflare build を実行してください')
   process.exit(1)
 }
+
+// Patch 7 を最初に実行（next-env.mjs から秘密情報を除去）
+stripSecretsFromNextEnv()
 
 generateLoadManifestStub()
 overwriteLoadManifestExternal()
