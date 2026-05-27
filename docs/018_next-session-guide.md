@@ -1,6 +1,6 @@
 # 018 次回セッション引き継ぎガイド
 
-> 作成日: 2026-05-26 / 最終更新: 2026-05-27（第2セッション） / 最終デプロイ: `a9c12ba9`
+> 作成日: 2026-05-26 / 最終更新: 2026-05-27（第3セッション） / 最終デプロイ: `a9c12ba9`
 
 ---
 
@@ -15,6 +15,36 @@
 | サイト名 | ✅ 「FANZAピックス」統一済み |
 | Supabase | ✅ 接続正常 |
 | PWA | ✅ Service Worker 稼働 |
+
+---
+
+## 2026-05-27（第3セッション）に完了した作業
+
+| 作業 | コミット | 内容 |
+|------|---------|------|
+| next-env.mjs 秘密情報除去 | `5f90c92` | patch-worker.js に Patch 7 追加 — デプロイ後の API 破損を恒久解決 |
+
+### Patch 7: next-env.mjs からサーバー秘密情報を除去（根本解決）
+
+**問題の構造：**
+```
+opennextjs-cloudflare build
+  └─ .env.local の全値を .open-next/cloudflare/next-env.mjs にハードコード
+        ↓ init.js でシークレット(=)→ next-env.mjs(??=) の優先順
+        ↓ シークレットの値が誤っていると両ソースとも誤った値になる
+        → 400 Bad Request
+```
+
+**Patch 7 の解決策：**
+`patch-worker.js` に `stripSecretsFromNextEnv()` 関数を追加。
+
+- `opennextjs-cloudflare build` 直後、`NEXT_PUBLIC_` 以外の全キーを `next-env.mjs` から削除
+- 削除対象: `DMM_API_ID`, `DMM_AFFILIATE_ID`, `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_PRIVATE_KEY_JWK` など10キー
+- Cloudflare シークレット（`wrangler secret put`）が**唯一の情報源**になる
+- `.env.local` の値が古くても **次回デプロイで API が壊れることはない**
+
+**セキュリティ改善：**
+秘密鍵がデプロイバンドルに平文でハードコードされていた問題も解消。
 
 ---
 
@@ -38,30 +68,30 @@
 | `text-white/50` | `text-white/70` | レビュー・価格補足 |
 | `text-white/10` | 変更なし | 装飾アイコン（Heart・BookOpen等） |
 
-### DMM API「コンテンツを準備中」問題の根本原因と対処法
+### DMM API「コンテンツを準備中」問題（✅ 第3セッションで恒久解決済み）
 
-**原因：** Cloudflare Workers シークレット `DMM_API_ID` に誤った値が設定されていた。
+**解決済み：** `patch-worker.js` の Patch 7 が `next-env.mjs` から秘密情報を自動除去するため、`.env.local` の値がデプロイバンドルに混入しなくなった。
 
 **FANZA API の IP 制限について：**
 - FANZA API はローカル（Windows）からは 400 BAD REQUEST になる場合がある
 - Cloudflare Workers からは正しい API キーで通る
-- そのため `wrangler secret put` で誤った値を入れると、ローカルではテスト不可能な状態になる
+- ローカルでテスト不可能なため、Cloudflare シークレットの値が唯一の正解
 
-**診断方法：**
+**今後また壊れた場合の診断方法：**
 ```bash
-# エラーが起きたら最初にこれを試す
+# API 状態確認
 curl -b "age_check_done=1" "https://fanzapicks.com/api/dmm/items?hits=1&sort=rank&service=digital&floor=videoa"
-# → {"error":"DMM API fetch failed"} なら API キーの問題
+# → {"items":[...]} ならOK / {"error":"DMM API fetch failed"} なら API キー問題
 
 # リアルタイムログ確認
 npx wrangler tail --format pretty
 ```
 
-**修正方法：**
+**シークレット再設定方法（最終手段）：**
 1. https://affiliate.dmm.com/api/ で「WebサービスID」を確認
 2. `npx wrangler secret put DMM_API_ID` で正しい値を入力
 
-> ⚠️ `.env.local` の古い値で `wrangler secret put` を誤って上書きしないよう注意。
+> ⚠️ `.env.local` の値（`uaVT3DGhgNk5XmNLZ9PG`）は参考値で正しいとは限らない。FANZA ダッシュボードの値を使うこと。
 
 ---
 
