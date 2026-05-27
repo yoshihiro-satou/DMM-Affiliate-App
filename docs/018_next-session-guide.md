@@ -1,6 +1,6 @@
 # 018 次回セッション引き継ぎガイド
 
-> 作成日: 2026-05-26 / 最終更新: 2026-05-27 / 最終デプロイ: `a4738b2`
+> 作成日: 2026-05-26 / 最終更新: 2026-05-27（第2セッション） / 最終デプロイ: `a9c12ba9`
 
 ---
 
@@ -11,14 +11,61 @@
 | 本番 URL | **https://fanzapicks.com** （カスタムドメイン稼働中） |
 | テスト URL | https://dmm-affiliate-app.yoshihirock0710.workers.dev |
 | ホスティング | Cloudflare Workers（opennextjs-cloudflare） |
-| DMM API | ✅ **審査通過・正常動作**（2026-05-27確認） |
-| サイト名 | ✅ 「おしランク」→「FANZAピックス」統一済み |
+| DMM API | ✅ **正常動作**（2026-05-27 第2セッション確認） |
+| サイト名 | ✅ 「FANZAピックス」統一済み |
 | Supabase | ✅ 接続正常 |
 | PWA | ✅ Service Worker 稼働 |
 
 ---
 
-## 2026-05-27 に完了した作業
+## 2026-05-27（第2セッション）に完了した作業
+
+| 作業 | コミット | 内容 |
+|------|---------|------|
+| テキスト可読性改善 | `17a2ca9` | text-white/XX の透明度を全体的に引き上げ（42ファイル） |
+| ホームヘッダー修正 | `28bba5d` | モバイルでのタイトル縦積みレイアウト・バランス改善 |
+| DMM API キー修正 | シークレット更新 | Cloudflare Workers シークレットの誤った値を正しい値に更新 |
+
+### テキスト透明度の変更マッピング
+
+| 変更前 | 変更後 | 対象例 |
+|--------|--------|--------|
+| `text-white/20` | `text-white/40` | PR表記、フッター注記 |
+| `text-white/25` | `text-white/50` | 説明文、空状態メッセージ |
+| `text-white/30` | `text-white/55` | 件数・ラベル |
+| `text-white/35` | `text-white/60` | ジャンルタグ |
+| `text-white/40` | `text-white/65` | サブタイトル |
+| `text-white/50` | `text-white/70` | レビュー・価格補足 |
+| `text-white/10` | 変更なし | 装飾アイコン（Heart・BookOpen等） |
+
+### DMM API「コンテンツを準備中」問題の根本原因と対処法
+
+**原因：** Cloudflare Workers シークレット `DMM_API_ID` に誤った値が設定されていた。
+
+**FANZA API の IP 制限について：**
+- FANZA API はローカル（Windows）からは 400 BAD REQUEST になる場合がある
+- Cloudflare Workers からは正しい API キーで通る
+- そのため `wrangler secret put` で誤った値を入れると、ローカルではテスト不可能な状態になる
+
+**診断方法：**
+```bash
+# エラーが起きたら最初にこれを試す
+curl -b "age_check_done=1" "https://fanzapicks.com/api/dmm/items?hits=1&sort=rank&service=digital&floor=videoa"
+# → {"error":"DMM API fetch failed"} なら API キーの問題
+
+# リアルタイムログ確認
+npx wrangler tail --format pretty
+```
+
+**修正方法：**
+1. https://affiliate.dmm.com/api/ で「WebサービスID」を確認
+2. `npx wrangler secret put DMM_API_ID` で正しい値を入力
+
+> ⚠️ `.env.local` の古い値で `wrangler secret put` を誤って上書きしないよう注意。
+
+---
+
+## 2026-05-27（第1セッション）に完了した作業
 
 | 作業 | コミット | 内容 |
 |------|---------|------|
@@ -128,11 +175,13 @@ pnpm og:generate    # public/og/default.png を再生成
 
 `.env.local` に設定済み：
 ```
-DMM_API_ID=uaVT3DGhgNk5XmNLZ9PG
 DMM_AFFILIATE_ID=yoshihirock-990
 NEXT_PUBLIC_SITE_URL=https://fanzapicks.com
 NEXT_PUBLIC_SUPABASE_URL=https://ilaszemqlacscbaewyox.supabase.co
 ```
+
+> ⚠️ `DMM_API_ID` は `.env.local` の値が古い可能性があります。
+> 正しい値は https://affiliate.dmm.com/api/ で確認し、Cloudflare シークレットを正とすること。
 
 Cloudflare シークレット登録済み（`npx wrangler secret list` で確認）:
 - `DMM_API_ID` / `DMM_AFFILIATE_ID`
@@ -150,7 +199,11 @@ pnpm cf:deploy   # ビルド → パッチ → Cloudflare デプロイ（約3分
 
 デプロイ後の確認：
 ```bash
-# DMM API 経由確認
+# DMM API 経由確認（最初にこれで API が通っているか確認する）
+curl -b "age_check_done=1" "https://fanzapicks.com/api/dmm/items?hits=1&sort=rank&service=digital&floor=videoa"
+# → {"items":[...]} ならOK、{"error":"DMM API fetch failed"} なら API キー問題
+
+# 各ページ確認
 curl -b "age_check_done=1" https://fanzapicks.com/ | grep -c "FANZAピックス"
 
 # sitemap 確認
