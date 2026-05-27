@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import { M_PLUS_Rounded_1c, Geist_Mono } from 'next/font/google'
+import Script from 'next/script'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { AuthListener } from '@/components/auth-listener'
 import { BottomNav } from '@/components/layout/BottomNav'
@@ -10,6 +11,8 @@ import { NavigationProgress } from '@/components/layout/NavigationProgress'
 import { DmmCredit } from '@/components/layout/DmmCredit'
 import { getCurrentUser } from '@/lib/supabase/server'
 import './globals.css'
+
+const GA_ID = 'G-X8VN2V321X'
 
 const mPlusRounded = M_PLUS_Rounded_1c({
   weight: ['400', '500', '700'],
@@ -98,6 +101,19 @@ export default async function RootLayout({
             __html: `(function(){try{var n=JSON.parse(localStorage.getItem('guest_favorites')||'[]').length;if(n>0){var el=document.getElementById('fav-badge');if(el)el.textContent=n}}catch(e){}})()`,
           }}
         />
+        {/* Google Analytics 4 */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}', { page_path: window.location.pathname });
+          `}
+        </Script>
         <Suspense>
           <NavigationProgress />
         </Suspense>
