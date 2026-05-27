@@ -41,11 +41,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'ja_JP',
     siteName: 'FANZAピックス',
+    images: [{ url: '/og/default.png', width: 1200, height: 630, alt: 'FANZAピックス' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@yoshihirock0710',
     creator: '@yoshihirock0710',
+    images: ['/og/default.png'],
   },
   verification: {
     google: 'd2702fb0af647cea',
