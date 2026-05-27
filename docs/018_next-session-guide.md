@@ -1,6 +1,6 @@
 # 018 次回セッション引き継ぎガイド
 
-> 作成日: 2026-05-26 / 最終デプロイ: `dbdd712`
+> 作成日: 2026-05-26 / 最終更新: 2026-05-27 / 最終デプロイ: `a4738b2`
 
 ---
 
@@ -11,142 +11,107 @@
 | 本番 URL | **https://fanzapicks.com** （カスタムドメイン稼働中） |
 | テスト URL | https://dmm-affiliate-app.yoshihirock0710.workers.dev |
 | ホスティング | Cloudflare Workers（opennextjs-cloudflare） |
-| cookies() | ✅ 修正済み（Patch 6e/6f） |
-| DMM API | ⏳ **審査待ち**（申請済 2026-05-26、3営業日目安） |
-| ページ表示 | API 待機中は「コンテンツを準備中」を表示（正常） |
+| DMM API | ✅ **審査通過・正常動作**（2026-05-27確認） |
+| サイト名 | ✅ 「おしランク」→「FANZAピックス」統一済み |
 | Supabase | ✅ 接続正常 |
 | PWA | ✅ Service Worker 稼働 |
 
 ---
 
-## DMM 審査完了後に最初にやること
+## 2026-05-27 に完了した作業
 
-### 1. API 動作確認（1分）
+| 作業 | コミット | 内容 |
+|------|---------|------|
+| サイト名統一 | `3fde484` | 「おしランク」→「FANZAピックス」全11箇所 |
+| GSC 確認ファイル | `09044e2` | `public/googled2702fb0af647cea.html` + meta タグ |
+| middleware 修正 | `002c770` | `sitemap.xml` / `robots.txt` / Google確認ファイルを age-check 除外 |
+| GA4 導入 | `f7843f2` | `G-X8VN2V321X`（afterInteractive で非同期ロード） |
+| OGP 画像 | `d9814d3` | `public/og/default.png`（1200×630 PNG、satori 生成） |
+| age-check layout revert | `a4738b2` | ネスト制約で効果なし → 削除 |
 
-```bash
-curl "https://api.dmm.com/affiliate/v3/ItemList?api_id=uaVT3DGhgNk5XmNLZ9PG&affiliate_id=yoshihirock-990&output=json&site=FANZA&hits=1"
+### SEO・アナリティクス登録状況
+
+| サービス | 状態 |
+|---------|------|
+| Google Search Console | ✅ 登録済み・所有権確認済み・サイトマップ送信済み |
+| Google Analytics 4 | ✅ 稼働中（G-X8VN2V321X） |
+| Bing Webmaster Tools | ✅ 登録済み（Google SC からインポート） |
+
+---
+
+## Core Web Vitals の現状と方針
+
+PageSpeed Insights は Cookie を持たないため、常に `/age-check` ページを計測する。
+サーバー側 age-gate がある限りこの制約は解消できない。
+
+| 指標 | PSI（age-check） | 実態 |
+|------|----------------|------|
+| Performance | 80 | age-check ページの値（コンテンツページとは別） |
+| SEO | 66 | "Page is blocked from indexing" = age-check の noindex が原因。正常な挙動 |
+| LCP | 4.5秒 | age-check での重い日本語フォント読み込みが原因。根本解決にはルートレイアウト分割が必要 |
+| Accessibility | 100 | ✅ |
+| Best Practices | 100 | ✅ |
+
+**実コンテンツページの確認方法：**
+- Chrome で年齢確認を通過後、DevTools → Lighthouse で `/ranking` を計測
+- GA4 → レポート → テクノロジー → ウェブの詳細（実ユーザーのCWVが数百人分溜まったら確認）
+
+**LCP を根本改善する場合（優先度：低）：**
+Route Group を使ってルートレイアウトを分割する必要がある。
+
 ```
-
-`"status":200` が返れば承認完了。
-
-### 2. サイト表示確認
-
-```bash
-curl -s -b "age_check_done=1" "https://fanzapicks.com/ranking" | grep -c "コンテンツを準備"
-# 0 なら正常表示に戻っている
+app/
+├── (main)/           ← フォント・GA4・BottomNav あり
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── ranking/
+│   └── ...
+├── age-check/        ← ルートレイアウトを持たせない
+│   └── page.tsx
+└── layout.tsx        ← html/body のみ（フォントなし）
 ```
-
-リデプロイは不要（コードに変更がなければ次のビルド時に ISR キャッシュが自然に更新される）。
 
 ---
 
 ## 積み残しタスク（優先順）
 
-### 🔴 最優先
+### 🟡 重要
 
-#### サイト名を「おしランク」→「FANZAピックス」に統一
+#### X（Twitter）自動投稿の定期実行設定
 
-現在コード内に「おしランク」が残っている。DMM に申請したサイト名と一致させる必要がある。
+`X_API_KEY` は設定済み。自動投稿スクリプトの定期実行（Cloudflare Cron）が未設定。
 
-変更対象ファイル：
-
-| ファイル | 変更箇所 |
-|---------|---------|
-| `app/layout.tsx` | `title.default` / `title.template` / `applicationName`（3箇所） |
-| `app/manifest.ts` | `name` / `short_name`（2箇所） |
-| `app/page.tsx` | `metadata.title` / OG title / ヘッダー表示テキスト「おしランク」「OSHI RANK」（4箇所） |
-
-変更後の値：
-```
-サイト名:  FANZAピックス
-短縮名:    FANZAピックス
-template:  %s | FANZAピックス
+```bash
+# 関連ファイル
+workers/            # Cloudflare Workers cron ロジック
 ```
 
----
+#### OGP 画像の更新・再生成
 
-### 🟡 重要（SEO・法務）
-
-#### Google Search Console 登録
-
-1. [search.google.com/search-console](https://search.google.com/search-console) を開く
-2. 「URLプレフィックス」で `https://fanzapicks.com` を追加
-3. 所有権確認：`<meta name="google-site-verification">` タグを `app/layout.tsx` の `metadata` に追加
-   ```ts
-   verification: { google: 'xxxxxxxxxxxxxxxx' }
-   ```
-4. サイトマップ送信：`https://fanzapicks.com/sitemap.xml`
-
-#### Google Analytics 4 導入
-
-`app/layout.tsx` に GA4 の gtag スクリプトを追加するか、`next/script` で非同期ロード。
-測定 ID（G-XXXXXXXXXX）を取得してから実施。
-
-#### Bing Webmaster Tools 登録
-
-[bing.com/webmasters](https://www.bing.com/webmasters) — Google SC とデータ共有可能。
-
----
-
-### 🟢 推奨（サイト品質向上）
-
-#### OGP 画像の追加
-
-現在 `next/og` は Cloudflare Workers 環境で動作不可のため削除済み。
-代替案：
-- Cloudflare Images や外部サービスで静的 OGP 画像を生成して `public/og/` に配置
-- `app/layout.tsx` の `openGraph.images` に固定 URL を設定
-
-```ts
-openGraph: {
-  images: [{ url: '/og/default.jpg', width: 1200, height: 630 }],
-}
+```bash
+pnpm og:generate    # public/og/default.png を再生成
 ```
 
-#### `robots.txt` の確認
+デザインを変えたい場合は `scripts/generate-og.mjs` を編集後に実行。
 
-現在の設定（`app/robots.ts`）で `/api/` は Disallow 済み。問題なし。
+### 🟢 推奨
 
-#### 構造化データの確認
+#### ISR キャッシュ（Cloudflare KV）の有効化
 
-ランキングページ・女優ページに JSON-LD が実装済み。
-Google リッチリザルトテストで確認推奨：
-`https://search.google.com/test/rich-results?url=https://fanzapicks.com/ranking`
+現在 KV は未使用。有効化するとランキング・商品ページのキャッシュが安定する。
+`wrangler.toml` に KV バインディングを追加すれば利用可能。
 
----
+#### 女優ページの充実
 
-## SEO で別途取り組むべき施策
+現在は女優名 + 商品一覧のみ。ユニークな説明文・h1 を追加するとロングテール SEO に効果。
 
-### コンテンツ SEO
+#### コンテンツ SEO（ロングテール）
 
-| 施策 | 優先 | 概要 |
-|------|------|------|
-| タイトルタグの最適化 | 高 | 各ページ `metadata.title` に検索キーワードを含める |
-| 内部リンク強化 | 中 | ランキング→個別商品→関連女優のリンク網を増やす |
-| 女優ページの充実 | 高 | 女優ごとにユニークな説明文・h1 を設定（現在は名前のみ） |
-| ロングテール記事 | 低 | 「○○ジャンル おすすめ」などのカテゴリ集計ページ |
-
-### テクニカル SEO
-
-| 施策 | 優先 | 概要 |
-|------|------|------|
-| Core Web Vitals 計測 | 高 | PageSpeed Insights で fanzapicks.com を計測 |
-| 画像 alt 属性 | 中 | `GridCard` / `ProductCard` の `<Image>` に適切な alt を付ける |
-| canonical URL | 済 | 各ページ設定済み |
-| ISR キャッシュ確認 | 中 | Cloudflare KV を有効化するとページキャッシュが安定する（現在未使用） |
-| hreflang | 低 | 日本語専用サイトのため不要 |
-
-### 外部施策
-
-| 施策 | 優先 | 概要 |
-|------|------|------|
-| X（旧 Twitter）連携 | 高 | 自動投稿スクリプト（X_API_KEY 設定済み）の定期実行設定 |
-| アフィリエイト ASP 追加 | 中 | A8.net / Amazonアソシエイト を補助として追加 |
-| 被リンク獲得 | 低 | アダルトアフィリエイト系ブログへの掲載依頼 |
+「○○ジャンル おすすめ」などのカテゴリ集計ページを追加するとオーガニック流入が増える見込み。
 
 ---
 
-## 法務チェックリスト（随時確認）
+## 法務チェックリスト
 
 | 項目 | 状態 | 備考 |
 |------|------|------|
@@ -185,12 +150,11 @@ pnpm cf:deploy   # ビルド → パッチ → Cloudflare デプロイ（約3分
 
 デプロイ後の確認：
 ```bash
-# cookies() 動作確認
-curl https://fanzapicks.com/api/test-cookies
-# → {"ok":true,"count":0}
-
 # DMM API 経由確認
-curl -b "age_check_done=1" https://fanzapicks.com/ranking | grep "コンテンツを準備\|件以上"
+curl -b "age_check_done=1" https://fanzapicks.com/ | grep -c "FANZAピックス"
+
+# sitemap 確認
+curl -s "https://fanzapicks.com/sitemap.xml" | head -5
 ```
 
 パッチログで以下が出れば正常：
