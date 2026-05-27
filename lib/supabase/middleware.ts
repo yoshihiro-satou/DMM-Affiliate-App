@@ -12,7 +12,10 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/api/') ||
     pathname.startsWith('/icons/') ||
     pathname === '/manifest.webmanifest' ||
-    pathname === '/sw.js'
+    pathname === '/sw.js' ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/robots.txt' ||
+    /^\/google[a-z0-9]+\.html$/.test(pathname)
 
   let supabaseResponse = NextResponse.next({ request })
 
