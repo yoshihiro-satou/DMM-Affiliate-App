@@ -129,23 +129,23 @@ export default function HomePage() {
         {/* 下部うっすらグロー */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-rose-600/30 via-pink-500/20 to-transparent" />
 
-        {/* 左：サイト名 */}
-        <div className="relative flex items-baseline gap-2">
-          <h1 className="bg-gradient-to-r from-amber-200 via-rose-100 to-pink-300 bg-clip-text text-[22px] font-black tracking-tight text-transparent">
+        {/* 左：サイト名（縦積み） */}
+        <div className="relative flex flex-col gap-0.5">
+          <h1 className="bg-gradient-to-r from-amber-200 via-rose-100 to-pink-300 bg-clip-text text-[20px] font-black leading-none tracking-tight text-transparent">
             FANZAピックス
           </h1>
-          <span className="text-[9px] font-bold tracking-[0.25em] text-rose-400/70">
+          <span className="text-[8px] font-bold tracking-[0.3em] text-rose-400/60">
             FANZA PICKS
           </span>
         </div>
 
-        {/* 右：キャッチフレーズ */}
-        <div className="relative flex flex-col items-end gap-px">
-          <span className="text-[9px] font-semibold tracking-[0.2em] text-pink-300/60">
+        {/* 右：短いタグライン */}
+        <div className="relative flex flex-col items-end gap-0.5">
+          <span className="text-[9px] font-semibold tracking-[0.15em] text-pink-300/60">
             FANZA GUIDE
           </span>
-          <span className="text-[10px] text-white/50">
-            推し女優 · セール · ランキング
+          <span className="text-[10px] text-white/55">
+            セール · ランキング
           </span>
         </div>
       </div>
