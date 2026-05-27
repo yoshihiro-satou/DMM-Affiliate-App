@@ -13,10 +13,10 @@ export const revalidate = 3600
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
 export const metadata: Metadata = {
-  title: 'おしランク - FANZAセール・ランキング・推し女優',
+  title: 'FANZAピックス - FANZAセール・ランキング・推し女優',
   description: 'FANZAの人気作品ランキング・セール情報をアプリ感覚でチェック。推し女優の新作通知や値下げアラートも。スワイプで好みの作品を発見。',
   openGraph: {
-    title: 'おしランク - FANZAセール・ランキング・推し女優',
+    title: 'FANZAピックス - FANZAセール・ランキング・推し女優',
     description: 'FANZAの人気作品ランキング・セール情報をアプリ感覚でチェック。推し女優の新作通知や値下げアラートも。',
     url: '/',
   },
@@ -132,10 +132,10 @@ export default function HomePage() {
         {/* 左：サイト名 */}
         <div className="relative flex items-baseline gap-2">
           <h1 className="bg-gradient-to-r from-amber-200 via-rose-100 to-pink-300 bg-clip-text text-[22px] font-black tracking-tight text-transparent">
-            おしランク
+            FANZAピックス
           </h1>
           <span className="text-[9px] font-bold tracking-[0.25em] text-rose-400/70">
-            OSHI RANK
+            FANZA PICKS
           </span>
         </div>
 

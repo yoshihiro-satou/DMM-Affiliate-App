@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'おしランク',
-    short_name: 'おしランク',
+    name: 'FANZAピックス',
+    short_name: 'FANZAピックス',
     description: 'FANZAのセール・ランキング・推し女優を管理するアプリ',
     start_url: '/',
     display: 'standalone',

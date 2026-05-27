@@ -29,15 +29,15 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'おしランク',
-    template: '%s | おしランク',
+    default: 'FANZAピックス',
+    template: '%s | FANZAピックス',
   },
   description: 'FANZAのセール・ランキング・推し女優を管理するアプリ。スワイプで作品発見、値下げ通知、お気に入り管理。',
-  applicationName: 'おしランク',
+  applicationName: 'FANZAピックス',
   openGraph: {
     type: 'website',
     locale: 'ja_JP',
-    siteName: 'FANZA おすすめ',
+    siteName: 'FANZAピックス',
   },
   twitter: {
     card: 'summary_large_image',
@@ -78,7 +78,7 @@ export default async function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: 'FANZA おすすめ',
+              name: 'FANZAピックス',
               url: SITE_URL,
               description: 'FANZAのセール・ランキング・お気に入り管理アプリ',
               potentialAction: {
