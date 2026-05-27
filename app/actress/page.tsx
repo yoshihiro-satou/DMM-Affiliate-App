@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+﻿import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { fetchActressList } from '@/lib/dmm/client'
 import { ActressCard } from '@/components/actress/ActressCard'
@@ -42,7 +42,7 @@ async function ActressResults(params: SearchParams) {
 
     if (result.actress.length === 0) {
       return (
-        <p className="py-16 text-center text-[13px] text-white/30">
+        <p className="py-16 text-center text-[13px] text-white/55">
           該当する女優が見つかりませんでした
         </p>
       )
@@ -57,7 +57,7 @@ async function ActressResults(params: SearchParams) {
     )
   } catch {
     return (
-      <p className="py-16 text-center text-[13px] text-white/30">
+      <p className="py-16 text-center text-[13px] text-white/55">
         コンテンツを準備中です。しばらくお待ちください。
       </p>
     )
@@ -92,7 +92,7 @@ export default async function ActressPage({ searchParams }: Props) {
           ACTRESS
         </span>
         <h1 className="mt-1 text-[22px] font-black tracking-tight text-white">女優一覧</h1>
-        <p className="mt-0.5 text-[11px] text-white/30">PR · FANZAアフィリエイトリンク</p>
+        <p className="mt-0.5 text-[11px] text-white/55">PR · FANZAアフィリエイトリンク</p>
       </div>
 
       {/* フィルター */}

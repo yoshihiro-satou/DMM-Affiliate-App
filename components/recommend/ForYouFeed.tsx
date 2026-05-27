@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from 'next/image'
 import useSWR from 'swr'
@@ -56,7 +56,7 @@ function ContinueCard({
   if (!item.affiliate_url) return null
   return (
     <section className="px-3 pt-6">
-      <h2 className="mb-2 text-[13px] font-semibold tracking-tight text-white/50">前回の続き</h2>
+      <h2 className="mb-2 text-[13px] font-semibold tracking-tight text-white/70">前回の続き</h2>
       <a
         href={item.affiliate_url}
         target="_blank"
@@ -80,7 +80,7 @@ function ContinueCard({
           </p>
           <p className="mt-1 text-[10px] text-red-500/70">FANZA で開く →</p>
         </div>
-        <span className="absolute left-1 top-1 text-[8px] text-white/20">PR</span>
+        <span className="absolute left-1 top-1 text-[8px] text-white/40">PR</span>
       </a>
     </section>
   )
@@ -122,13 +122,13 @@ function HorizontalCarousel({ title, items }: { title: string; items: DmmItem[] 
               ) : (
                 <div className="aspect-[112/150] w-full bg-white/5" />
               )}
-              <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+              <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/65">
                 PR
               </span>
               <div className="p-1.5">
                 <p className="line-clamp-2 text-[9px] leading-tight text-white/60">{item.title}</p>
                 {price !== null && (
-                  <p className="mt-0.5 text-[9px] font-bold tabular-nums text-white/40">
+                  <p className="mt-0.5 text-[9px] font-bold tabular-nums text-white/65">
                     ¥{price.toLocaleString('ja-JP')}
                   </p>
                 )}
@@ -209,7 +209,7 @@ export function ForYouFeed() {
               <h2 className="text-[15px] font-black tracking-tight text-white">
                 あなたへのおすすめ
               </h2>
-              <span className="text-[10px] text-white/40">あなたの好みに合わせた作品</span>
+              <span className="text-[10px] text-white/65">あなたの好みに合わせた作品</span>
             </div>
             <a href="/ranking" className="text-[13px] font-bold text-red-400 hover:text-red-300 active:text-red-500">
               もっと見る →

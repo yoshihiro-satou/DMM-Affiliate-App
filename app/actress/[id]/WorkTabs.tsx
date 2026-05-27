@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 
@@ -28,7 +28,7 @@ export function WorkTabs({ actressId, currentTab }: Props) {
           className={`flex-1 py-3 text-center text-[13px] font-medium transition-colors ${
             currentTab === tab.id
               ? 'border-b-2 border-red-500 text-white'
-              : 'text-white/40 hover:text-white/70'
+              : 'text-white/65 hover:text-white/70'
           }`}
         >
           {tab.label}

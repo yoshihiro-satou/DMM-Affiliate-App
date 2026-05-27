@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const metadata = {
   title: 'リセットメールを送信しました',
@@ -54,7 +54,7 @@ export default function ForgotPasswordSentPage() {
             <br />
             してください
           </h1>
-          <p className="text-[13px] leading-6 text-white/40">
+          <p className="text-[13px] leading-6 text-white/65">
             パスワードリセットリンクを送信しました。
             <br />
             メール内のリンクをタップしてください。
@@ -63,7 +63,7 @@ export default function ForgotPasswordSentPage() {
 
         <div className="h-px w-full bg-white/8" />
 
-        <p className="text-[11px] leading-5 text-white/20">
+        <p className="text-[11px] leading-5 text-white/40">
           メールが届かない場合は迷惑メールフォルダを
           <br />
           ご確認ください。リンクの有効期限は1時間です。
@@ -71,7 +71,7 @@ export default function ForgotPasswordSentPage() {
 
         <Link
           href="/login"
-          className="text-[13px] text-white/30 underline underline-offset-4 transition-colors hover:text-white/50"
+          className="text-[13px] text-white/55 underline underline-offset-4 transition-colors hover:text-white/70"
         >
           ← ログインページに戻る
         </Link>

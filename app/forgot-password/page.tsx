@@ -1,4 +1,4 @@
-import { ForgotForm } from './_components/forgot-form'
+﻿import { ForgotForm } from './_components/forgot-form'
 
 export const metadata = {
   title: 'パスワードリセット',
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
           >
             パスワードリセット
           </h1>
-          <p className="text-[13px] leading-6 text-white/40">
+          <p className="text-[13px] leading-6 text-white/65">
             登録済みのメールアドレスに
             <br />
             リセットリンクをお送りします。

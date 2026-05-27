@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useActionState } from 'react'
 import Link from 'next/link'
@@ -21,7 +21,7 @@ export function LoginForm({
       <div className="flex flex-col gap-1">
         <label
           htmlFor="email"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           メールアドレス
@@ -41,7 +41,7 @@ export function LoginForm({
       <div className="flex flex-col gap-1">
         <label
           htmlFor="password"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           パスワード
@@ -78,7 +78,7 @@ export function LoginForm({
       <div className="flex flex-col items-center gap-3 text-center">
         <Link
           href="/forgot-password"
-          className="text-[11px] text-white/40 underline underline-offset-2 transition-colors active:text-white/70"
+          className="text-[11px] text-white/65 underline underline-offset-2 transition-colors active:text-white/70"
         >
           パスワードを忘れた方はこちら
         </Link>

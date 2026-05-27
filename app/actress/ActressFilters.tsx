@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs'
 import { useTransition } from 'react'
@@ -47,19 +47,19 @@ export function ActressFilters() {
     >
       {/* キーワード */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/30" />
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/55" />
         <input
           type="search"
           placeholder="女優名で検索"
           value={filters.keyword}
           onChange={(e) => setFilters({ keyword: e.target.value || null })}
-          className="w-full rounded-lg bg-white/8 py-2.5 pl-9 pr-4 text-[13px] text-white outline-none placeholder:text-white/30 focus:bg-white/12 transition-colors"
+          className="w-full rounded-lg bg-white/8 py-2.5 pl-9 pr-4 text-[13px] text-white outline-none placeholder:text-white/55 focus:bg-white/12 transition-colors"
         />
       </div>
 
       {/* 身長 */}
       <div>
-        <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-white/30">身長 (cm)</p>
+        <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-white/55">身長 (cm)</p>
         <div className="flex flex-wrap gap-1.5">
           {HEIGHT_PRESETS.map((p) => {
             const active =
@@ -84,7 +84,7 @@ export function ActressFilters() {
 
       {/* バスト */}
       <div>
-        <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-white/30">バスト (cm)</p>
+        <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-white/55">バスト (cm)</p>
         <div className="flex flex-wrap gap-1.5">
           {BUST_PRESETS.map((p) => {
             const active =
@@ -109,7 +109,7 @@ export function ActressFilters() {
       {hasFilters && (
         <button
           onClick={clearAll}
-          className="flex items-center gap-1 text-[11px] text-white/35 hover:text-white/60 transition-colors"
+          className="flex items-center gap-1 text-[11px] text-white/60 hover:text-white/60 transition-colors"
         >
           <X className="size-3" />
           絞り込みをリセット

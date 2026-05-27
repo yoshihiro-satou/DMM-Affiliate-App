@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useTransition } from 'react'
 import { Bell, BellOff, BellRing } from 'lucide-react'
@@ -92,7 +92,7 @@ export function PushSubscribeButton() {
       >
         <div className="flex flex-col items-start">
           <span
-            className="text-[10px] font-semibold tracking-[0.2em] text-white/30"
+            className="text-[10px] font-semibold tracking-[0.2em] text-white/55"
             style={{ fontFamily: 'ui-monospace, monospace' }}
           >
             PUSH NOTIFICATION
@@ -105,7 +105,7 @@ export function PushSubscribeButton() {
                 : '値下げ・新着通知を受け取る'}
           </span>
           {state === 'denied' && (
-            <span className="mt-0.5 text-[10px] text-white/30">
+            <span className="mt-0.5 text-[10px] text-white/55">
               ブラウザの設定から通知を許可してください
             </span>
           )}
@@ -113,9 +113,9 @@ export function PushSubscribeButton() {
         {state === 'subscribed' ? (
           <BellOff size={20} className="text-red-400" />
         ) : state === 'denied' ? (
-          <Bell size={20} className="text-white/20" />
+          <Bell size={20} className="text-white/40" />
         ) : (
-          <BellRing size={20} className="text-white/40" />
+          <BellRing size={20} className="text-white/65" />
         )}
       </button>
 

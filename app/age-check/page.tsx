@@ -1,4 +1,4 @@
-import { confirmAge } from './actions'
+﻿import { confirmAge } from './actions'
 
 type Props = {
   searchParams: Promise<{ from?: string }>
@@ -54,7 +54,7 @@ export default async function AgeCheckPage({ searchParams }: Props) {
           >
             年齢確認
           </h1>
-          <p className="text-[13px] leading-6 text-white/40">
+          <p className="text-[13px] leading-6 text-white/65">
             本サービスはアダルトコンテンツを含みます。
             <br />
             18歳以上の方のみご利用いただけます。
@@ -81,7 +81,7 @@ export default async function AgeCheckPage({ searchParams }: Props) {
           {/* 18歳未満 */}
           <a
             href="https://www.yahoo.co.jp"
-            className="block w-full rounded-lg border border-white/12 py-4 text-center text-[15px] font-medium tracking-wide text-white/30 transition-colors duration-150 hover:border-white/20 hover:text-white/50"
+            className="block w-full rounded-lg border border-white/12 py-4 text-center text-[15px] font-medium tracking-wide text-white/55 transition-colors duration-150 hover:border-white/20 hover:text-white/70"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             18歳未満です・退場する
@@ -89,7 +89,7 @@ export default async function AgeCheckPage({ searchParams }: Props) {
         </div>
 
         {/* 注意文 */}
-        <p className="text-center text-[11px] leading-5 text-white/20">
+        <p className="text-center text-[11px] leading-5 text-white/40">
           「入場する」を押すことで、あなたが18歳以上であることを
           <br />
           確認したものとみなします。

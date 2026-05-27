@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useQueryState } from 'nuqs'
 import useSWR from 'swr'
@@ -42,7 +42,7 @@ function ResultCard({ item }: { item: ResultItem }) {
         ) : (
           <div className="aspect-[184/250] w-full bg-white/5" />
         )}
-        <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/50 backdrop-blur-sm">
+        <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/70 backdrop-blur-sm">
           PR
         </span>
         {item.discount_rate !== null && item.discount_rate >= 5 && (
@@ -57,7 +57,7 @@ function ResultCard({ item }: { item: ResultItem }) {
         <p className="line-clamp-2 text-[11px] leading-[1.4] text-white/70">{item.title}</p>
         <div className="flex flex-wrap items-center gap-1">
           {item.list_price !== null && item.discount_rate !== null && (
-            <span className="text-[10px] text-white/30 line-through">
+            <span className="text-[10px] text-white/55 line-through">
               ¥{item.list_price.toLocaleString('ja-JP')}
             </span>
           )}
@@ -72,8 +72,8 @@ function ResultCard({ item }: { item: ResultItem }) {
         {item.review_average !== null && item.review_count > 0 && (
           <div className="flex items-center gap-0.5">
             <span className="text-[10px] text-yellow-400">★</span>
-            <span className="text-[10px] text-white/50">{item.review_average.toFixed(1)}</span>
-            <span className="text-[9px] text-white/25">({item.review_count})</span>
+            <span className="text-[10px] text-white/70">{item.review_average.toFixed(1)}</span>
+            <span className="text-[9px] text-white/50">({item.review_count})</span>
           </div>
         )}
       </div>
@@ -110,7 +110,7 @@ export function SearchResults() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center gap-2 py-16 text-white/40">
+      <div className="flex flex-col items-center gap-2 py-16 text-white/65">
         <span className="text-3xl">⚠️</span>
         <p className="text-sm">検索に失敗しました。もう一度お試しください。</p>
       </div>
@@ -128,7 +128,7 @@ export function SearchResults() {
   if (!data || data.items.length === 0) {
     const isEmpty = !q || q.trim() === ''
     return (
-      <div className="flex flex-col items-center gap-2 py-16 text-white/40">
+      <div className="flex flex-col items-center gap-2 py-16 text-white/65">
         <span className="text-4xl">{isEmpty ? '🔍' : '😔'}</span>
         <p className="text-sm">
           {isEmpty ? 'キーワードを入力して検索' : `「${q}」の検索結果が見つかりませんでした`}
@@ -139,7 +139,7 @@ export function SearchResults() {
 
   return (
     <div>
-      <p className="mb-3 text-[11px] text-white/30">
+      <p className="mb-3 text-[11px] text-white/55">
         {data.total.toLocaleString('ja-JP')}件見つかりました
         {q && <span>（「{q}」）</span>}
       </p>

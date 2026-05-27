@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { fetchItemList } from '@/lib/dmm/client'
 import { sortByDiscount } from '@/lib/ranking'
 import { ProductCard } from '@/components/product/ProductCard'
@@ -44,7 +44,7 @@ export default async function SalePage() {
     return (
       <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
         {header}
-        <p className="px-4 pb-2 pt-1 text-[11px] text-white/30">
+        <p className="px-4 pb-2 pt-1 text-[11px] text-white/55">
           PR · 割引率の高い順 · {result.total_count.toLocaleString('ja-JP')}件以上
         </p>
         <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
@@ -63,7 +63,7 @@ export default async function SalePage() {
     return (
       <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
         {header}
-        <p className="py-16 text-center text-[13px] text-white/30">
+        <p className="py-16 text-center text-[13px] text-white/55">
           コンテンツを準備中です。しばらくお待ちください。
         </p>
       </main>

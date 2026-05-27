@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+﻿import { Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient, getCurrentUser } from '@/lib/supabase/server'
@@ -28,7 +28,7 @@ function RankingSkeleton({ label }: { label: string }) {
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <div className="mb-2 h-3 w-40 animate-pulse rounded bg-white/10" />
-      <p className="text-[9px] text-white/20">{label}</p>
+      <p className="text-[9px] text-white/40">{label}</p>
       <div className="mt-3 flex flex-col gap-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3">
@@ -57,12 +57,12 @@ async function CommunityActressRanking() {
     return (
       <div className="rounded-lg border border-white/8 bg-white/3 p-4">
         <p
-          className="mb-2 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+          className="mb-2 text-[10px] font-semibold tracking-[0.2em] text-white/55"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           みんなの推し女優ランキング
         </p>
-        <p className="text-[13px] text-white/40">
+        <p className="text-[13px] text-white/65">
           準備中。みんな！推し女優を登録してね！
         </p>
       </div>
@@ -87,7 +87,7 @@ async function CommunityActressRanking() {
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <p
-        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/55"
         style={{ fontFamily: 'ui-monospace, monospace' }}
       >
         みんなの推し女優ランキング
@@ -101,7 +101,7 @@ async function CommunityActressRanking() {
             <a href={`/actress/${id}`} className="flex-1 text-[13px] text-white/70 hover:text-white">
               {name}
             </a>
-            <span className="text-[11px] tabular-nums text-white/30">{count}人</span>
+            <span className="text-[11px] tabular-nums text-white/55">{count}人</span>
           </li>
         ))}
       </ol>
@@ -124,12 +124,12 @@ async function CommunityDirectorRanking() {
     return (
       <div className="rounded-lg border border-white/8 bg-white/3 p-4">
         <p
-          className="mb-2 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+          className="mb-2 text-[10px] font-semibold tracking-[0.2em] text-white/55"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           みんなの推し監督ランキング
         </p>
-        <p className="text-[13px] text-white/40">
+        <p className="text-[13px] text-white/65">
           準備中。みんな！推し監督を登録してね！
         </p>
       </div>
@@ -153,7 +153,7 @@ async function CommunityDirectorRanking() {
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <p
-        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/55"
         style={{ fontFamily: 'ui-monospace, monospace' }}
       >
         みんなの推し監督ランキング
@@ -165,7 +165,7 @@ async function CommunityDirectorRanking() {
               {i + 1}
             </span>
             <span className="flex-1 text-[13px] text-white/70">{name}</span>
-            <span className="text-[11px] tabular-nums text-white/30">{count}人</span>
+            <span className="text-[11px] tabular-nums text-white/55">{count}人</span>
           </li>
         ))}
       </ol>
@@ -179,7 +179,7 @@ function WorksScrollSkeleton({ label }: { label: string }) {
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <div className="mb-3 h-3 w-32 animate-pulse rounded bg-white/10" />
-      <p className="mb-2 text-[9px] text-white/20">{label}</p>
+      <p className="mb-2 text-[9px] text-white/40">{label}</p>
       <div className="flex gap-2 overflow-hidden">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-26.75 w-20 shrink-0 animate-pulse rounded-lg bg-white/8" />
@@ -214,7 +214,7 @@ async function OshiActressWorks({
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <p
-        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/55"
         style={{ fontFamily: 'ui-monospace, monospace' }}
       >
         {actressName} の最新作
@@ -237,10 +237,10 @@ async function OshiActressWorks({
                 className="aspect-80/107 w-full object-cover"
               />
             )}
-            <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+            <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/65">
               PR
             </span>
-            <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
+            <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/70">
               {item.title}
             </p>
           </a>
@@ -264,7 +264,7 @@ async function OshiDirectorWorks({ directorName }: { directorName: string }) {
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <p
-        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/55"
         style={{ fontFamily: 'ui-monospace, monospace' }}
       >
         {directorName} の最新作
@@ -287,10 +287,10 @@ async function OshiDirectorWorks({ directorName }: { directorName: string }) {
                 className="aspect-80/107 w-full object-cover"
               />
             )}
-            <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+            <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/65">
               PR
             </span>
-            <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
+            <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/70">
               {item.title}
             </p>
           </a>
@@ -333,11 +333,11 @@ async function OshiCombinedWorks({
       >
         推し女優 × 推し監督
       </p>
-      <p className="mb-3 text-[11px] text-white/40">
+      <p className="mb-3 text-[11px] text-white/65">
         {actressName} × {directorName}
       </p>
       {items.length === 0 ? (
-        <p className="text-[13px] text-white/30">コラボなし（登録データ上）</p>
+        <p className="text-[13px] text-white/55">コラボなし（登録データ上）</p>
       ) : (
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {items.map((item) => (
@@ -357,10 +357,10 @@ async function OshiCombinedWorks({
                   className="aspect-80/107 w-full object-cover"
                 />
               )}
-              <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/40">
+              <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/65">
                 PR
               </span>
-              <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/50">
+              <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/70">
                 {item.title}
               </p>
             </a>
@@ -382,7 +382,7 @@ async function TopActresses({ userId }: { userId: string }) {
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <p
-        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/55"
         style={{ fontFamily: 'ui-monospace, monospace' }}
       >
         よく見る女優 TOP5
@@ -399,7 +399,7 @@ async function TopActresses({ userId }: { userId: string }) {
                       ? 'bg-white/70 text-black'
                       : i === 2
                         ? 'bg-orange-400 text-black'
-                        : 'bg-white/10 text-white/50'
+                        : 'bg-white/10 text-white/70'
                 }`}
               >
                 {i + 1}
@@ -416,7 +416,7 @@ async function TopActresses({ userId }: { userId: string }) {
                 className="h-1.5 rounded-full bg-red-600/50"
                 style={{ width: `${Math.round((score / top[0].score) * 60)}px` }}
               />
-              <span className="w-8 text-right text-[10px] tabular-nums text-white/30">
+              <span className="w-8 text-right text-[10px] tabular-nums text-white/55">
                 {score}pt
               </span>
             </div>
@@ -514,7 +514,7 @@ export default async function MyPage() {
             <p className="text-2xl font-black tracking-tight text-white">
               {displayName}
             </p>
-            <p className="text-[12px] text-white/30">{email}</p>
+            <p className="text-[12px] text-white/55">{email}</p>
           </div>
           <div className="h-px w-full bg-white/8" />
         </div>
@@ -570,7 +570,7 @@ export default async function MyPage() {
           <PushSubscribeButton />
           <Link
             href="/forgot-password"
-            className="block w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/40 transition-colors duration-150 hover:border-white/20 hover:text-white/60"
+            className="block w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/65 transition-colors duration-150 hover:border-white/20 hover:text-white/60"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             パスワードを変更する
@@ -578,19 +578,19 @@ export default async function MyPage() {
           <form action={signOut}>
             <button
               type="submit"
-              className="w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/40 transition-colors duration-150 hover:border-white/20 hover:text-white/60"
+              className="w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/65 transition-colors duration-150 hover:border-white/20 hover:text-white/60"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               ログアウト
             </button>
           </form>
           <div className="mt-auto flex flex-col items-center gap-1.5 pt-2">
-            <p className="text-[10px] text-white/20">お問い合わせ</p>
+            <p className="text-[10px] text-white/40">お問い合わせ</p>
             <a
               href="https://x.com/zenyuu1978"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 text-white/30 transition-colors hover:border-white/25 hover:text-white/60"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 text-white/55 transition-colors hover:border-white/25 hover:text-white/60"
               aria-label="お問い合わせ"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >

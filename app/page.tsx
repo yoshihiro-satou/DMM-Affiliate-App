@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+﻿import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { fetchItemList, fetchDailySaleItems } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
@@ -96,7 +96,7 @@ async function DailySaleSection() {
 
 function ApiUnavailable() {
   return (
-    <p className="py-8 text-center text-[13px] text-white/30">
+    <p className="py-8 text-center text-[13px] text-white/55">
       コンテンツを準備中です。しばらくお待ちください。
     </p>
   )
@@ -144,7 +144,7 @@ export default function HomePage() {
           <span className="text-[9px] font-semibold tracking-[0.2em] text-pink-300/60">
             FANZA GUIDE
           </span>
-          <span className="text-[10px] text-white/25">
+          <span className="text-[10px] text-white/50">
             推し女優 · セール · ランキング
           </span>
         </div>
@@ -172,7 +172,7 @@ export default function HomePage() {
             <h2 className="text-[15px] font-black tracking-tight text-white">
               今日だけの特別価格
             </h2>
-            <span className="text-[10px] text-white/40">日替わり · 本日限り</span>
+            <span className="text-[10px] text-white/65">日替わり · 本日限り</span>
           </div>
         </div>
         <Suspense fallback={<LoadingGrid count={5} />}>
@@ -185,7 +185,7 @@ export default function HomePage() {
         <div className="mb-3 flex items-center justify-between">
           <div>
             <h2 className="text-[15px] font-black tracking-tight text-white">本日のおすすめ</h2>
-            <span className="text-[10px] text-white/40">評価が上昇中です</span>
+            <span className="text-[10px] text-white/65">評価が上昇中です</span>
           </div>
           <a href="/ranking?period=new" className="text-[13px] font-bold text-red-400 hover:text-red-300 active:text-red-500">
             もっと見る →

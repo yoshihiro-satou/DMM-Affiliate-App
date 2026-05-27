@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useQueryState } from 'nuqs'
 import { useTransition, useEffect, useRef } from 'react'
@@ -41,7 +41,7 @@ export function SearchInput() {
     <div className="relative flex items-center">
       <Search
         size={16}
-        className={`absolute left-3 transition-colors ${isPending ? 'text-red-400' : 'text-white/30'}`}
+        className={`absolute left-3 transition-colors ${isPending ? 'text-red-400' : 'text-white/55'}`}
       />
       <input
         ref={inputRef}
@@ -50,13 +50,13 @@ export function SearchInput() {
         defaultValue={q ?? ''}
         onChange={(e) => handleChange(e.target.value)}
         placeholder="作品名・女優名・ジャンルで検索..."
-        className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-9 pr-9 text-[14px] text-white placeholder:text-white/25 focus:border-white/20 focus:outline-none"
+        className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-9 pr-9 text-[14px] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none"
         style={{ WebkitTapHighlightColor: 'transparent' }}
       />
       {q && (
         <button
           onClick={handleClear}
-          className="absolute right-3 text-white/30 active:text-white/60"
+          className="absolute right-3 text-white/55 active:text-white/60"
           style={{ WebkitTapHighlightColor: 'transparent' }}
         >
           <X size={16} />

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRouter } from 'next/navigation'
 
@@ -27,7 +27,7 @@ export function RankingTabs({ currentPeriod }: Props) {
           className={`whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
             currentPeriod === key
               ? 'bg-red-600 text-white'
-              : 'bg-white/8 text-white/50 hover:bg-white/15'
+              : 'bg-white/8 text-white/70 hover:bg-white/15'
           }`}
           style={{ WebkitTapHighlightColor: 'transparent' }}
         >

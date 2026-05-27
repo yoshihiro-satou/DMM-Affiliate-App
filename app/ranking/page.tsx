@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { fetchItemList, fetchActressList } from '@/lib/dmm/client'
 import type { FetchItemListParams } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
@@ -107,7 +107,7 @@ export default async function RankingPage({ searchParams }: Props) {
             RANKING
           </span>
           <h1 className="mt-1 text-[22px] font-black tracking-tight text-white">{label}</h1>
-          <p className="mt-0.5 text-[11px] text-white/30">
+          <p className="mt-0.5 text-[11px] text-white/55">
             PR · レビュー上位作品への出演数順
           </p>
         </div>
@@ -168,7 +168,7 @@ export default async function RankingPage({ searchParams }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {pageHeader}
-        <p className="px-4 pb-2 text-[11px] text-white/30">
+        <p className="px-4 pb-2 text-[11px] text-white/55">
           PR · {result.total_count.toLocaleString('ja-JP')}件以上
         </p>
         <div className="grid grid-cols-2 grid-flow-dense gap-2 px-3 pb-2 md:grid-cols-4">
@@ -187,7 +187,7 @@ export default async function RankingPage({ searchParams }: Props) {
     return (
       <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
         {pageHeader}
-        <p className="py-16 text-center text-[13px] text-white/30">
+        <p className="py-16 text-center text-[13px] text-white/55">
           コンテンツを準備中です。しばらくお待ちください。
         </p>
       </main>

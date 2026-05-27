@@ -1,4 +1,4 @@
-import Image from 'next/image'
+﻿import Image from 'next/image'
 import type { DmmItem } from '@/types/dmm'
 import { parsePrice, calcDiscountRate } from '@/lib/ranking'
 
@@ -72,7 +72,7 @@ export function GridCard({ item, rank, featured = false, dateEnd }: Props) {
         )}
 
         {/* PR */}
-        <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[8px] font-bold tracking-wider text-white/40 backdrop-blur-sm">
+        <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[8px] font-bold tracking-wider text-white/65 backdrop-blur-sm">
           PR
         </span>
 
@@ -121,7 +121,7 @@ export function GridCard({ item, rank, featured = false, dateEnd }: Props) {
             </p>
             <div className="mt-1 flex items-center gap-2">
               {listPrice !== null && discount !== null && (
-                <span className="text-[11px] text-white/35 line-through">
+                <span className="text-[11px] text-white/60 line-through">
                   ¥{listPrice.toLocaleString('ja-JP')}
                 </span>
               )}
@@ -143,7 +143,7 @@ export function GridCard({ item, rank, featured = false, dateEnd }: Props) {
           <p className="line-clamp-2 text-[10px] leading-tight text-white/70">{item.title}</p>
           <div className="flex items-center gap-1">
             {listPrice !== null && discount !== null && (
-              <span className="text-[9px] text-white/30 line-through">
+              <span className="text-[9px] text-white/55 line-through">
                 ¥{listPrice.toLocaleString('ja-JP')}
               </span>
             )}

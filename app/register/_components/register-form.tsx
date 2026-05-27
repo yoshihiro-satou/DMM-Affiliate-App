@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useActionState } from 'react'
 import Link from 'next/link'
@@ -12,7 +12,7 @@ export function RegisterForm() {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="display_name"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           ニックネーム
@@ -32,7 +32,7 @@ export function RegisterForm() {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="email"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           メールアドレス
@@ -52,7 +52,7 @@ export function RegisterForm() {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="password"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           パスワード
@@ -72,7 +72,7 @@ export function RegisterForm() {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="confirm_password"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           パスワード確認
@@ -102,7 +102,7 @@ export function RegisterForm() {
         {pending ? '作成中...' : 'アカウントを作成'}
       </button>
 
-      <p className="text-center text-[11px] leading-5 text-white/20">
+      <p className="text-center text-[11px] leading-5 text-white/40">
         登録後に確認メールを送信します。
         <br />
         メールのリンクをタップするとログインが完了します。
@@ -111,7 +111,7 @@ export function RegisterForm() {
       <div className="text-center">
         <Link
           href="/login"
-          className="text-[11px] text-white/30 underline underline-offset-2"
+          className="text-[11px] text-white/55 underline underline-offset-2"
         >
           すでにアカウントをお持ちの方はこちら
         </Link>

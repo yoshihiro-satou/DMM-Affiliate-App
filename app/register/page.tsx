@@ -1,4 +1,4 @@
-import { RegisterForm } from './_components/register-form'
+﻿import { RegisterForm } from './_components/register-form'
 
 export const metadata = {
   title: '新規登録',
@@ -48,7 +48,7 @@ export default function RegisterPage() {
           >
             新規登録
           </h1>
-          <p className="text-[13px] leading-6 text-white/40">
+          <p className="text-[13px] leading-6 text-white/65">
             お気に入り・スワイプ履歴・通知を
             <br />
             どのデバイスからでも引き継げます。

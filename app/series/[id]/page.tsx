@@ -1,4 +1,4 @@
-import Image from 'next/image'
+﻿import Image from 'next/image'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { fetchSeriesItems } from '@/lib/dmm/series'
@@ -121,12 +121,12 @@ export default async function SeriesDetailPage({ params }: Props) {
           <h1 className="line-clamp-2 text-[18px] font-black leading-snug tracking-tight text-white">
             {seriesName}
           </h1>
-          <p className="text-[11px] text-white/40">全{totalCount}巻</p>
+          <p className="text-[11px] text-white/65">全{totalCount}巻</p>
         </div>
       </div>
 
       {/* PR */}
-      <p className="px-4 py-1 text-[9px] text-white/20">PR · FANZAアフィリエイトリンク</p>
+      <p className="px-4 py-1 text-[9px] text-white/40">PR · FANZAアフィリエイトリンク</p>
 
       {/* 進捗セクション */}
       <div className="border-b border-white/8 px-4 pb-4 pt-2">
@@ -137,7 +137,7 @@ export default async function SeriesDetailPage({ params }: Props) {
                 {readCount}巻読了 / 全{totalCount}巻
               </span>
               {remaining > 0 ? (
-                <span className="text-[11px] text-white/40">あと{remaining}巻で完走</span>
+                <span className="text-[11px] text-white/65">あと{remaining}巻で完走</span>
               ) : (
                 <span className="text-[11px] font-bold text-yellow-400">完走達成!</span>
               )}
@@ -150,7 +150,7 @@ export default async function SeriesDetailPage({ params }: Props) {
             </div>
           </>
         ) : (
-          <p className="text-[12px] text-white/30">ログインして読書進捗を記録しましょう</p>
+          <p className="text-[12px] text-white/55">ログインして読書進捗を記録しましょう</p>
         )}
       </div>
 
@@ -206,7 +206,7 @@ export default async function SeriesDetailPage({ params }: Props) {
                       <div className="aspect-[184/250] w-full bg-white/5" />
                     )}
 
-                    <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[8px] font-bold tracking-wider text-white/40 backdrop-blur-sm">
+                    <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[8px] font-bold tracking-wider text-white/65 backdrop-blur-sm">
                       PR
                     </span>
 
@@ -218,7 +218,7 @@ export default async function SeriesDetailPage({ params }: Props) {
                       </div>
                     )}
 
-                    <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1 py-px text-[9px] text-white/50 backdrop-blur-sm">
+                    <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1 py-px text-[9px] text-white/70 backdrop-blur-sm">
                       {i + 1}巻
                     </span>
                   </a>
@@ -238,7 +238,7 @@ export default async function SeriesDetailPage({ params }: Props) {
                     {item.title}
                   </p>
                   {price !== null && (
-                    <p className="mt-0.5 text-[10px] font-bold tabular-nums text-white/40">
+                    <p className="mt-0.5 text-[10px] font-bold tabular-nums text-white/65">
                       ¥{price.toLocaleString('ja-JP')}
                     </p>
                   )}

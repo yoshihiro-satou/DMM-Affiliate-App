@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
@@ -43,7 +43,7 @@ export function BadgeToast({ badges, onDismiss }: Props) {
                       BADGE UNLOCKED
                     </span>
                     <span className="text-[14px] font-black text-white">{def.label}</span>
-                    <span className="text-[10px] text-white/40">{def.description}</span>
+                    <span className="text-[10px] text-white/65">{def.description}</span>
                   </div>
                 </div>
               )

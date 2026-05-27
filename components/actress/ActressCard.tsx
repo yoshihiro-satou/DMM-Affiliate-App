@@ -1,4 +1,4 @@
-import Image from 'next/image'
+﻿import Image from 'next/image'
 import Link from 'next/link'
 import type { DmmActress } from '@/types/dmm'
 
@@ -36,7 +36,7 @@ export function ActressCard({ actress }: Props) {
       <div>
         <p className="line-clamp-1 text-[15px] font-semibold text-white/90">{actress.name}</p>
         {sub && (
-          <p className="mt-1 text-[12px] text-white/50">{sub}</p>
+          <p className="mt-1 text-[12px] text-white/70">{sub}</p>
         )}
       </div>
     </Link>

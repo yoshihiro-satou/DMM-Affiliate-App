@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -72,7 +72,7 @@ export function OshiActressSetting({ current }: Props) {
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
       <p
-        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/30"
+        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/55"
         style={{ fontFamily: 'ui-monospace, monospace' }}
       >
         推し女優
@@ -88,12 +88,12 @@ export function OshiActressSetting({ current }: Props) {
               {oshi.name}
             </a>
           ) : (
-            <span className="text-[13px] text-white/30">まだ設定されていません</span>
+            <span className="text-[13px] text-white/55">まだ設定されていません</span>
           )}
           <div className="flex shrink-0 gap-2">
             <button
               onClick={startEditing}
-              className="rounded-md border border-white/12 px-3 py-1.5 text-[11px] text-white/50 transition-colors hover:border-white/20 hover:text-white"
+              className="rounded-md border border-white/12 px-3 py-1.5 text-[11px] text-white/70 transition-colors hover:border-white/20 hover:text-white"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {oshi ? '変更' : '設定する'}
@@ -102,7 +102,7 @@ export function OshiActressSetting({ current }: Props) {
               <button
                 onClick={clear}
                 disabled={saving}
-                className="rounded-md border border-white/8 px-3 py-1.5 text-[11px] text-white/30 transition-colors hover:border-white/12 hover:text-white/60 disabled:opacity-40"
+                className="rounded-md border border-white/8 px-3 py-1.5 text-[11px] text-white/55 transition-colors hover:border-white/12 hover:text-white/60 disabled:opacity-40"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 解除
@@ -113,18 +113,18 @@ export function OshiActressSetting({ current }: Props) {
       ) : (
         <div className="flex flex-col gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/30" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/55" />
             <input
               autoFocus
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="女優名で検索"
-              className="w-full rounded-lg bg-white/8 py-2.5 pl-9 pr-4 text-[13px] text-white outline-none placeholder:text-white/30 focus:bg-white/12 transition-colors"
+              className="w-full rounded-lg bg-white/8 py-2.5 pl-9 pr-4 text-[13px] text-white outline-none placeholder:text-white/55 focus:bg-white/12 transition-colors"
             />
           </div>
 
-          {loading && <p className="text-[11px] text-white/30">検索中...</p>}
+          {loading && <p className="text-[11px] text-white/55">検索中...</p>}
 
           {results.length > 0 && (
             <ul className="flex flex-col divide-y divide-white/5">
@@ -145,7 +145,7 @@ export function OshiActressSetting({ current }: Props) {
           )}
 
           {!loading && query.trim() && results.length === 0 && (
-            <p className="text-[11px] text-white/30">見つかりませんでした</p>
+            <p className="text-[11px] text-white/55">見つかりませんでした</p>
           )}
         </div>
       )}

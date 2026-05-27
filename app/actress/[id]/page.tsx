@@ -1,4 +1,4 @@
-import Image from 'next/image'
+﻿import Image from 'next/image'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { fetchActressList, fetchItemList } from '@/lib/dmm/client'
@@ -143,12 +143,12 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
             {actress.name}
           </h1>
           {actress.ruby && (
-            <p className="text-[11px] text-white/30">{actress.ruby}</p>
+            <p className="text-[11px] text-white/55">{actress.ruby}</p>
           )}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {profileStats.map((s) => (
-              <span key={s.label} className="text-[11px] text-white/50">
-                <span className="text-white/25">{s.label}: </span>
+              <span key={s.label} className="text-[11px] text-white/70">
+                <span className="text-white/50">{s.label}: </span>
                 {s.value}
               </span>
             ))}
@@ -158,7 +158,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
 
       {/* FANZA リンク + PR */}
       <div className="flex items-center justify-between px-4 py-1.5">
-        <p className="text-[9px] text-white/20">PR · FANZAアフィリエイトリンク</p>
+        <p className="text-[9px] text-white/40">PR · FANZAアフィリエイトリンク</p>
         {actress.listURL?.digital && (
           <a
             href={actress.listURL.digital}
@@ -178,7 +178,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
       {/* 作品グリッド */}
       <div className="px-3 pt-3">
         {works.length === 0 ? (
-          <p className="py-16 text-center text-[13px] text-white/30">作品が見つかりませんでした</p>
+          <p className="py-16 text-center text-[13px] text-white/55">作品が見つかりませんでした</p>
         ) : (
           <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
             {works.map((item, i) => (

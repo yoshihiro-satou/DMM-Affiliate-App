@@ -1,4 +1,4 @@
-import Image from 'next/image'
+﻿import Image from 'next/image'
 import type { DmmItem } from '@/types/dmm'
 import { parsePrice, calcDiscountRate } from '@/lib/ranking'
 
@@ -77,7 +77,7 @@ export function ProductCard({ item, rank, overlaySlot }: Props) {
         )}
 
         {/* PR表記 */}
-        <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/50 backdrop-blur-sm">
+        <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/70 backdrop-blur-sm">
           PR
         </span>
 
@@ -115,7 +115,7 @@ export function ProductCard({ item, rank, overlaySlot }: Props) {
         {/* 価格 */}
         <div className="flex flex-wrap items-center gap-1">
           {listPrice !== null && discount !== null && (
-            <span className="text-[10px] text-white/30 line-through">
+            <span className="text-[10px] text-white/55 line-through">
               ¥{listPrice.toLocaleString('ja-JP')}
             </span>
           )}
@@ -132,8 +132,8 @@ export function ProductCard({ item, rank, overlaySlot }: Props) {
         {reviewAvg !== null && reviewCount > 0 && (
           <div className="flex items-center gap-0.5">
             <span className="text-[10px] text-yellow-400">★</span>
-            <span className="text-[10px] text-white/50">{reviewAvg.toFixed(1)}</span>
-            <span className="text-[9px] text-white/25">({reviewCount})</span>
+            <span className="text-[10px] text-white/70">{reviewAvg.toFixed(1)}</span>
+            <span className="text-[9px] text-white/50">({reviewCount})</span>
           </div>
         )}
       </div>

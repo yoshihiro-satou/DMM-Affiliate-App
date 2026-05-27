@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useTransition, useRef, useCallback, useMemo } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'motion/react'
@@ -238,7 +238,7 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe, showHint }: SwipeCardProps)
           {/* 作品情報 */}
           <div className="space-y-1.5">
             {item.iteminfo?.actress?.[0]?.name && (
-              <p className="text-xs font-medium text-white/50">
+              <p className="text-xs font-medium text-white/70">
                 {item.iteminfo.actress[0].name}
               </p>
             )}
@@ -252,7 +252,7 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe, showHint }: SwipeCardProps)
                 <span className="text-xs font-semibold text-white/60">¥{item.prices.price}</span>
               )}
               {item.iteminfo?.maker?.[0]?.name && (
-                <span className="truncate text-xs text-white/30">
+                <span className="truncate text-xs text-white/55">
                   {item.iteminfo.maker[0].name}
                 </span>
               )}
@@ -263,14 +263,14 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe, showHint }: SwipeCardProps)
               {item.review?.average && Number(item.review.average) > 0 && (
                 <div className="flex items-center gap-1">
                   <span className="text-yellow-400 text-xs">{'★'.repeat(Math.round(Number(item.review.average)))}</span>
-                  <span className="text-[10px] text-white/30">
+                  <span className="text-[10px] text-white/55">
                     {item.review.average}
                     {item.review.count ? `（${item.review.count}件）` : ''}
                   </span>
                 </div>
               )}
               {item.date && (
-                <span className="text-[10px] text-white/25">
+                <span className="text-[10px] text-white/50">
                   {item.date.slice(0, 10)}
                 </span>
               )}
@@ -282,7 +282,7 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe, showHint }: SwipeCardProps)
                 {item.iteminfo.genre.slice(0, 6).map((g) => (
                   <span
                     key={g.id}
-                    className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-white/35"
+                    className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-white/60"
                   >
                     {g.name}
                   </span>
@@ -354,7 +354,7 @@ function SwipeCard({ item, isTop, stackIdx, onSwipe, showHint }: SwipeCardProps)
             </motion.div>
           </div>
 
-          <p className="relative text-white/50 text-xs tracking-wide">
+          <p className="relative text-white/70 text-xs tracking-wide">
             スワイプすると閉じます
           </p>
         </motion.div>

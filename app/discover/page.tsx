@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { fetchItemList } from '@/lib/dmm/client'
 import { SwipeFeedClient } from './SwipeFeedClient'
 
@@ -19,7 +19,7 @@ export default async function DiscoverPage() {
   } catch {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center pb-[calc(4rem+env(safe-area-inset-bottom))]">
-        <p className="text-[13px] text-white/30">コンテンツを準備中です。しばらくお待ちください。</p>
+        <p className="text-[13px] text-white/55">コンテンツを準備中です。しばらくお待ちください。</p>
       </main>
     )
   }

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BookOpen } from 'lucide-react'
@@ -44,7 +44,7 @@ export default async function SeriesListPage() {
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="border-b border-white/8 px-4 py-4">
         <h1 className="text-[22px] font-black tracking-tight text-white">シリーズ</h1>
-        <p className="mt-0.5 text-[11px] text-white/30">{series.length}件フォロー中</p>
+        <p className="mt-0.5 text-[11px] text-white/55">{series.length}件フォロー中</p>
       </div>
 
       {series.length === 0 ? (
@@ -80,9 +80,9 @@ function SeriesCard({
         <p className="line-clamp-2 text-[14px] font-semibold leading-snug text-white">
           {series.series_name}
         </p>
-        <p className="text-[11px] text-white/30">{readCount}巻読了</p>
+        <p className="text-[11px] text-white/55">{readCount}巻読了</p>
       </div>
-      <span className="shrink-0 text-[18px] text-white/20">›</span>
+      <span className="shrink-0 text-[18px] text-white/40">›</span>
     </Link>
   )
 }
@@ -92,8 +92,8 @@ function EmptyState() {
     <div className="flex flex-col items-center justify-center gap-4 px-8 py-20 text-center">
       <BookOpen size={48} className="text-white/10" />
       <div>
-        <p className="text-[15px] font-semibold text-white/40">フォロー中のシリーズなし</p>
-        <p className="mt-1 text-[12px] text-white/25">
+        <p className="text-[15px] font-semibold text-white/65">フォロー中のシリーズなし</p>
+        <p className="mt-1 text-[12px] text-white/50">
           シリーズページでフォローして新刊通知を受け取りましょう
         </p>
       </div>

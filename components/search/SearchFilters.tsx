@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useQueryState } from 'nuqs'
 import { useTransition } from 'react'
@@ -21,7 +21,7 @@ export function SearchFilters() {
           className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors ${
             sort === value
               ? 'border-red-600 bg-red-600/20 text-red-400'
-              : 'border-white/10 bg-white/5 text-white/50 active:border-white/20'
+              : 'border-white/10 bg-white/5 text-white/70 active:border-white/20'
           }`}
           style={{ WebkitTapHighlightColor: 'transparent' }}
         >

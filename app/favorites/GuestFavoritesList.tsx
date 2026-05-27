@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useSyncExternalStore, useMemo, useState } from 'react'
 import Image from 'next/image'
@@ -39,14 +39,14 @@ export function GuestFavoritesList() {
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="border-b border-white/8 px-4 py-4">
         <h1 className="text-[22px] font-black tracking-tight text-white">お気に入り</h1>
-        <p className="mt-0.5 text-[11px] text-white/30">{items.length}件</p>
+        <p className="mt-0.5 text-[11px] text-white/55">{items.length}件</p>
       </div>
 
       {/* ログイン促進バナー */}
       <div className="mx-4 mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
         <div>
           <p className="text-[12px] font-semibold text-white">ゲストモード（5件まで）</p>
-          <p className="mt-0.5 text-[11px] text-white/40">登録すると無制限に保存できます</p>
+          <p className="mt-0.5 text-[11px] text-white/65">登録すると無制限に保存できます</p>
         </div>
         <Link
           href="/login"
@@ -95,7 +95,7 @@ function GuestFavCard({
         ) : (
           <div className="aspect-[184/250] w-full bg-white/5" />
         )}
-        <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/50 backdrop-blur-sm">
+        <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/70 backdrop-blur-sm">
           PR
         </span>
         <button
@@ -128,8 +128,8 @@ function EmptyState() {
     <div className="flex flex-col items-center justify-center gap-4 px-8 py-20 text-center">
       <Heart size={48} className="text-white/10" />
       <div>
-        <p className="text-[15px] font-semibold text-white/40">まだお気に入りがありません</p>
-        <p className="mt-1 text-[12px] text-white/25">
+        <p className="text-[15px] font-semibold text-white/65">まだお気に入りがありません</p>
+        <p className="mt-1 text-[12px] text-white/50">
           作品のハートボタンをタップして保存しましょう
         </p>
       </div>

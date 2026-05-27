@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useActionState } from 'react'
 import Link from 'next/link'
@@ -12,7 +12,7 @@ export function ForgotForm() {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="email"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           メールアドレス
@@ -42,7 +42,7 @@ export function ForgotForm() {
         {pending ? '送信中...' : 'リセットメールを送信'}
       </button>
 
-      <p className="text-center text-[11px] leading-5 text-white/20">
+      <p className="text-center text-[11px] leading-5 text-white/40">
         登録済みのメールアドレスにリセットリンクを送信します。
         <br />
         リンクの有効期限は1時間です。
@@ -51,7 +51,7 @@ export function ForgotForm() {
       <div className="text-center">
         <Link
           href="/login"
-          className="text-[11px] text-white/30 underline underline-offset-2"
+          className="text-[11px] text-white/55 underline underline-offset-2"
         >
           ログインページに戻る
         </Link>

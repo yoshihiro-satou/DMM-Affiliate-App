@@ -1,4 +1,4 @@
-import { UpdateForm } from './_components/update-form'
+﻿import { UpdateForm } from './_components/update-form'
 
 export const metadata = {
   title: '新しいパスワードを設定',
@@ -48,7 +48,7 @@ export default function UpdatePasswordPage() {
           >
             パスワードを設定
           </h1>
-          <p className="text-[13px] leading-6 text-white/40">
+          <p className="text-[13px] leading-6 text-white/65">
             新しいパスワードを入力してください。
           </p>
         </div>

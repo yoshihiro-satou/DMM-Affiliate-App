@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useActionState } from 'react'
 import { updatePassword } from '../actions'
@@ -11,7 +11,7 @@ export function UpdateForm() {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="password"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           新しいパスワード
@@ -31,7 +31,7 @@ export function UpdateForm() {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="confirm_password"
-          className="text-[11px] font-semibold tracking-[0.2em] text-white/40"
+          className="text-[11px] font-semibold tracking-[0.2em] text-white/65"
           style={{ fontFamily: 'ui-monospace, monospace' }}
         >
           パスワード確認

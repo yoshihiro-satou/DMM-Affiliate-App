@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -52,7 +52,7 @@ export function BottomNav() {
                 <Icon
                   size={22}
                   strokeWidth={isActive ? 2 : 1.5}
-                  className={isActive ? 'text-white' : 'text-white/30'}
+                  className={isActive ? 'text-white' : 'text-white/55'}
                 />
                 {href === '/favorites' && (
                   <span
@@ -64,7 +64,7 @@ export function BottomNav() {
               </span>
               <span
                 className={`text-[10px] tracking-wide ${
-                  isActive ? 'text-white' : 'text-white/25'
+                  isActive ? 'text-white' : 'text-white/50'
                 }`}
               >
                 {label}

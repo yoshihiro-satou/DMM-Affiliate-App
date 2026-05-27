@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import dynamic from 'next/dynamic'
 import type { DmmItem } from '@/types/dmm'
@@ -8,7 +8,7 @@ const SwipeFeed = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-dvh items-center justify-center bg-black text-white/40">
+      <div className="flex h-dvh items-center justify-center bg-black text-white/65">
         <p>読み込み中...</p>
       </div>
     ),

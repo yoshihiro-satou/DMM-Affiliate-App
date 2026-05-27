@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 import { Check } from 'lucide-react'
@@ -40,7 +40,7 @@ export function ReadToggleButton({ itemId, seriesId, isRead: initialIsRead, tota
         className={`mt-1 flex w-full items-center justify-center gap-1 rounded py-1 text-[10px] font-semibold transition-colors disabled:opacity-60 ${
           isRead
             ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-            : 'bg-white/5 text-white/40 hover:bg-white/10'
+            : 'bg-white/5 text-white/65 hover:bg-white/10'
         }`}
       >
         {isRead ? (

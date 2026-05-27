@@ -1,4 +1,4 @@
-import { LoginForm } from './_components/login-form'
+﻿import { LoginForm } from './_components/login-form'
 
 type Props = {
   searchParams: Promise<{ error?: string; registered?: string; updated?: string }>
@@ -62,7 +62,7 @@ export default async function LoginPage({ searchParams }: Props) {
           >
             ログイン
           </h1>
-          <p className="text-[13px] leading-6 text-white/40">
+          <p className="text-[13px] leading-6 text-white/65">
             お気に入り・スワイプ履歴・通知を
             <br />
             どのデバイスからでも引き継げます。
