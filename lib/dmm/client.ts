@@ -4,14 +4,26 @@ import {
   DmmItemListResponseSchema,
   DmmActressResponseSchema,
   DmmFloorListResponseSchema,
+  DmmGenreResponseSchema,
 } from '@/types/dmm'
-import type { DmmItem, DmmItemListResponse, DmmActressResponse, DmmFloorListResponse, ItemSort, ActressSort, Article } from '@/types/dmm'
+import type { DmmItem, DmmItemListResponse, DmmActressResponse, DmmFloorListResponse, DmmGenreResponse, ItemSort, ActressSort, Article } from '@/types/dmm'
 
 const BASE_URL = 'https://api.dmm.com/affiliate/v3'
 
+type CfEnv = Record<string, string | undefined>
+
+function getCfEnv(): CfEnv {
+  // Cloudflare Workers runtime stores the request env in globalThis via AsyncLocalStorage
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctx = (globalThis as any)[Symbol.for('__cloudflare-context__')]
+  return (ctx?.env ?? {}) as CfEnv
+}
+
 function getCredentials() {
-  const api_id = process.env.DMM_API_ID
-  const affiliate_id = process.env.DMM_AFFILIATE_ID
+  const cfEnv = getCfEnv()
+  // Use || (not ??) to treat empty string as missing
+  const api_id = process.env.DMM_API_ID || cfEnv.DMM_API_ID
+  const affiliate_id = process.env.DMM_AFFILIATE_ID || cfEnv.DMM_AFFILIATE_ID
   if (!api_id || !affiliate_id) {
     throw new Error('DMM_API_ID または DMM_AFFILIATE_ID が未設定です')
   }
@@ -66,9 +78,7 @@ export const fetchItemList = cache(
       mono_stock: params.mono_stock,
     })
 
-    const res = await fetch(`${BASE_URL}/ItemList?${searchParams}`, {
-      next: { revalidate: 3600 },
-    })
+    const res = await fetch(`${BASE_URL}/ItemList?${searchParams}`)
 
     if (!res.ok) {
       throw new Error(`DMM ItemList API Error: ${res.status} ${res.statusText}`)
@@ -125,9 +135,7 @@ export const fetchActressList = cache(
       lte_birthday: params.lte_birthday,
     })
 
-    const res = await fetch(`${BASE_URL}/ActressSearch?${searchParams}`, {
-      next: { revalidate: 3600 },
-    })
+    const res = await fetch(`${BASE_URL}/ActressSearch?${searchParams}`)
 
     if (!res.ok) {
       throw new Error(`DMM ActressSearch API Error: ${res.status} ${res.statusText}`)
@@ -160,9 +168,7 @@ export const fetchFloorList = cache(
   async (): Promise<DmmFloorListResponse['result']> => {
     const searchParams = buildParams({})
 
-    const res = await fetch(`${BASE_URL}/FloorList?${searchParams}`, {
-      next: { revalidate: 86400 },
-    })
+    const res = await fetch(`${BASE_URL}/FloorList?${searchParams}`)
 
     if (!res.ok) {
       throw new Error(`DMM FloorList API Error: ${res.status} ${res.statusText}`)
@@ -191,7 +197,7 @@ export function secondsUntilMidnightJST(): number {
   return Math.max(60, Math.floor((nextMidnightUTC.getTime() - now.getTime()) / 1000))
 }
 
-async function fetchBatch(sort: 'rank' | 'review', ttl: number): Promise<DmmItem[]> {
+async function fetchBatch(sort: 'rank' | 'review'): Promise<DmmItem[]> {
   const searchParams = buildParams({
     site: 'FANZA',
     service: 'digital',
@@ -199,9 +205,7 @@ async function fetchBatch(sort: 'rank' | 'review', ttl: number): Promise<DmmItem
     hits: 100,
     sort,
   })
-  const res = await fetch(`${BASE_URL}/ItemList?${searchParams}`, {
-    next: { revalidate: ttl },
-  })
+  const res = await fetch(`${BASE_URL}/ItemList?${searchParams}`)
   if (!res.ok) return []
   const json = await res.json()
   const parsed = DmmItemListResponseSchema.safeParse(json)
@@ -209,12 +213,10 @@ async function fetchBatch(sort: 'rank' | 'review', ttl: number): Promise<DmmItem
 }
 
 export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
-  const ttl = secondsUntilMidnightJST()
-
   // rank上位100 + review上位100 を並列取得して合算
   const [rankItems, reviewItems] = await Promise.all([
-    fetchBatch('rank', ttl),
-    fetchBatch('review', ttl),
+    fetchBatch('rank'),
+    fetchBatch('review'),
   ])
 
   const today = new Date().toISOString().slice(0, 10)
@@ -237,6 +239,50 @@ export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
     })
     .slice(0, hits)
 }
+
+// ------------------------------------
+// ジャンル一覧（日次キャッシュ）
+// ------------------------------------
+export type FetchGenreListParams = {
+  floor_id?: string
+  hits?: number
+  offset?: number
+  initial?: string
+}
+
+export const fetchGenreList = cache(
+  async (params: FetchGenreListParams = {}): Promise<DmmGenreResponse['result']> => {
+    const searchParams = buildParams({
+      floor_id: params.floor_id ?? '43',
+      hits: params.hits ?? 100,
+      offset: params.offset ?? 1,
+      initial: params.initial,
+    })
+
+    const res = await fetch(`${BASE_URL}/GenreSearch?${searchParams}`)
+
+    if (!res.ok) {
+      throw new Error(`DMM GenreSearch API Error: ${res.status} ${res.statusText}`)
+    }
+
+    const json = await res.json()
+    const parsed = DmmGenreResponseSchema.safeParse(json)
+    if (!parsed.success) {
+      const raw = json?.result
+      if (raw && typeof raw === 'object') {
+        return {
+          status: raw.status,
+          result_count: Number(raw.result_count ?? 0),
+          total_count: Number(raw.total_count ?? 0),
+          first_position: Number(raw.first_position ?? 1),
+          genre: Array.isArray(raw.genre) ? raw.genre : [],
+        }
+      }
+      throw new Error(`DMM GenreSearch レスポンスパースエラー: ${parsed.error.message}`)
+    }
+    return parsed.data.result
+  }
+)
 
 // ------------------------------------
 // 複数リクエストを直列実行（レート制限対策）

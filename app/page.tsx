@@ -174,6 +174,9 @@ export default function HomePage() {
             </h2>
             <span className="text-[10px] text-white/65">日替わり · 本日限り</span>
           </div>
+          <a href="/sale" className="text-[13px] font-bold text-red-400 hover:text-red-300 active:text-red-500">
+            セール一覧 →
+          </a>
         </div>
         <Suspense fallback={<LoadingGrid count={5} />}>
           <DailyDealsSection />
@@ -194,6 +197,16 @@ export default function HomePage() {
         <Suspense fallback={<LoadingGrid count={4} />}>
           <DailySaleSection />
         </Suspense>
+      </section>
+
+      {/* 女優一覧への誘導 */}
+      <section className="px-4 pt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[15px] font-black tracking-tight text-white">人気女優</h2>
+          <a href="/actress" className="text-[13px] font-bold text-red-400 hover:text-red-300 active:text-red-500">
+            女優一覧 →
+          </a>
+        </div>
       </section>
 
       {/* あなたへのおすすめ（クライアントサイド・SWR） */}

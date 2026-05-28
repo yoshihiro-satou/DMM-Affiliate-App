@@ -41,8 +41,24 @@ export default async function SalePage() {
     })
     const items = sortByDiscount(result.items)
 
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'セール・値引き作品',
+      itemListElement: items.slice(0, 10).map((item, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: item.title,
+        url: item.affiliateURL,
+      })),
+    }
+
     return (
       <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {header}
         <p className="px-4 pb-2 pt-1 text-[11px] text-white/55">
           PR · 割引率の高い順 · {result.total_count.toLocaleString('ja-JP')}件以上

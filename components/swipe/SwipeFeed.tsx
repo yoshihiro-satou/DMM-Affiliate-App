@@ -12,6 +12,7 @@ import { SampleVideoPlayer } from './SampleVideoPlayer'
 import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
 import { BadgeToast } from '@/components/ui/BadgeToast'
 import { useAuth } from '@/components/providers/auth-provider'
+import { trackEvent } from '@/lib/analytics'
 import type { BadgeType } from '@/lib/badges'
 
 const SWIPE_THRESHOLD = 80
@@ -70,6 +71,7 @@ export function SwipeFeed({ initialItems }: Props) {
       setHintVisible(false)
       localStorage.setItem('swipe_hint_seen', '1')
       navigator.vibrate?.(10)
+      trackEvent('swipe', { direction, item_id: itemId, item_name: item.title })
 
       if (!isLoggedIn) {
         addGuestSwipe(itemId, direction)

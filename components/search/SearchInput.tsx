@@ -4,6 +4,7 @@ import { useQueryState } from 'nuqs'
 import { useTransition, useEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { searchSortParser, searchQueryParser } from './searchParsers'
+import { trackEvent } from '@/lib/analytics'
 
 export function SearchInput() {
   const [q, setQ] = useQueryState('q', searchQueryParser)
@@ -21,6 +22,7 @@ export function SearchInput() {
   function handleChange(value: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
+      if (value) trackEvent('search', { search_term: value })
       startTransition(() => {
         setQ(value || null)
         setPage(1)

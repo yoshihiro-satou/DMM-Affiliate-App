@@ -150,6 +150,30 @@ export const DmmActressResponseSchema = z.object({
 export type DmmActressResponse = z.infer<typeof DmmActressResponseSchema>
 
 // ------------------------------------
+// DmmGenre
+// ------------------------------------
+export const DmmGenreSchema = z.object({
+  genre_id: z.coerce.number(),
+  name: z.string(),
+  ruby: z.string().nullish(),
+  list_url: z.string().nullish(),
+})
+
+export type DmmGenre = z.infer<typeof DmmGenreSchema>
+
+export const DmmGenreResponseSchema = z.object({
+  result: z.object({
+    status: z.coerce.number().optional(),
+    result_count: z.coerce.number(),
+    total_count: z.coerce.number(),
+    first_position: z.coerce.number(),
+    genre: z.array(DmmGenreSchema).optional().default([]),
+  }),
+})
+
+export type DmmGenreResponse = z.infer<typeof DmmGenreResponseSchema>
+
+// ------------------------------------
 // Floor
 // ------------------------------------
 export const DmmFloorSchema = z.object({

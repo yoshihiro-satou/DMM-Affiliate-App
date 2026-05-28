@@ -10,9 +10,8 @@ import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistratio
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
 import { DmmCredit } from '@/components/layout/DmmCredit'
 import { getCurrentUser } from '@/lib/supabase/server'
+import { GA_ID } from '@/lib/analytics'
 import './globals.css'
-
-const GA_ID = 'G-X8VN2V321X'
 
 const mPlusRounded = M_PLUS_Rounded_1c({
   weight: ['400', '500', '700'],
@@ -113,7 +112,10 @@ export default async function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA_ID}', { page_path: window.location.pathname });
+            gtag('config', '${GA_ID}', {
+              page_path: window.location.pathname,
+              ${user?.sub ? `user_id: '${user.sub}',` : ''}
+            });
           `}
         </Script>
         <Suspense>

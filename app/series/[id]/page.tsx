@@ -90,8 +90,22 @@ export default async function SeriesDetailPage({ params }: Props) {
     items[items.length - 1]?.imageURL.large ??
     null
 
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWorkSeries',
+    name: seriesName,
+    numberOfEpisodes: totalCount,
+    url: `${SITE_URL}/series/${id}`,
+    ...(thumbnail ? { image: thumbnail } : {}),
+  }
+
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ヘッダー */}
       <div className="flex gap-4 border-b border-white/8 px-4 py-5">
         <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-white/5">

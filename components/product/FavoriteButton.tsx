@@ -9,6 +9,7 @@ import { dmmItemToFavorite, dmmItemToGuestFav } from '@/lib/dmm/mappers'
 import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
 import { BadgeToast } from '@/components/ui/BadgeToast'
 import { useAuth } from '@/components/providers/auth-provider'
+import { trackEvent } from '@/lib/analytics'
 import type { BadgeType } from '@/lib/badges'
 
 type Props = {
@@ -30,6 +31,9 @@ export function FavoriteButton({ item, initialFavorited = false }: Props) {
     if (isLoggedIn) {
       const next = !favorited
       setFavorited(next)
+      trackEvent(next ? 'add_to_wishlist' : 'remove_from_wishlist', {
+        items: [{ item_id: item.content_id, item_name: item.title }],
+      })
       startTransition(async () => {
         try {
           if (next) {

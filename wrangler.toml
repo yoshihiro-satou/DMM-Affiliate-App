@@ -26,7 +26,6 @@ binding = "ASSETS"
 # DMM_API_ID = ""
 # DMM_AFFILIATE_ID = ""
 
-# [[kv_namespaces]]
-# ISRキャッシュ用 KV（Cloudflare Dashboardで作成後にコメントアウトを外してIDを入力）
-# binding = "NEXT_CACHE_WORKERS_KV"
-# id = ""
+[[kv_namespaces]]
+binding = "NEXT_INC_CACHE_KV"
+id = "1e220c7428ee4b19a197951dbc0fd2b9"

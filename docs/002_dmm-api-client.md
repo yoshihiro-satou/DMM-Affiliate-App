@@ -28,14 +28,14 @@ DMM API v3 への安全なサーバーサイドアクセス基盤を構築する
 - [x] Route Handler 側で Zod バリデーション実施
 
 ### キャッシュ戦略
-- [x] `fetch` に `next: { revalidate: 3600 }` を設定（商品データは1時間キャッシュ）
 - [x] `React.cache()` で同一リクエスト内の重複フェッチを排除
 - [x] `next.config.ts` に `optimizePackageImports: ['lucide-react']` を追加
+- [x] `export const revalidate = 3600` をページ単位で設定（Cloudflare KV ISR によりページ HTML をキャッシュ）
 
 ## 備考
-- `fetchFloorList` は `revalidate: 86400`（1日）で長めにキャッシュ
 - `ActressListQuerySchema` / `ItemListQuerySchema` も `types/dmm.ts` に定義（Route Handler のバリデーション共用）
-- Route Handler の `Cache-Control` ヘッダーで Cloudflare CDN にもキャッシュさせる
+- **`fetch` レベルの `{ next: { revalidate } }` は使用しない** — Cloudflare Cache API が 400 エラーレスポンスもキャッシュしてしまい、クォータ超過時に全リクエストが N 秒間エラーを返し続ける問題があるため廃止
+- ページキャッシュは `export const revalidate = N`（ISR）+ Cloudflare KV（`NEXT_INC_CACHE_KV`）で対応する
 
 ---
 
