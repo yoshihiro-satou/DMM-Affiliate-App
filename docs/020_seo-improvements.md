@@ -1,6 +1,6 @@
 # 020 SEO 改善ログ
 
-> 実施日: 2026-05-28 / 更新: 2026-05-29
+> 実施日: 2026-05-28 / 更新: 2026-05-29（第3回）
 
 ---
 
@@ -15,6 +15,12 @@
 | **ジャンルへの内部リンク 3箇所** | `app/page.tsx` / `app/actress/[id]/page.tsx` / `app/ranking/page.tsx` | トピッククラスター形成・クロール促進 |
 | **404 バウンダリ追加** | `app/not-found.tsx` | CF Workers で `notFound()` が 500 になるバグ修正 |
 | **女優ページ安定化** | `app/actress/[id]/page.tsx` / `app/ranking/page.tsx` | DMM API レート制限対策・CF Workers 500 完全排除 |
+| **ジャンルページ安定化** | `app/genre/[id]/page.tsx` | `notFound()` 廃止・`GenreNotFound`/`GenreRetry` コンポーネントに置き換え |
+| **ジャンル↔女優 逆方向リンク** | `app/genre/[id]/page.tsx` | 取得済み作品から女優集計・横スクロール＋作品数表示 |
+| **ランキング「人気ジャンル」タブ** | `app/ranking/page.tsx` / `components/ranking/RankingTabs.tsx` | `period=genre` で上位20ジャンルをランク表示・`/genre/[id]` へ誘導 |
+
+> ⚠️ **2026-05-29 時点で本番未デプロイ**（`pnpm cf:build && pnpm cf:deploy` 要実行）。  
+> Playwright 検証済み：push 済みコードの動作は確認、デプロイ後に本番反映される。
 
 **ジャンルページの実装ポイント:**
 - `generateStaticParams` で上位50件を事前生成、残りは `dynamicParams = true` でオンデマンド ISR
@@ -25,6 +31,19 @@
 - **ホーム**: `fetchGenreList` で16件取得 → Suspense でチップ表示（エラー時は非表示）
 - **女優ページ**: 取得済み `works` からジャンルを集計（追加 API なし）→ 頻度順上位8件
 - **ランキングページ**: 取得済み `items` からジャンルを集計（追加 API なし）→ 頻度順上位10件
+- **ジャンルページ → 女優ページ**: 取得済み `items` から女優を集計（追加 API なし）→ 頻度順上位8件・横スクロール＋作品数バッジ
+
+**ランキング「人気ジャンル」タブの実装詳細:**
+- `fetchPopularGenres()`: `sort: 'rank'` で上位100作品取得 → ジャンル出現頻度を集計 → 上位20件
+- UI: 順位番号（1位=金・2位=銀・3位=銅）＋ジャンル名 ＋ 相対バー ＋ 作品数 ＋ chevron
+- 追加 API コール 0（作品データから派生）
+
+**CF Workers `notFound()` 廃止方針（全ページ共通）:**
+- CF Workers では `notFound()` を呼んでも HTTP ステータスが 200 になるバグがある
+- 対策: `notFound()` を使わず `return <XxxNotFound />` / `return <XxxRetry />` コンポーネントを返す
+- **女優ページ**: `ActressNotFound` / `ActressRetry` ✅
+- **ジャンルページ**: `GenreNotFound` / `GenreRetry` ✅（2026-05-29 追加）
+- Playwright 検証: `/genre/99999` → HTTP 200 + `app/not-found.tsx` 表示を確認（旧コード動作）
 
 **女優ページ安定化の実装詳細（CF Workers 対応）:**
 - `cache(actressId: number)` ラッパーで `generateMetadata` とページ本体の `fetchActressList` 呼び出しを1回に統合（3回→2回に削減）
@@ -102,16 +121,17 @@ export default async function OGImage({ params }: { params: Promise<{ id: string
 
 ---
 
-### ✅ 優先4：ジャンル↔女優 内部リンク（トピッククラスター）— **実装済み**
+### ✅ 優先4：ジャンル↔女優 内部リンク（トピッククラスター）— **実装済み・デプロイ待ち**
 
-ホーム・女優ページ・ランキングページからジャンルページへのリンクを追加済み。
+ジャンル↔女優の相互リンクをすべて実装。加えてランキングにジャンルタブを追加。
 
 | 追加元 | 追加先 | 状態 |
 |--------|--------|------|
-| ホームページ「ジャンルで探す」セクション | `/genre/[id]` チップ16件 | ✅ 実装済み |
-| 女優ページ（作品から集計） | 出演ジャンル上位8件 | ✅ 実装済み |
-| ランキングページ（作品から集計） | 人気ジャンル上位10件 | ✅ 実装済み |
-| ジャンルページ → 女優ページ | 「このジャンルの人気女優」チップ上位8件 | ✅ 実装済み |
+| ホームページ「ジャンルで探す」セクション | `/genre/[id]` チップ16件 | ✅ 本番反映済み |
+| 女優ページ（作品から集計） | 出演ジャンル上位8件 | ✅ 本番反映済み |
+| ランキングページ（作品から集計） | 人気ジャンル上位10件 | ✅ 本番反映済み |
+| ジャンルページ → 女優ページ | 「関連女優」横スクロール上位8件・作品数表示 | 🔄 push済み・デプロイ待ち |
+| ランキング「人気ジャンル」タブ | `/genre/[id]` ランキング形式20件 | 🔄 push済み・デプロイ待ち |
 
 ---
 
