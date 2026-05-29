@@ -1,6 +1,6 @@
 import { cache } from 'react'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { fetchItemList, fetchGenreList } from '@/lib/dmm/client'
 import { GridCard } from '@/components/product/GridCard'
 
@@ -58,10 +58,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function GenrePage({ params }: Props) {
   const { id } = await params
   const genreId = parseInt(id)
-  if (isNaN(genreId)) notFound()
+
+  if (isNaN(genreId)) return <GenreNotFound id={id} />
 
   const data = await getGenreData(genreId).catch(() => null)
-  if (!data || !data.result.items.length) notFound()
+
+  // API エラー → 一時障害として再試行を促す（永続的な 404 にしない）
+  if (data === null) return <GenreRetry id={id} />
+
+  // 作品なし → IDが不正または削除済み
+  if (!data.result.items.length) return <GenreNotFound id={id} />
+
   const { result, genreName } = data
 
   // 作品データから女優を集計（追加 API なし）→ 出現頻度順・上位8件
@@ -140,6 +147,36 @@ export default async function GenrePage({ params }: Props) {
           </div>
         </div>
       )}
+    </main>
+  )
+}
+
+function GenreRetry({ id }: { id: string }) {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <p className="text-[14px] text-white/70">データを取得できませんでした</p>
+      <a
+        href={`/genre/${id}`}
+        className="rounded-lg border border-red-700/50 px-4 py-2 text-[13px] font-bold text-red-400 hover:border-red-500 hover:text-red-300"
+      >
+        再読み込み
+      </a>
+    </main>
+  )
+}
+
+function GenreNotFound({ id: _id }: { id: string }) {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="text-center">
+        <p className="text-[14px] text-white/70">ジャンル情報が見つかりませんでした</p>
+      </div>
+      <Link
+        href="/"
+        className="rounded-lg border border-red-700/50 px-5 py-2.5 text-[13px] font-bold text-red-400 hover:border-red-500 hover:text-red-300"
+      >
+        ホームに戻る
+      </Link>
     </main>
   )
 }
