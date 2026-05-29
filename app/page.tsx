@@ -1,6 +1,6 @@
 ﻿import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { fetchItemList, fetchDailySaleItems } from '@/lib/dmm/client'
+import { fetchItemList, fetchDailySaleItems, fetchGenreList } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
 import { BentoGrid } from '@/components/layout/BentoGrid'
 import { GridCard } from '@/components/product/GridCard'
@@ -112,6 +112,40 @@ function LoadingGrid({ count = 10 }: { count?: number }) {
   )
 }
 
+async function GenreSection() {
+  try {
+    const result = await fetchGenreList({ floor_id: '43', hits: 16 })
+    const genres = result.genre ?? []
+    if (genres.length === 0) return null
+    return (
+      <div className="flex flex-wrap gap-2">
+        {genres.map((g) => (
+          <a
+            key={g.genre_id}
+            href={`/genre/${g.genre_id}`}
+            className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] font-medium text-white/75 hover:border-red-500/40 hover:bg-red-950/30 hover:text-white active:opacity-70"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+          >
+            {g.name}
+          </a>
+        ))}
+      </div>
+    )
+  } catch {
+    return null
+  }
+}
+
+function GenreChipsSkeleton() {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} className="h-8 w-16 animate-pulse rounded-full bg-white/8" style={{ width: `${56 + (i % 4) * 16}px` }} />
+      ))}
+    </div>
+  )
+}
+
 // ------------------------------------
 // ページ本体
 // ------------------------------------
@@ -207,6 +241,16 @@ export default function HomePage() {
             女優一覧 →
           </a>
         </div>
+      </section>
+
+      {/* ジャンルで探す */}
+      <section className="px-4 pt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[15px] font-black tracking-tight text-white">ジャンルで探す</h2>
+        </div>
+        <Suspense fallback={<GenreChipsSkeleton />}>
+          <GenreSection />
+        </Suspense>
       </section>
 
       {/* あなたへのおすすめ（クライアントサイド・SWR） */}

@@ -1,6 +1,7 @@
-﻿import Image from 'next/image'
+import Image from 'next/image'
+import { cache } from 'react'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { fetchActressList, fetchItemList } from '@/lib/dmm/client'
 import { GridCard } from '@/components/product/GridCard'
 import { WorkTabs, type WorkTab } from './WorkTabs'
@@ -12,15 +13,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
+// リクエスト内で generateMetadata とページ本体が同じキャッシュエントリを共有する
+// (数値キーで React.cache() の値等値比較が有効になる)
+const getActressById = cache(async (actressId: number) =>
+  Promise.resolve()
+    .then(() => fetchActressList({ actress_id: actressId }))
+    .catch(() => null)
+)
+
 export async function generateStaticParams() {
-  const [r1, r2] = await Promise.all([
-    fetchActressList({ hits: 100, offset: 1, sort: 'id' }).catch(() => null),
-    fetchActressList({ hits: 100, offset: 101, sort: 'id' }).catch(() => null),
-  ])
-  return [
-    ...(r1?.actress ?? []),
-    ...(r2?.actress ?? []),
-  ].map((a) => ({ id: a.id }))
+  const result = await fetchActressList({ hits: 100 }).catch(() => null)
+  return (result?.actress ?? []).map((a) => ({ id: a.id }))
 }
 
 type Props = {
@@ -33,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const actressId = parseInt(id)
   if (isNaN(actressId)) return { title: '女優ページ' }
 
-  const result = await fetchActressList({ actress_id: actressId }).catch(() => null)
+  const result = await getActressById(actressId)
   const actress = result?.actress[0]
   if (!actress) return { title: '女優ページ' }
 
@@ -66,25 +69,53 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
   const currentTab = (tab === 'popular' ? 'popular' : 'latest') as WorkTab
 
   const actressId = parseInt(id)
-  if (isNaN(actressId)) notFound()
+
+  if (isNaN(actressId)) {
+    return <ActressNotFound id={id} />
+  }
 
   const [actressResult, worksResult] = await Promise.all([
-    fetchActressList({ actress_id: actressId }).catch(() => null),
-    fetchItemList({
-      article: 'actress',
-      article_id: actressId,
-      service: 'digital',
-      floor: 'videoa',
-      hits: 30,
-      sort: currentTab === 'popular' ? 'rank' : 'date',
-    }).catch(() => null),
+    getActressById(actressId),
+    Promise.resolve()
+      .then(() => fetchItemList({
+        article: 'actress',
+        article_id: actressId,
+        service: 'digital',
+        floor: 'videoa',
+        hits: 30,
+        sort: currentTab === 'popular' ? 'rank' : 'date',
+      }))
+      .catch(() => null),
   ])
 
-  const actress = actressResult?.actress[0]
-  if (!actress) notFound()
+  // API エラー（null）→ 一時障害のためリトライ画面（永続的な 404 にしない）
+  if (actressResult === null) {
+    return <ActressRetry id={id} />
+  }
+
+  const actress = actressResult.actress[0]
+
+  // 女優が存在しない → CF Workers で notFound() が 500 になるため直接 UI を返す
+  if (!actress) {
+    return <ActressNotFound id={id} />
+  }
 
   const works = worksResult?.items ?? []
   const imageUrl = actress.imageURL?.large ?? actress.imageURL?.small ?? null
+
+  // 出演作品からジャンルを集計（出現頻度順・上位8件）
+  const genreCountMap = new Map<number, { name: string; count: number }>()
+  for (const item of works) {
+    for (const g of item.iteminfo?.genre ?? []) {
+      if (g.id == null || !g.name) continue
+      const prev = genreCountMap.get(g.id)
+      genreCountMap.set(g.id, { name: g.name, count: (prev?.count ?? 0) + 1 })
+    }
+  }
+  const relatedGenres = [...genreCountMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 8)
+    .map(([genreId, { name }]) => ({ id: genreId, name }))
 
   const profileStats = [
     actress.height ? { label: '身長', value: `${actress.height}cm` } : null,
@@ -172,6 +203,25 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
         )}
       </div>
 
+      {/* 関連ジャンル */}
+      {relatedGenres.length > 0 && (
+        <div className="border-b border-white/8 px-4 pb-3 pt-2">
+          <p className="mb-2 text-[10px] font-semibold tracking-wider text-white/40">GENRE</p>
+          <div className="flex flex-wrap gap-1.5">
+            {relatedGenres.map((g) => (
+              <a
+                key={g.id}
+                href={`/genre/${g.id}`}
+                className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/70 hover:border-red-500/40 hover:bg-red-950/30 hover:text-white active:opacity-70"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                {g.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* タブ */}
       <WorkTabs actressId={id} currentTab={currentTab} />
 
@@ -191,6 +241,36 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
           </div>
         )}
       </div>
+    </main>
+  )
+}
+
+function ActressRetry({ id }: { id: string }) {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <p className="text-[14px] text-white/70">データを取得できませんでした</p>
+      <a
+        href={`/actress/${id}`}
+        className="rounded-lg border border-red-700/50 px-4 py-2 text-[13px] font-bold text-red-400 hover:border-red-500 hover:text-red-300"
+      >
+        再読み込み
+      </a>
+    </main>
+  )
+}
+
+function ActressNotFound({ id: _id }: { id: string }) {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="text-center">
+        <p className="text-[14px] text-white/70">女優情報が見つかりませんでした</p>
+      </div>
+      <Link
+        href="/ranking?period=actress"
+        className="rounded-lg border border-red-700/50 px-5 py-2.5 text-[13px] font-bold text-red-400 hover:border-red-500 hover:text-red-300"
+      >
+        人気女優に戻る
+      </Link>
     </main>
   )
 }

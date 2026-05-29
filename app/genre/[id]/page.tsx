@@ -58,11 +58,9 @@ export default async function GenrePage({ params }: Props) {
   const genreId = parseInt(id)
   if (isNaN(genreId)) notFound()
 
-  const { result, genreName } = await getGenreData(genreId).catch(() => {
-    notFound()
-  }) as Awaited<ReturnType<typeof getGenreData>>
-
-  if (!result.items.length) notFound()
+  const data = await getGenreData(genreId).catch(() => null)
+  if (!data || !data.result.items.length) notFound()
+  const { result, genreName } = data
 
   const jsonLd = {
     '@context': 'https://schema.org',

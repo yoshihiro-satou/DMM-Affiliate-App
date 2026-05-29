@@ -1,6 +1,6 @@
 # 020 SEO 改善ログ
 
-> 実施日: 2026-05-28
+> 実施日: 2026-05-28 / 更新: 2026-05-29
 
 ---
 
@@ -12,11 +12,25 @@
 | セール・シリーズに JSON-LD 追加 | `app/sale/page.tsx` / `app/series/[id]/page.tsx` | リッチリザルト対応 |
 | ホームに内部リンク追加 | `app/page.tsx` | /sale・/actress へのクロールパス確保 |
 | サイトマップに /genre・/discover 追加 | `app/sitemap.ts` | インデックス促進 |
+| **ジャンルへの内部リンク 3箇所** | `app/page.tsx` / `app/actress/[id]/page.tsx` / `app/ranking/page.tsx` | トピッククラスター形成・クロール促進 |
+| **404 バウンダリ追加** | `app/not-found.tsx` | CF Workers で `notFound()` が 500 になるバグ修正 |
+| **女優ページ安定化** | `app/actress/[id]/page.tsx` / `app/ranking/page.tsx` | DMM API レート制限対策・CF Workers 500 完全排除 |
 
 **ジャンルページの実装ポイント:**
 - `generateStaticParams` で上位50件を事前生成、残りは `dynamicParams = true` でオンデマンド ISR
 - ジャンル名は `result.items[0]?.iteminfo?.genre?.find(g => g.id === genreId)?.name` で逆引き（GenreSearch に単一取得がないため）
 - `floor_id: '43'` = FANZA videoa フロアの固定ID
+
+**内部リンクの実装詳細:**
+- **ホーム**: `fetchGenreList` で16件取得 → Suspense でチップ表示（エラー時は非表示）
+- **女優ページ**: 取得済み `works` からジャンルを集計（追加 API なし）→ 頻度順上位8件
+- **ランキングページ**: 取得済み `items` からジャンルを集計（追加 API なし）→ 頻度順上位10件
+
+**女優ページ安定化の実装詳細（CF Workers 対応）:**
+- `cache(actressId: number)` ラッパーで `generateMetadata` とページ本体の `fetchActressList` 呼び出しを1回に統合（3回→2回に削減）
+- `Promise.resolve().then(...)` で CF Workers での同期的な例外も確実にキャッチ
+- `notFound()` を `ActressNotFound` / `ActressRetry` コンポーネントに置き換え（CF Workers で `notFound()` が 500 になる問題を完全排除）
+- ランキング女優取得を `Promise.all`（12並列）→ `fetchWithRateLimit`（150ms 直列）に変更しレート制限を回避
 
 **検証:**
 ```bash
@@ -88,15 +102,16 @@ export default async function OGImage({ params }: { params: Promise<{ id: string
 
 ---
 
-### 🟡 優先4：ジャンル↔女優 内部リンク（トピッククラスター）
+### ✅ 優先4：ジャンル↔女優 内部リンク（トピッククラスター）— **実装済み**
 
-現状ページが孤立。相互リンクで Google が「専門ドメイン」と認識しやすくなる。
+ホーム・女優ページ・ランキングページからジャンルページへのリンクを追加済み。
 
-| 追加元 | 追加先 | アンカーテキスト |
-|--------|--------|----------------|
-| 女優ページ | 出演ジャンルの `/genre/[id]` | 「○○ジャンルの人気作品を見る」 |
-| ジャンルページ | 出演女優の `/actress/[id]` | 「このジャンルの人気女優」 |
-| `/ranking` | 上位ジャンルの `/genre/[id]` | 「○○ジャンルをもっと見る」 |
+| 追加元 | 追加先 | 状態 |
+|--------|--------|------|
+| ホームページ「ジャンルで探す」セクション | `/genre/[id]` チップ16件 | ✅ 実装済み |
+| 女優ページ（作品から集計） | 出演ジャンル上位8件 | ✅ 実装済み |
+| ランキングページ（作品から集計） | 人気ジャンル上位10件 | ✅ 実装済み |
+| ジャンルページ → 女優ページ | 「このジャンルの人気女優」 | 未実装 |
 
 ---
 

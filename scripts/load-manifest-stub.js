@@ -4,7 +4,7 @@
 // Consumed via wrangler.toml [alias] "next/dist/server/load-manifest.external.js".
 
 const _cache = new Map()
-const BUILD_ID = "sxhX6QQY9gqRRmkO7Y4ot"
+const BUILD_ID = "UELKpq9xJpy2vMLoH7yPs"
 
 // Manifest lookup: endsWith key ("/routes-manifest.json" etc.) → parsed JSON
 const MANIFEST_MAP = new Map([
@@ -460,7 +460,7 @@ const MANIFEST_MAP = new Map([
       "wasm": [],
       "assets": [],
       "env": {
-        "__NEXT_BUILD_ID": "sxhX6QQY9gqRRmkO7Y4ot",
+        "__NEXT_BUILD_ID": "UELKpq9xJpy2vMLoH7yPs",
         "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "m0nkyQB5hlmjRHpTpwh45Vxc6Wg3E0OZK9lcg+rcDuE=",
         "__NEXT_PREVIEW_MODE_ID": "1d36c4a5d1c8e7aa0915c7fcc6c45a77",
         "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "d4981e536c75758232db9c6d4e4d64cb6ffb9d1234d46866f123f86c55037174",
@@ -1147,64 +1147,7 @@ const MANIFEST_MAP = new Map([
       ]
     }
   },
-  "dynamicRoutes": {
-    "/actress/[id]": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "routeRegex": "^/actress/([^/]+?)(?:/)?$",
-      "dataRoute": "/actress/[id].rsc",
-      "fallback": null,
-      "fallbackRootParams": [],
-      "fallbackRouteParams": [],
-      "dataRouteRegex": "^/actress/([^/]+?)\\.rsc$",
-      "prefetchDataRoute": null,
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/genre/[id]": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "routeRegex": "^/genre/([^/]+?)(?:/)?$",
-      "dataRoute": "/genre/[id].rsc",
-      "fallback": null,
-      "fallbackRootParams": [],
-      "fallbackRouteParams": [],
-      "dataRouteRegex": "^/genre/([^/]+?)\\.rsc$",
-      "prefetchDataRoute": null,
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    }
-  },
+  "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
     "previewModeId": "1d36c4a5d1c8e7aa0915c7fcc6c45a77",
@@ -1495,9 +1438,9 @@ const MANIFEST_MAP = new Map([
     "static/chunks/03~yq9q893hmn.js"
   ],
   "lowPriorityFiles": [
-    "static/sxhX6QQY9gqRRmkO7Y4ot/_buildManifest.js",
-    "static/sxhX6QQY9gqRRmkO7Y4ot/_ssgManifest.js",
-    "static/sxhX6QQY9gqRRmkO7Y4ot/_clientMiddlewareManifest.js"
+    "static/UELKpq9xJpy2vMLoH7yPs/_buildManifest.js",
+    "static/UELKpq9xJpy2vMLoH7yPs/_ssgManifest.js",
+    "static/UELKpq9xJpy2vMLoH7yPs/_clientMiddlewareManifest.js"
   ],
   "rootMainFiles": [
     "static/chunks/0wttf-7i21~.a.js",

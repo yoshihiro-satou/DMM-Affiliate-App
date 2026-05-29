@@ -1,5 +1,5 @@
 ﻿import type { Metadata } from 'next'
-import { fetchItemList, fetchActressList } from '@/lib/dmm/client'
+import { fetchItemList, fetchActressList, fetchWithRateLimit } from '@/lib/dmm/client'
 import type { FetchItemListParams } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
 import { GridCard } from '@/components/product/GridCard'
@@ -71,10 +71,14 @@ async function fetchPopularActresses(limit = 12): Promise<DmmActress[]> {
     .slice(0, limit)
     .map(([id]) => id)
 
-  const results = await Promise.all(
-    topIds.map((id) =>
-      fetchActressList({ actress_id: id, hits: 1 }).then((r) => r.actress[0] ?? null)
-    )
+  // 並列実行ではなく直列で取得（DMM API レート制限対策）
+  const results = await fetchWithRateLimit(
+    topIds.map((id) => () =>
+      fetchActressList({ actress_id: id, hits: 1 })
+        .then((r) => r.actress[0] ?? null)
+        .catch(() => null)
+    ),
+    150
   )
 
   return results.filter((a): a is DmmActress => a !== null)
@@ -149,6 +153,20 @@ export default async function RankingPage({ searchParams }: Props) {
     })
     const items = config.applyScore ? sortByRankingScore(result.items) : result.items
 
+    // ランキング作品から上位ジャンルを集計（出現頻度順・上位10件）
+    const genreCountMap = new Map<number, { name: string; count: number }>()
+    for (const item of items) {
+      for (const g of item.iteminfo?.genre ?? []) {
+        if (g.id == null || !g.name) continue
+        const prev = genreCountMap.get(g.id)
+        genreCountMap.set(g.id, { name: g.name, count: (prev?.count ?? 0) + 1 })
+      }
+    }
+    const topGenres = [...genreCountMap.entries()]
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10)
+      .map(([id, { name }]) => ({ id, name }))
+
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -181,6 +199,25 @@ export default async function RankingPage({ searchParams }: Props) {
             />
           ))}
         </div>
+        {topGenres.length > 0 && (
+          <div className="border-t border-white/8 px-4 pb-6 pt-4">
+            <p className="mb-2.5 text-[10px] font-semibold tracking-wider text-white/40">
+              このランキングの人気ジャンル
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {topGenres.map((g) => (
+                <a
+                  key={g.id}
+                  href={`/genre/${g.id}`}
+                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] font-medium text-white/75 hover:border-red-500/40 hover:bg-red-950/30 hover:text-white active:opacity-70"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {g.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     )
   } catch {
