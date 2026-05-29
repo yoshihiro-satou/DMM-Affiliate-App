@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { fetchItemList, fetchGenreList } from '@/lib/dmm/client'
@@ -12,7 +13,7 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
-async function getGenreData(genreId: number) {
+const getGenreData = cache(async (genreId: number) => {
   const result = await fetchItemList({
     article: 'genre',
     article_id: genreId,
@@ -25,7 +26,7 @@ async function getGenreData(genreId: number) {
     result.items[0]?.iteminfo?.genre?.find((g) => g.id === genreId)?.name ??
     `ジャンル${genreId}`
   return { result, genreName }
-}
+})
 
 export async function generateStaticParams() {
   const genreResult = await fetchGenreList({ floor_id: '43', hits: 100 }).catch(() => null)
@@ -39,7 +40,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const genreId = parseInt(id)
   if (isNaN(genreId)) return { title: 'ジャンル' }
 
-  const { genreName } = await getGenreData(genreId).catch(() => ({ genreName: `ジャンル${id}`, result: null }))
+  const data = await getGenreData(genreId).catch(() => null)
+  const genreName = data?.genreName ?? `ジャンル${id}`
 
   return {
     title: `${genreName} おすすめ作品`,
@@ -61,6 +63,20 @@ export default async function GenrePage({ params }: Props) {
   const data = await getGenreData(genreId).catch(() => null)
   if (!data || !data.result.items.length) notFound()
   const { result, genreName } = data
+
+  // 作品データから女優を集計（追加 API なし）→ 出現頻度順・上位8件
+  const actressCountMap = new Map<number, { name: string; count: number }>()
+  for (const item of result.items) {
+    for (const a of item.iteminfo?.actress ?? []) {
+      if (a.id == null || !a.name) continue
+      const prev = actressCountMap.get(a.id)
+      actressCountMap.set(a.id, { name: a.name, count: (prev?.count ?? 0) + 1 })
+    }
+  }
+  const topActresses = [...actressCountMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 8)
+    .map(([actressId, { name }]) => ({ id: actressId, name }))
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -101,6 +117,27 @@ export default async function GenrePage({ params }: Props) {
           />
         ))}
       </div>
+
+      {/* このジャンルの人気女優 */}
+      {topActresses.length > 0 && (
+        <div className="border-t border-white/8 px-4 pb-6 pt-4">
+          <p className="mb-2.5 text-[10px] font-semibold tracking-wider text-white/40">
+            このジャンルの人気女優
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {topActresses.map((a) => (
+              <a
+                key={a.id}
+                href={`/actress/${a.id}`}
+                className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] font-medium text-white/75 hover:border-red-500/40 hover:bg-red-950/30 hover:text-white active:opacity-70"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                {a.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   )
 }
