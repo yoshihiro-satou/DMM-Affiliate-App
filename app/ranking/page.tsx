@@ -43,6 +43,7 @@ const PERIOD_LABEL: Record<RankingPeriod, string> = {
   weekly:  '週次ランキング',
   monthly: '月次ランキング',
   actress: '人気女優',
+  genre:   '人気ジャンル',
 }
 
 // ------------------------------------
@@ -85,6 +86,32 @@ async function fetchPopularActresses(limit = 12): Promise<DmmActress[]> {
 }
 
 // ------------------------------------
+// 人気ジャンル取得（ランク上位100作品の出現頻度でランク）
+// ------------------------------------
+async function fetchPopularGenres(limit = 20) {
+  const result = await fetchItemList({
+    sort: 'rank',
+    hits: 100,
+    service: 'digital',
+    floor: 'videoa',
+  })
+
+  const countMap = new Map<number, { name: string; count: number }>()
+  for (const item of result.items) {
+    for (const g of item.iteminfo?.genre ?? []) {
+      if (g.id == null || !g.name) continue
+      const prev = countMap.get(g.id)
+      countMap.set(g.id, { name: g.name, count: (prev?.count ?? 0) + 1 })
+    }
+  }
+
+  return [...countMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, limit)
+    .map(([id, { name, count }]) => ({ id, name, count }))
+}
+
+// ------------------------------------
 // ページ
 // ------------------------------------
 type Props = {
@@ -96,6 +123,63 @@ export default async function RankingPage({ searchParams }: Props) {
   const validPeriod = (period in PERIOD_LABEL ? period : 'daily') as RankingPeriod
   const label = PERIOD_LABEL[validPeriod]
   const isActress = validPeriod === 'actress'
+  const isGenre   = validPeriod === 'genre'
+
+  if (isGenre) {
+    const genres = await fetchPopularGenres().catch(() => [])
+    const maxCount = genres[0]?.count ?? 1
+
+    return (
+      <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <div className="border-b border-white/8 px-4 py-4">
+          <span
+            className="text-[10px] font-semibold tracking-[0.3em] text-red-600/80"
+            style={{ fontFamily: 'ui-monospace, monospace' }}
+          >
+            RANKING
+          </span>
+          <h1 className="mt-1 text-[22px] font-black tracking-tight text-white">{label}</h1>
+          <p className="mt-0.5 text-[11px] text-white/55">PR · 人気上位100作品から集計</p>
+        </div>
+
+        <RankingTabs currentPeriod={validPeriod} />
+
+        <div className="divide-y divide-white/6">
+          {genres.map((g, i) => {
+            const rank = i + 1
+            const rankColor =
+              rank === 1 ? 'text-yellow-400' :
+              rank === 2 ? 'text-slate-300'  :
+              rank === 3 ? 'text-amber-600'  :
+              'text-white/30'
+            const barWidth = Math.round((g.count / maxCount) * 100)
+            return (
+              <a
+                key={g.id}
+                href={`/genre/${g.id}`}
+                className="flex items-center gap-4 px-4 py-3.5 hover:bg-white/4 active:bg-white/8"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                <span className={`w-7 shrink-0 text-center text-[15px] font-black tabular-nums ${rankColor}`}>
+                  {rank}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-semibold text-white/90">{g.name}</p>
+                  <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/8">
+                    <div className="h-full rounded-full bg-red-600/50" style={{ width: `${barWidth}%` }} />
+                  </div>
+                </div>
+                <span className="shrink-0 text-[12px] tabular-nums text-white/40">{g.count}作品</span>
+                <svg className="h-4 w-4 shrink-0 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            )
+          })}
+        </div>
+      </main>
+    )
+  }
 
   if (isActress) {
     const actresses = await fetchPopularActresses().catch(() => [])

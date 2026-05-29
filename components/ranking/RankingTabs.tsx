@@ -7,6 +7,7 @@ export const RANKING_PERIODS = [
   { key: 'weekly',  label: '週次'   },
   { key: 'monthly', label: '月次'   },
   { key: 'actress', label: '人気女優' },
+  { key: 'genre',   label: '人気ジャンル' },
 ] as const
 
 export type RankingPeriod = (typeof RANKING_PERIODS)[number]['key']
