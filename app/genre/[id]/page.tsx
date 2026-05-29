@@ -76,7 +76,7 @@ export default async function GenrePage({ params }: Props) {
   const topActresses = [...actressCountMap.entries()]
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 8)
-    .map(([actressId, { name }]) => ({ id: actressId, name }))
+    .map(([actressId, { name, count }]) => ({ id: actressId, name, count }))
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -118,21 +118,23 @@ export default async function GenrePage({ params }: Props) {
         ))}
       </div>
 
-      {/* このジャンルの人気女優 */}
+      {/* 関連女優 */}
       {topActresses.length > 0 && (
-        <div className="border-t border-white/8 px-4 pb-6 pt-4">
-          <p className="mb-2.5 text-[10px] font-semibold tracking-wider text-white/40">
-            このジャンルの人気女優
-          </p>
-          <div className="flex flex-wrap gap-2">
+        <div className="border-t border-white/8 pb-6 pt-5">
+          <div className="mb-3 flex items-center gap-2 px-4">
+            <span className="text-[13px] font-black tracking-tight text-white">関連女優</span>
+            <span className="text-[11px] text-white/35">{topActresses.length}人</span>
+          </div>
+          <div className="flex gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {topActresses.map((a) => (
               <a
                 key={a.id}
                 href={`/actress/${a.id}`}
-                className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] font-medium text-white/75 hover:border-red-500/40 hover:bg-red-950/30 hover:text-white active:opacity-70"
+                className="flex shrink-0 flex-col items-center gap-1.5 rounded-xl border border-white/12 bg-white/5 px-3.5 py-3 hover:border-red-500/40 hover:bg-red-950/30 active:opacity-70"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                {a.name}
+                <span className="whitespace-nowrap text-[13px] font-semibold text-white/90">{a.name}</span>
+                <span className="text-[10px] text-white/35">{a.count}作品</span>
               </a>
             ))}
           </div>
