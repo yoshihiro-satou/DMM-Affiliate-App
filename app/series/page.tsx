@@ -1,5 +1,4 @@
 ﻿import type { Metadata } from 'next'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BookOpen } from 'lucide-react'
 import { getCurrentUser, createClient } from '@/lib/supabase/server'
@@ -72,9 +71,10 @@ function SeriesCard({
   readCount: number
 }) {
   return (
-    <Link
+    <a
       href={`/series/${series.series_id}`}
       className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/3 active:bg-white/5"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       <div className="flex flex-1 min-w-0 flex-col gap-0.5">
         <p className="line-clamp-2 text-[14px] font-semibold leading-snug text-white">
@@ -83,7 +83,7 @@ function SeriesCard({
         <p className="text-[11px] text-white/55">{readCount}巻読了</p>
       </div>
       <span className="shrink-0 text-[18px] text-white/40">›</span>
-    </Link>
+    </a>
   )
 }
 

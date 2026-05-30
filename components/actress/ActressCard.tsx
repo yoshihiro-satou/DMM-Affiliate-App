@@ -1,5 +1,4 @@
 ﻿import Image from 'next/image'
-import Link from 'next/link'
 import type { DmmActress } from '@/types/dmm'
 
 type Props = {
@@ -14,7 +13,7 @@ export function ActressCard({ actress }: Props) {
   ].filter(Boolean).join(' · ')
 
   return (
-    <Link href={`/actress/${actress.id}`} className="group flex flex-col items-center gap-3 text-center">
+    <a href={`/actress/${actress.id}`} className="group flex flex-col items-center gap-3 text-center" style={{ WebkitTapHighlightColor: 'transparent' }}>
       {/* 丸型画像（全幅の75%） */}
       <div className="relative aspect-square w-3/4 overflow-hidden rounded-full bg-white/8 ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-105">
         {imageUrl ? (
@@ -39,6 +38,6 @@ export function ActressCard({ actress }: Props) {
           <p className="mt-1 text-[12px] text-white/70">{sub}</p>
         )}
       </div>
-    </Link>
+    </a>
   )
 }

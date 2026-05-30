@@ -1,8 +1,4 @@
-﻿'use client'
-
-import Link from 'next/link'
-
-export type WorkTab = 'latest' | 'popular'
+﻿export type WorkTab = 'latest' | 'popular'
 
 const TABS: { id: WorkTab; label: string }[] = [
   { id: 'latest', label: '最新作' },
@@ -18,7 +14,7 @@ export function WorkTabs({ actressId, currentTab }: Props) {
   return (
     <div className="flex border-b border-white/8">
       {TABS.map((tab) => (
-        <Link
+        <a
           key={tab.id}
           href={
             tab.id === 'latest'
@@ -30,9 +26,10 @@ export function WorkTabs({ actressId, currentTab }: Props) {
               ? 'border-b-2 border-red-500 text-white'
               : 'text-white/65 hover:text-white/70'
           }`}
+          style={{ WebkitTapHighlightColor: 'transparent' }}
         >
           {tab.label}
-        </Link>
+        </a>
       ))}
     </div>
   )
