@@ -1,6 +1,6 @@
 # 020 SEO 改善ログ
 
-> 実施日: 2026-05-28 / 更新: 2026-05-29（第3回）
+> 実施日: 2026-05-28 / 更新: 2026-05-30（第4回）
 
 ---
 
@@ -18,9 +18,12 @@
 | **ジャンルページ安定化** | `app/genre/[id]/page.tsx` | `notFound()` 廃止・`GenreNotFound`/`GenreRetry` コンポーネントに置き換え |
 | **ジャンル↔女優 逆方向リンク** | `app/genre/[id]/page.tsx` | 取得済み作品から女優集計・横スクロール＋作品数表示 |
 | **ランキング「人気ジャンル」タブ** | `app/ranking/page.tsx` / `components/ranking/RankingTabs.tsx` | `period=genre` で上位20ジャンルをランク表示・`/genre/[id]` へ誘導 |
+| ✅ **優先5：女優ページ description・作品数表示** | `app/actress/[id]/page.tsx` | `generateMetadata` に作品数を追加・プロフィール欄に「FANZA動画 全XX作品」表示 |
+| ✅ **CF Workers RSC ナビゲーション 500 修正** | `components/actress/ActressCard.tsx` / `app/actress/[id]/WorkTabs.tsx` / `app/series/page.tsx` | `<Link>` → `<a>` に変更（動的ルートへの RSC リクエストが 500 になる CF Workers バグ回避） |
+| ✅ **CF Workers React.cache() 500 修正** | `app/actress/[id]/page.tsx` / `app/genre/[id]/page.tsx` | モジュールスコープ `React.cache()` を通常の `async function` に変更（workerd の AsyncLocalStorage 非互換バグ修正） |
 
-> ⚠️ **2026-05-29 時点で本番未デプロイ**（`pnpm cf:build && pnpm cf:deploy` 要実行）。  
-> Playwright 検証済み：push 済みコードの動作は確認、デプロイ後に本番反映される。
+> ✅ **2026-05-30 時点で本番デプロイ済み**（Version ID: `e48590c6`）  
+> 本番確認: `/actress/1082666` HTTP 200 ✅ / `/genre/4026` HTTP 200 ✅
 
 **ジャンルページの実装ポイント:**
 - `generateStaticParams` で上位50件を事前生成、残りは `dynamicParams = true` でオンデマンド ISR
@@ -39,11 +42,23 @@
 - 追加 API コール 0（作品データから派生）
 
 **CF Workers `notFound()` 廃止方針（全ページ共通）:**
-- CF Workers では `notFound()` を呼んでも HTTP ステータスが 200 になるバグがある
+- CF Workers では `notFound()` を呼ぶと HTTP 500 "Internal Server Error" になるバグがある
 - 対策: `notFound()` を使わず `return <XxxNotFound />` / `return <XxxRetry />` コンポーネントを返す
 - **女優ページ**: `ActressNotFound` / `ActressRetry` ✅
-- **ジャンルページ**: `GenreNotFound` / `GenreRetry` ✅（2026-05-29 追加）
-- Playwright 検証: `/genre/99999` → HTTP 200 + `app/not-found.tsx` 表示を確認（旧コード動作）
+- **ジャンルページ**: `GenreNotFound` / `GenreRetry` ✅
+- **シリーズページ**: `SeriesNotFound` / `SeriesRetry` ✅（2026-05-30 追加）
+
+**CF Workers `<Link>` RSC ナビゲーション バグ（2026-05-30 発見・修正）:**
+- CF Workers では動的ルート（`[id]`）への RSC リクエスト（`Next-Router-State-Tree` ヘッダー付き）が HTTP 500 を返す
+- Next.js `<Link>` はクライアントサイドナビゲーション（RSC リクエスト）を使用するため、動的ルートへの `<Link>` がすべて失敗していた
+- 対策: 動的ルートへのリンクはすべて `<a>` タグ（ハードナビゲーション）に変更
+- 影響箇所: `ActressCard` / `WorkTabs` / `SeriesListItem`
+
+**CF Workers `React.cache()` バグ（2026-05-30 発見・修正）:**
+- CF Workers (workerd) で `React.cache()` を**モジュールスコープ**で使うと、AsyncLocalStorage の非互換により Server Components render で HTTP 500 になる
+- `fetchActressList` / `fetchItemList` など `lib/dmm/client.ts` 内の `React.cache()` は問題なし（後から判明: ページファイル内でのモジュールスコープ定義が問題）
+- 対策: `actress/[id]/page.tsx` と `genre/[id]/page.tsx` の `const xxx = cache(async ...)` を通常の `async function` に変更
+- `series/[id]/page.tsx` が問題なかった理由: モジュールスコープに `React.cache()` ラッパーを定義していないため
 
 **女優ページ安定化の実装詳細（CF Workers 対応）:**
 - `cache(actressId: number)` ラッパーで `generateMetadata` とページ本体の `fetchActressList` 呼び出しを1回に統合（3回→2回に削減）
@@ -130,19 +145,16 @@ export default async function OGImage({ params }: { params: Promise<{ id: string
 | ホームページ「ジャンルで探す」セクション | `/genre/[id]` チップ16件 | ✅ 本番反映済み |
 | 女優ページ（作品から集計） | 出演ジャンル上位8件 | ✅ 本番反映済み |
 | ランキングページ（作品から集計） | 人気ジャンル上位10件 | ✅ 本番反映済み |
-| ジャンルページ → 女優ページ | 「関連女優」横スクロール上位8件・作品数表示 | 🔄 push済み・デプロイ待ち |
-| ランキング「人気ジャンル」タブ | `/genre/[id]` ランキング形式20件 | 🔄 push済み・デプロイ待ち |
+| ジャンルページ → 女優ページ | 「関連女優」横スクロール上位8件・作品数表示 | ✅ 本番反映済み |
+| ランキング「人気ジャンル」タブ | `/genre/[id]` ランキング形式20件 | ✅ 本番反映済み |
 
 ---
 
-### 🟡 優先5：女優ページ description・h1 充実
+### ✅ 優先5：女優ページ description・h1 充実 — **実装済み・本番反映済み**
 
-現状は女優名のみ。固有文を追加するだけでロングテール流入が増える。
-
-```ts
-// 例: generateMetadata
-description: `${actress.name}のFANZA作品一覧。全${totalCount}作品をレビュー順に掲載。`
-```
+- `generateMetadata` に作品数（`hits:1` で `total_count` のみ取得）と3サイズを追加
+- プロフィールヘッダーに「FANZA動画 全XX作品」を表示
+- description 例: `「女優名のFANZA作品一覧。全123作品。B85 W58 H87 身長162cm。最新作・人気作をレビュー順に掲載。」`
 
 ---
 
