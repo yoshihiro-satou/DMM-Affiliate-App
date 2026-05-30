@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { fetchItemList, fetchGenreList } from '@/lib/dmm/client'
+import { fetchItemList } from '@/lib/dmm/client'
 import { GridCard } from '@/components/product/GridCard'
 
-export const revalidate = 3600
-export const dynamicParams = true
+export const dynamic = 'force-dynamic'
 
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
@@ -25,13 +24,6 @@ async function getGenreData(genreId: number) {
     result.items[0]?.iteminfo?.genre?.find((g) => g.id === genreId)?.name ??
     `ジャンル${genreId}`
   return { result, genreName }
-}
-
-export async function generateStaticParams() {
-  const genreResult = await fetchGenreList({ floor_id: '43', hits: 100 }).catch(() => null)
-  return (genreResult?.genre ?? []).slice(0, 50).map((g) => ({
-    id: String(g.genre_id),
-  }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

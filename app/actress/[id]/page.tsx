@@ -5,8 +5,7 @@ import { fetchActressList, fetchItemList } from '@/lib/dmm/client'
 import { GridCard } from '@/components/product/GridCard'
 import { WorkTabs, type WorkTab } from './WorkTabs'
 
-export const revalidate = 3600
-export const dynamicParams = true
+export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
@@ -25,11 +24,6 @@ async function getActressWorkCount(actressId: number): Promise<number | null> {
     hits: 1,
   }).catch(() => null)
   return result?.total_count ?? null
-}
-
-export async function generateStaticParams() {
-  const result = await fetchActressList({ hits: 100 }).catch(() => null)
-  return (result?.actress ?? []).map((a) => ({ id: a.id }))
 }
 
 type Props = {
