@@ -13,13 +13,25 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
-// リクエスト内で generateMetadata とページ本体が同じキャッシュエントリを共有する
-// (数値キーで React.cache() の値等値比較が有効になる)
 const getActressById = cache(async (actressId: number) =>
   Promise.resolve()
     .then(() => fetchActressList({ actress_id: actressId }))
     .catch(() => null)
 )
+
+// hits:1 で total_count だけ取得（metadata の description に使う）
+const getActressWorkCount = cache(async (actressId: number): Promise<number | null> => {
+  const result = await Promise.resolve()
+    .then(() => fetchItemList({
+      article: 'actress',
+      article_id: actressId,
+      service: 'digital',
+      floor: 'videoa',
+      hits: 1,
+    }))
+    .catch(() => null)
+  return result?.total_count ?? null
+})
 
 export async function generateStaticParams() {
   const result = await fetchActressList({ hits: 100 }).catch(() => null)
@@ -36,7 +48,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const actressId = parseInt(id)
   if (isNaN(actressId)) return { title: '女優ページ' }
 
-  const result = await getActressById(actressId)
+  const [result, totalCount] = await Promise.all([
+    getActressById(actressId),
+    getActressWorkCount(actressId),
+  ])
   const actress = result?.actress[0]
   if (!actress) return { title: '女優ページ' }
 
@@ -49,15 +64,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .filter(Boolean)
     .join(' ')
 
+  const countText = totalCount ? `全${totalCount}作品。` : ''
+  const statsText = stats ? `${stats}。` : ''
+  const title = `${actress.name}のFANZA作品一覧`
+  const description = `${actress.name}のFANZA作品一覧。${countText}${statsText}最新作・人気作をレビュー順に掲載。`
+
   return {
-    title: actress.name,
-    description: `${actress.name}の全作品一覧。${stats}`,
+    title,
+    description,
     alternates: { canonical: `/actress/${id}` },
     openGraph: {
       type: 'profile',
       url: `/actress/${id}`,
-      title: `${actress.name} | FANZA おすすめ`,
-      description: `${actress.name}の全作品一覧。${stats}`,
+      title: `${title} | FANZAピックス`,
+      description,
       images: actress.imageURL?.large ? [{ url: actress.imageURL.large, alt: actress.name }] : undefined,
     },
   }
@@ -101,6 +121,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
   }
 
   const works = worksResult?.items ?? []
+  const totalWorks = worksResult?.total_count ?? null
   const imageUrl = actress.imageURL?.large ?? actress.imageURL?.small ?? null
 
   // 出演作品からジャンルを集計（出現頻度順・上位8件）
@@ -175,6 +196,11 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
           </h1>
           {actress.ruby && (
             <p className="text-[11px] text-white/55">{actress.ruby}</p>
+          )}
+          {totalWorks != null && totalWorks > 0 && (
+            <p className="text-[11px] text-white/45">
+              FANZA動画 全{totalWorks.toLocaleString()}作品
+            </p>
           )}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {profileStats.map((s) => (

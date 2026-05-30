@@ -1,6 +1,6 @@
 ﻿import Image from 'next/image'
+import Link from 'next/link'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import { fetchSeriesItems } from '@/lib/dmm/series'
 import { getCurrentUser, createClient } from '@/lib/supabase/server'
 import { parsePrice } from '@/lib/ranking'
@@ -42,14 +42,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SeriesDetailPage({ params }: Props) {
   const { id } = await params
   const seriesId = parseInt(id)
-  if (isNaN(seriesId)) notFound()
+  if (isNaN(seriesId)) return <SeriesNotFound />
 
   const [user, seriesData] = await Promise.all([
     getCurrentUser(),
     fetchSeriesItems(seriesId).catch(() => null),
   ])
 
-  if (!seriesData || seriesData.items.length === 0) notFound()
+  // API エラー → 一時障害のためリトライ画面
+  if (seriesData === null) return <SeriesRetry id={id} />
+  // 存在しないシリーズ → CF Workers で notFound() が 500 になるため直接 UI を返す
+  if (seriesData.items.length === 0) return <SeriesNotFound />
 
   const { seriesName, items } = seriesData
 
@@ -262,6 +265,36 @@ export default async function SeriesDetailPage({ params }: Props) {
           })}
         </div>
       </div>
+    </main>
+  )
+}
+
+function SeriesRetry({ id }: { id: string }) {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <p className="text-[14px] text-white/70">データを取得できませんでした</p>
+      <a
+        href={`/series/${id}`}
+        className="rounded-lg border border-red-700/50 px-4 py-2 text-[13px] font-bold text-red-400 hover:border-red-500 hover:text-red-300"
+      >
+        再読み込み
+      </a>
+    </main>
+  )
+}
+
+function SeriesNotFound() {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="text-center">
+        <p className="text-[14px] text-white/70">シリーズ情報が見つかりませんでした</p>
+      </div>
+      <Link
+        href="/series"
+        className="rounded-lg border border-red-700/50 px-5 py-2.5 text-[13px] font-bold text-red-400 hover:border-red-500 hover:text-red-300"
+      >
+        シリーズ一覧に戻る
+      </Link>
     </main>
   )
 }
