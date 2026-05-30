@@ -1,6 +1,6 @@
 # 020 SEO 改善ログ
 
-> 実施日: 2026-05-28 / 更新: 2026-05-30（第4回）
+> 実施日: 2026-05-28 / 更新: 2026-05-30（第5回）
 
 ---
 
@@ -21,12 +21,14 @@
 | ✅ **優先5：女優ページ description・作品数表示** | `app/actress/[id]/page.tsx` | `generateMetadata` に作品数を追加・プロフィール欄に「FANZA動画 全XX作品」表示 |
 | ✅ **CF Workers RSC ナビゲーション 500 修正** | `components/actress/ActressCard.tsx` / `app/actress/[id]/WorkTabs.tsx` / `app/series/page.tsx` | `<Link>` → `<a>` に変更（動的ルートへの RSC リクエストが 500 になる CF Workers バグ回避） |
 | ✅ **CF Workers React.cache() 500 修正** | `app/actress/[id]/page.tsx` / `app/genre/[id]/page.tsx` | モジュールスコープ `React.cache()` を通常の `async function` に変更（workerd の AsyncLocalStorage 非互換バグ修正） |
+| ✅ **女優・ジャンルページ force-dynamic 化** | `app/actress/[id]/page.tsx` / `app/genre/[id]/page.tsx` | ISR 廃止 → SSR。ビルド時 API 失敗で静的ページ 0 件 → `DYNAMIC_SERVER_USAGE` 500 を恒久解消 |
+| ✅ **女優ページ OGP 画像（写真）** | `app/actress/[id]/page.tsx` | `openGraph.images` に DMM 提供の女優写真 URL を設定。SNS シェア時に写真が表示される |
 
-> ✅ **2026-05-30 時点で本番デプロイ済み**（Version ID: `e48590c6`）  
+> ✅ **2026-05-30 時点で本番デプロイ済み**（Version ID: `6016f2c5`）  
 > 本番確認: `/actress/1082666` HTTP 200 ✅ / `/genre/4026` HTTP 200 ✅
 
-**ジャンルページの実装ポイント:**
-- `generateStaticParams` で上位50件を事前生成、残りは `dynamicParams = true` でオンデマンド ISR
+**ジャンルページの実装ポイント（更新）:**
+- `force-dynamic` (SSR) に変更。`generateStaticParams` + ISR はビルド時 API 失敗で 0 件になり `DYNAMIC_SERVER_USAGE` 500 が発生するため廃止
 - ジャンル名は `result.items[0]?.iteminfo?.genre?.find(g => g.id === genreId)?.name` で逆引き（GenreSearch に単一取得がないため）
 - `floor_id: '43'` = FANZA videoa フロアの固定ID
 
@@ -111,9 +113,16 @@ curl -s "https://fanzapicks.com/sitemap.xml" | grep "/genre/"
 
 ---
 
-### 🔴 優先3：動的 OGP 画像（`next/og`）
+### ⚠️ 優先3：動的 OGP 画像（`next/og`） — **CF Workers 非対応のため保留**
 
-**SNS シェア時のクリック率 +45%（成功事例）。`app/genre/[id]/opengraph-image.tsx` を追加するだけ。**
+**`next/og` は `@vercel/og` の `resvg.wasm` / `yoga.wasm` を使用するため CF Workers (wrangler) でデプロイ不可。**
+
+- `opengraph-image.tsx` を追加すると wrangler が WASM ファイルのバンドルに失敗しデプロイエラー
+- 代替案: satori (純 JS) で SVG 生成は可能だが PNG 変換に WASM が必要（同問題）
+- **現状対応**: 女優ページのみ `openGraph.images` で DMM 提供写真を使用（Twitter/X は HTTP URL 非対応）
+- **将来対応**: Cloudflare Images + 静的 PNG 事前生成、または WASM バインディング対応を待つ
+
+<!-- 以下は実装可能になった場合のサンプルコード（現在は使用不可） -->
 
 ```ts
 // app/genre/[id]/opengraph-image.tsx
