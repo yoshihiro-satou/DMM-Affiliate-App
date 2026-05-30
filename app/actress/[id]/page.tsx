@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { fetchActressList, fetchItemList } from '@/lib/dmm/client'
@@ -13,25 +12,20 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
-const getActressById = cache(async (actressId: number) =>
-  Promise.resolve()
-    .then(() => fetchActressList({ actress_id: actressId }))
-    .catch(() => null)
-)
+async function getActressById(actressId: number) {
+  return fetchActressList({ actress_id: actressId }).catch(() => null)
+}
 
-// hits:1 で total_count だけ取得（metadata の description に使う）
-const getActressWorkCount = cache(async (actressId: number): Promise<number | null> => {
-  const result = await Promise.resolve()
-    .then(() => fetchItemList({
-      article: 'actress',
-      article_id: actressId,
-      service: 'digital',
-      floor: 'videoa',
-      hits: 1,
-    }))
-    .catch(() => null)
+async function getActressWorkCount(actressId: number): Promise<number | null> {
+  const result = await fetchItemList({
+    article: 'actress',
+    article_id: actressId,
+    service: 'digital',
+    floor: 'videoa',
+    hits: 1,
+  }).catch(() => null)
   return result?.total_count ?? null
-})
+}
 
 export async function generateStaticParams() {
   const result = await fetchActressList({ hits: 100 }).catch(() => null)

@@ -1,4 +1,3 @@
-import { cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { fetchItemList, fetchGenreList } from '@/lib/dmm/client'
@@ -13,7 +12,7 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
-const getGenreData = cache(async (genreId: number) => {
+async function getGenreData(genreId: number) {
   const result = await fetchItemList({
     article: 'genre',
     article_id: genreId,
@@ -26,7 +25,7 @@ const getGenreData = cache(async (genreId: number) => {
     result.items[0]?.iteminfo?.genre?.find((g) => g.id === genreId)?.name ??
     `ジャンル${genreId}`
   return { result, genreName }
-})
+}
 
 export async function generateStaticParams() {
   const genreResult = await fetchGenreList({ floor_id: '43', hits: 100 }).catch(() => null)
