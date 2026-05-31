@@ -9,11 +9,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'セール・値引き作品',
-  description: 'FANZAで現在値引き中の作品一覧。割引率の高い順に表示。',
+  title: '今日のFANZAセール・値引き作品',
+  description: 'FANZAで今日値引き中の作品一覧。毎時更新・割引率の高い順に掲載。最大90%OFFのセール作品をチェック。',
   openGraph: {
-    title: 'セール・値引き作品 | FANZA おすすめ',
-    description: 'FANZAで現在値引き中の作品一覧。割引率の高い順に表示。',
+    title: '今日のFANZAセール・値引き作品 | FANZAピックス',
+    description: 'FANZAで今日値引き中の作品一覧。毎時更新・割引率の高い順に掲載。',
     url: '/sale',
   },
   alternates: { canonical: '/sale' },
@@ -29,8 +29,9 @@ export default async function SalePage() {
         SALE
       </span>
       <h1 className="mt-1 text-[22px] font-black tracking-tight text-white">
-        セール・値引き作品
+        今日のFANZAセール
       </h1>
+      <p className="mt-0.5 text-[11px] text-white/50">値引き作品を割引率の高い順に掲載</p>
     </div>
   )
 

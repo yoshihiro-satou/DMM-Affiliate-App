@@ -38,12 +38,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${genreName} おすすめ作品`,
-    description: `FANZAで人気の${genreName}作品一覧。レビュー評価の高い作品から厳選して紹介。`,
+    description: `FANZA ${genreName}のおすすめ作品一覧。レビュー評価の高い人気作を厳選して掲載。最新・人気順で${genreName}動画を探せます。`,
     alternates: { canonical: `/genre/${id}` },
     openGraph: {
       url: `/genre/${id}`,
       title: `${genreName} おすすめ作品 | FANZAピックス`,
-      description: `FANZAで人気の${genreName}作品一覧。レビュー評価の高い作品から厳選して紹介。`,
+      description: `FANZA ${genreName}のおすすめ作品一覧。レビュー評価の高い人気作を厳選して掲載。`,
     },
   }
 }
@@ -144,7 +144,10 @@ export default async function GenrePage({ params }: Props) {
           GENRE
         </span>
         <h1 className="mt-1 text-[22px] font-black tracking-tight text-white">{genreName}</h1>
-        <p className="mt-0.5 text-[11px] text-white/55">
+        <p className="mt-0.5 text-[11px] text-white/60">
+          FANZA {genreName}のおすすめ作品をレビュー評価順に掲載
+        </p>
+        <p className="mt-0.5 text-[11px] text-white/40">
           PR · {result.total_count.toLocaleString('ja-JP')}件以上
         </p>
       </div>

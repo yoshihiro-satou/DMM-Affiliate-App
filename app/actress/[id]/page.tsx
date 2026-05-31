@@ -54,8 +54,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const countText = totalCount ? `全${totalCount}作品。` : ''
   const statsText = stats ? `${stats}。` : ''
-  const title = `${actress.name}のFANZA作品一覧`
-  const description = `${actress.name}のFANZA作品一覧。${countText}${statsText}最新作・人気作をレビュー順に掲載。`
+  const title = `${actress.name} おすすめFANZA作品一覧`
+  const description = `${actress.name}のFANZAおすすめ作品一覧。${countText}${statsText}最新作・人気作をレビュー順に掲載。`
 
   return {
     title,
