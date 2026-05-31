@@ -14,10 +14,10 @@ export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'ランキング',
-  description: 'FANZAの人気作品ランキング。日次・週次・月次・人気女優で絞り込み可能。',
+  description: 'FANZAの人気作品ランキング。日次・週次・月次・素人・人気女優で絞り込み可能。',
   openGraph: {
     title: 'ランキング | FANZA おすすめ',
-    description: 'FANZAの人気作品ランキング。日次・週次・月次・人気女優で絞り込み可能。',
+    description: 'FANZAの人気作品ランキング。日次・週次・月次・素人・人気女優で絞り込み可能。',
     url: '/ranking',
   },
   alternates: { canonical: '/ranking' },
@@ -30,18 +30,21 @@ type ItemPeriodConfig = {
   fetchParams: Omit<FetchItemListParams, 'hits' | 'service' | 'floor'>
   label: string
   applyScore: boolean
+  floor?: string  // デフォルト: 'videoa'
 }
 
 const ITEM_PERIOD_CONFIG: Partial<Record<RankingPeriod, ItemPeriodConfig>> = {
   daily:   { fetchParams: { sort: 'rank', offset: 1  }, label: '日次ランキング', applyScore: false },
   weekly:  { fetchParams: { sort: 'rank', offset: 41 }, label: '週次ランキング', applyScore: true  },
   monthly: { fetchParams: { sort: 'review'            }, label: '月次ランキング', applyScore: true  },
+  amateur: { fetchParams: { sort: 'rank'              }, label: '素人ランキング', applyScore: false, floor: 'videoc' },
 }
 
 const PERIOD_LABEL: Record<RankingPeriod, string> = {
   daily:   '日次ランキング',
   weekly:  '週次ランキング',
   monthly: '月次ランキング',
+  amateur: '素人ランキング',
   actress: '人気女優',
   genre:   '人気ジャンル',
 }
@@ -233,7 +236,7 @@ export default async function RankingPage({ searchParams }: Props) {
       ...config.fetchParams,
       hits: 40,
       service: 'digital',
-      floor: 'videoa',
+      floor: config.floor ?? 'videoa',
     })
     const items = config.applyScore ? sortByRankingScore(result.items) : result.items
 

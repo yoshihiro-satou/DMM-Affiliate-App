@@ -1,5 +1,5 @@
 ﻿import type { Metadata } from 'next'
-import { fetchItemList } from '@/lib/dmm/client'
+import { fetchItemListMixed } from '@/lib/dmm/client'
 import { SwipeFeedClient } from './SwipeFeedClient'
 
 export const metadata: Metadata = {
@@ -9,12 +9,7 @@ export const metadata: Metadata = {
 
 export default async function DiscoverPage() {
   try {
-    const result = await fetchItemList({
-      service: 'digital',
-      floor: 'videoa',
-      hits: 20,
-      sort: 'rank',
-    })
+    const result = await fetchItemListMixed({ hits: 20, sort: 'rank' })
     return <SwipeFeedClient initialItems={result.items} />
   } catch {
     return (

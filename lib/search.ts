@@ -1,5 +1,5 @@
 import 'server-only'
-import { fetchItemList } from '@/lib/dmm/client'
+import { fetchItemList, fetchItemListMixed } from '@/lib/dmm/client'
 import { parsePrice } from '@/lib/ranking'
 import type { DmmItem } from '@/types/dmm'
 
@@ -79,17 +79,20 @@ export async function searchItems(params: {
   const { q, sort = 'rank', page = 1, hitsPerPage = 20 } = params
   const offset = (page - 1) * hitsPerPage
 
-  const result = await fetchItemList({
-    keyword: q || undefined,
-    sort: q && sort === 'rank' ? 'match' : DMM_SORT[sort],
-    hits: hitsPerPage,
-    offset: offset + 1,
-    service: 'digital',
-    floor: 'videoa',
-  })
+  const result = !q
+    ? await fetchItemListMixed({ sort: DMM_SORT[sort], hits: hitsPerPage, offset: offset + 1 })
+    : await fetchItemList({
+        keyword: q,
+        sort: sort === 'rank' ? 'match' : DMM_SORT[sort],
+        hits: hitsPerPage,
+        offset: offset + 1,
+        service: 'digital',
+      })
 
   return {
-    items: result.items.map(dmmToResult),
+    items: result.items
+      .filter(item => !item.iteminfo?.genre?.some(g => g.name?.includes('VR')))
+      .map(dmmToResult),
     total: result.total_count,
     query: q,
   }

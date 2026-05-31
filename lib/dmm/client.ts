@@ -285,6 +285,38 @@ export const fetchGenreList = cache(
 )
 
 // ------------------------------------
+// videoa + videoc を並列取得してインターリーブマージ
+// ------------------------------------
+export async function fetchItemListMixed(
+  params: Omit<FetchItemListParams, 'service' | 'floor'> = {}
+): Promise<DmmItemListResponse['result']> {
+  const [videoa, videoc] = await Promise.all([
+    fetchItemList({ ...params, service: 'digital', floor: 'videoa' }),
+    fetchItemList({ ...params, service: 'digital', floor: 'videoc' }),
+  ])
+
+  const seen = new Set<string>()
+  const merged: DmmItem[] = []
+  const maxLen = Math.max(videoa.items.length, videoc.items.length)
+  for (let i = 0; i < maxLen; i++) {
+    if (videoa.items[i] && !seen.has(videoa.items[i].content_id)) {
+      seen.add(videoa.items[i].content_id)
+      merged.push(videoa.items[i])
+    }
+    if (videoc.items[i] && !seen.has(videoc.items[i].content_id)) {
+      seen.add(videoc.items[i].content_id)
+      merged.push(videoc.items[i])
+    }
+  }
+
+  return {
+    ...videoa,
+    items: merged,
+    total_count: videoa.total_count + videoc.total_count,
+  }
+}
+
+// ------------------------------------
 // 複数リクエストを直列実行（レート制限対策）
 // ------------------------------------
 export async function fetchWithRateLimit<T>(

@@ -52,7 +52,7 @@ export function SwipeFeed({ initialItems }: Props) {
     isFetchingRef.current = true
     try {
       const res = await fetch(
-        `/api/dmm/items?service=digital&floor=videoa&sort=rank&hits=20&offset=${nextOffset.current}`
+        `/api/dmm/items?service=digital&floor=mixed&sort=rank&hits=20&offset=${nextOffset.current}`
       )
       if (res.ok) {
         const data = (await res.json()) as { items?: DmmItem[] }

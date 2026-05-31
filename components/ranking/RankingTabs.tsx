@@ -6,6 +6,7 @@ export const RANKING_PERIODS = [
   { key: 'daily',   label: '日次'   },
   { key: 'weekly',  label: '週次'   },
   { key: 'monthly', label: '月次'   },
+  { key: 'amateur', label: '素人'   },
   { key: 'actress', label: '人気女優' },
   { key: 'genre',   label: '人気ジャンル' },
 ] as const

@@ -4,7 +4,7 @@
 // Consumed via wrangler.toml [alias] "next/dist/server/load-manifest.external.js".
 
 const _cache = new Map()
-const BUILD_ID = "pwxmTdBeyK1gKRemze0rb"
+const BUILD_ID = "WG42CdNzzieaPuv4N-O61"
 
 // Manifest lookup: endsWith key ("/routes-manifest.json" etc.) → parsed JSON
 const MANIFEST_MAP = new Map([
@@ -23,7 +23,7 @@ const MANIFEST_MAP = new Map([
   "76635": {
     "id": 76635,
     "files": [
-      "static/chunks/0so87ozu5252k.js",
+      "static/chunks/0~vv~ey6rowkk.js",
       "static/chunks/0e2pz5x5yoso6.js"
     ]
   }
@@ -460,7 +460,7 @@ const MANIFEST_MAP = new Map([
       "wasm": [],
       "assets": [],
       "env": {
-        "__NEXT_BUILD_ID": "pwxmTdBeyK1gKRemze0rb",
+        "__NEXT_BUILD_ID": "WG42CdNzzieaPuv4N-O61",
         "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "N9AlDEWw1BQeTNAmsUdJ/n54Ior+t5ZOFzCA4b1Oar0=",
         "__NEXT_PREVIEW_MODE_ID": "081d399ad477f7e062f8574cf9aea050",
         "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "ca7cdf32c57b50324b21fb21ac60db862c1d5225434ce49ddf9077a81a625991",
@@ -1438,9 +1438,9 @@ const MANIFEST_MAP = new Map([
     "static/chunks/03~yq9q893hmn.js"
   ],
   "lowPriorityFiles": [
-    "static/pwxmTdBeyK1gKRemze0rb/_buildManifest.js",
-    "static/pwxmTdBeyK1gKRemze0rb/_ssgManifest.js",
-    "static/pwxmTdBeyK1gKRemze0rb/_clientMiddlewareManifest.js"
+    "static/WG42CdNzzieaPuv4N-O61/_buildManifest.js",
+    "static/WG42CdNzzieaPuv4N-O61/_ssgManifest.js",
+    "static/WG42CdNzzieaPuv4N-O61/_clientMiddlewareManifest.js"
   ],
   "rootMainFiles": [
     "static/chunks/0s.nri1hm7d4q.js",

@@ -1,6 +1,6 @@
 ﻿import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { fetchItemList, fetchDailySaleItems, fetchGenreList } from '@/lib/dmm/client'
+import { fetchItemListMixed, fetchItemList, fetchDailySaleItems, fetchGenreList } from '@/lib/dmm/client'
 import { sortByRankingScore } from '@/lib/ranking'
 import { BentoGrid } from '@/components/layout/BentoGrid'
 import { GridCard } from '@/components/product/GridCard'
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 // ------------------------------------
 async function RankingSection() {
   try {
-    const result = await fetchItemList({ sort: 'rank', hits: 10, service: 'digital', floor: 'videoa' })
+    const result = await fetchItemListMixed({ sort: 'rank', hits: 10 })
     const ranked = sortByRankingScore(result.items)
 
     const jsonLd = {
@@ -62,7 +62,7 @@ async function DailySaleSection() {
     const saleItems = await fetchDailySaleItems(10)
 
     if (saleItems.length === 0) {
-      const result = await fetchItemList({ sort: 'date', hits: 10, service: 'digital', floor: 'videoa' })
+      const result = await fetchItemListMixed({ sort: 'date', hits: 10 })
       return (
         <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
           {result.items.map((item, i) => (
