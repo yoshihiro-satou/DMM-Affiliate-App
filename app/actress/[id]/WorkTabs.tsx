@@ -1,4 +1,6 @@
-﻿export type WorkTab = 'latest' | 'popular'
+﻿'use client'
+
+export type WorkTab = 'latest' | 'popular'
 
 const TABS: { id: WorkTab; label: string }[] = [
   { id: 'latest', label: '最新作' },

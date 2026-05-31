@@ -136,7 +136,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     actress.birthday ? { label: '生年月日', value: actress.birthday } : null,
   ].filter((s): s is { label: string; value: string } => s !== null)
 
-  const jsonLd = {
+  const jsonLdPerson = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: actress.name,
@@ -146,11 +146,25 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     url: `${SITE_URL}/actress/${id}`,
   }
 
+  const jsonLdBreadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: '人気女優', item: `${SITE_URL}/ranking?period=actress` },
+      { '@type': 'ListItem', position: 3, name: actress.name, item: `${SITE_URL}/actress/${id}` },
+    ],
+  }
+
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdPerson) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }}
       />
 
       {/* プロフィールヘッダー */}
@@ -201,20 +215,35 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
         </div>
       </div>
 
-      {/* FANZA リンク + PR */}
+      {/* FANZA リンク + PR + X シェア */}
       <div className="flex items-center justify-between px-4 py-1.5">
         <p className="text-[9px] text-white/40">PR · FANZAアフィリエイトリンク</p>
-        {actress.listURL?.digital && (
-          <a
-            href={actress.listURL.digital}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded border border-red-700/50 px-2.5 py-1 text-[11px] font-bold text-red-400 hover:border-red-500 hover:text-red-300 active:opacity-70"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          >
-            FANZAで全作品を見る →
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          {works[0] && (
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                `${actress.name} の新作来た🎉\n「${works[0].title}」\n#FANZAピックス`
+              )}&url=${encodeURIComponent(`${SITE_URL}/actress/${id}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded border border-white/15 px-2.5 py-1 text-[11px] font-bold text-white/50 hover:border-white/30 hover:text-white/80 active:opacity-70"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              𝕏 シェア
+            </a>
+          )}
+          {actress.listURL?.digital && (
+            <a
+              href={actress.listURL.digital}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded border border-red-700/50 px-2.5 py-1 text-[11px] font-bold text-red-400 hover:border-red-500 hover:text-red-300 active:opacity-70"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              FANZAで全作品を見る →
+            </a>
+          )}
+        </div>
       </div>
 
       {/* 関連ジャンル */}

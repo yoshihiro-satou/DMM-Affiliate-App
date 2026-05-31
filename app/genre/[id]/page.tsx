@@ -5,6 +5,8 @@ import { GridCard } from '@/components/product/GridCard'
 
 export const dynamic = 'force-dynamic'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
+
 const BENTO_PATTERN = [true, false, false, false, true, false, false, true, false, false, false, false]
 
 type Props = {
@@ -76,7 +78,7 @@ export default async function GenrePage({ params }: Props) {
     .slice(0, 8)
     .map(([actressId, { name, count }]) => ({ id: actressId, name, count }))
 
-  const jsonLd = {
+  const jsonLdItemList = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: `${genreName} おすすめ作品`,
@@ -88,11 +90,51 @@ export default async function GenrePage({ params }: Props) {
     })),
   }
 
+  const jsonLdBreadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: `${genreName} おすすめ作品`, item: `${SITE_URL}/genre/${genreId}` },
+    ],
+  }
+
+  const jsonLdFaq = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `${genreName}とはどんなジャンルですか？`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `${genreName}はFANZAで人気のジャンルです。このページではレビュー評価の高い${genreName}作品を厳選して紹介しています。`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `${genreName}のおすすめ作品はどこで見られますか？`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `FANZAピックスの${genreName}ページでは、レビュー評価・人気順に並んだ作品一覧を無料で閲覧できます。各作品のFANZA購入ページへのリンクも掲載しています。`,
+        },
+      },
+    ],
+  }
+
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdItemList) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }}
       />
       <div className="border-b border-white/8 px-4 py-4">
         <span

@@ -4,6 +4,8 @@ import { sortByDiscount } from '@/lib/ranking'
 import { ProductCard } from '@/components/product/ProductCard'
 import { FavoriteButton } from '@/components/product/FavoriteButton'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
+
 export const revalidate = 3600
 
 export const metadata: Metadata = {
@@ -41,7 +43,7 @@ export default async function SalePage() {
     })
     const items = sortByDiscount(result.items)
 
-    const jsonLd = {
+    const jsonLdItemList = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
       name: 'セール・値引き作品',
@@ -53,11 +55,24 @@ export default async function SalePage() {
       })),
     }
 
+    const jsonLdBreadcrumb = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'セール・値引き作品', item: `${SITE_URL}/sale` },
+      ],
+    }
+
     return (
       <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdItemList) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }}
         />
         {header}
         <p className="px-4 pb-2 pt-1 text-[11px] text-white/55">

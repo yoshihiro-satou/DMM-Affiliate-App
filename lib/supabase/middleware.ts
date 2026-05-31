@@ -15,6 +15,7 @@ export async function updateSession(request: NextRequest) {
     pathname === '/sw.js' ||
     pathname === '/sitemap.xml' ||
     pathname === '/robots.txt' ||
+    pathname === '/llms.txt' ||
     /^\/google[a-z0-9]+\.html$/.test(pathname)
 
   let supabaseResponse = NextResponse.next({ request })
