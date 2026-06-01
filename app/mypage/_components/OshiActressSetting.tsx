@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import type { DmmActress } from '@/types/dmm'
-import { addOshiActress, removeOshiActress, MAX_OSHI_ACTRESSES } from '../actions'
+import { addOshiActress, removeOshiActress } from '../actions'
+import { MAX_OSHI_ACTRESSES } from '@/lib/constants/oshi'
 
 type Oshi = { id: string; name: string }
 

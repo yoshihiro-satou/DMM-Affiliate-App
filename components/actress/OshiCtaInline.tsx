@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Star, Check } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
-import { addOshiActress, removeOshiActress, MAX_OSHI_ACTRESSES } from '@/app/mypage/actions'
+import { addOshiActress, removeOshiActress } from '@/app/mypage/actions'
+import { MAX_OSHI_ACTRESSES } from '@/lib/constants/oshi'
 
 type Props = {
   actressId: string

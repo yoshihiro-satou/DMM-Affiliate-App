@@ -3,14 +3,13 @@
 import { createClient, getCurrentUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { MAX_OSHI_ACTRESSES } from '@/lib/constants/oshi'
 
 export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/')
 }
-
-export const MAX_OSHI_ACTRESSES = 5
 
 export type AddOshiResult = { ok: boolean; count: number; limitReached?: boolean }
 
