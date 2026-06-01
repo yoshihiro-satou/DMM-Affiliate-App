@@ -2,10 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { AGE_CHECK_COOKIE, AGE_CHECK_VALUE } from '@/lib/constants/age-check'
 
+const SEARCH_BOT_RE = /googlebot|google-inspectiontool|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|ia_archiver/i
+
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ageCheckDone = request.cookies.get(AGE_CHECK_COOKIE)?.value === AGE_CHECK_VALUE
   const isAgeCheckPage = pathname === '/age-check'
+  const isSearchBot = SEARCH_BOT_RE.test(request.headers.get('user-agent') ?? '')
   const isPublicAsset =
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
@@ -56,7 +59,7 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  if (!ageCheckDone && !isAgeCheckPage && !isPublicAsset) {
+  if (!ageCheckDone && !isAgeCheckPage && !isPublicAsset && !isSearchBot) {
     const url = request.nextUrl.clone()
     url.pathname = '/age-check'
     url.searchParams.set('from', pathname + request.nextUrl.search)
