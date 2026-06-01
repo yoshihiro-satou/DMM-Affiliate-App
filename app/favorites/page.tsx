@@ -5,6 +5,7 @@ import { Heart } from 'lucide-react'
 import { getCurrentUser, createClient } from '@/lib/supabase/server'
 import { RemoveFavoriteButton } from './RemoveFavoriteButton'
 import { GuestFavoritesList } from './GuestFavoritesList'
+import { ShareFavoritesButton } from './ShareFavoritesButton'
 import type { Tables } from '@/types/supabase'
 
 export const metadata: Metadata = {
@@ -30,8 +31,13 @@ export default async function FavoritesPage() {
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="border-b border-white/8 px-4 py-4">
-        <h1 className="text-[22px] font-black tracking-tight text-white">お気に入り</h1>
-        <p className="mt-0.5 text-[11px] text-white/55">{items.length}件</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[22px] font-black tracking-tight text-white">お気に入り</h1>
+            <p className="mt-0.5 text-[11px] text-white/55">{items.length}件</p>
+          </div>
+          <ShareFavoritesButton titles={items.map((i) => i.item_title ?? '')} />
+        </div>
         <p className="mt-2 text-[13px] text-white/60">お気に入り登録するとあなた向けの表示に近づきます。</p>
       </div>
 

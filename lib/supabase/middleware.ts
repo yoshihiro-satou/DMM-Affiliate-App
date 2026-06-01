@@ -21,6 +21,22 @@ export async function updateSession(request: NextRequest) {
     pathname === '/llms.txt' ||
     /^\/google[a-z0-9]+\.html$/.test(pathname)
 
+  // 流入元(?ref= / utm_source)を Cookie に保持。年齢ゲートのリダイレクトを跨いでも
+  // 計測できるようにする（Phase 0 / 施策10 のシェア計測）。first-touch のみ保存。
+  const refParam =
+    request.nextUrl.searchParams.get('ref') ?? request.nextUrl.searchParams.get('utm_source')
+  const hasRefCookie = !!request.cookies.get('fp_ref')
+  const applyRef = (res: NextResponse): NextResponse => {
+    if (refParam && !hasRefCookie) {
+      res.cookies.set('fp_ref', refParam.slice(0, 128), {
+        maxAge: 60 * 60 * 24 * 90,
+        path: '/',
+        sameSite: 'lax',
+      })
+    }
+    return res
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -56,15 +72,15 @@ export async function updateSession(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
     })
-    return supabaseResponse
+    return applyRef(supabaseResponse)
   }
 
   if (!ageCheckDone && !isAgeCheckPage && !isPublicAsset && !isSearchBot) {
     const url = request.nextUrl.clone()
     url.pathname = '/age-check'
     url.searchParams.set('from', pathname + request.nextUrl.search)
-    return NextResponse.redirect(url)
+    return applyRef(NextResponse.redirect(url))
   }
 
-  return supabaseResponse
+  return applyRef(supabaseResponse)
 }

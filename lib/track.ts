@@ -36,7 +36,9 @@ export function captureRef(): string | null {
   if (typeof window === 'undefined') return null
   try {
     const params = new URLSearchParams(window.location.search)
-    const incoming = params.get('ref') ?? params.get('utm_source')
+    // URL → 既存localStorage → Cookie(middlewareが年齢ゲート跨ぎで保持)の順に解決
+    const cookieRef = document.cookie.match(/(?:^|;\s*)fp_ref=([^;]+)/)?.[1]
+    const incoming = params.get('ref') ?? params.get('utm_source') ?? (cookieRef ? decodeURIComponent(cookieRef) : null)
     const stored = localStorage.getItem(REF_KEY)
     const ref = stored ?? incoming
     if (ref && !stored) {

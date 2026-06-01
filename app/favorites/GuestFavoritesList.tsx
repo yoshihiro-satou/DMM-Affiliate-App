@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Heart } from 'lucide-react'
 import { removeGuestFavorite, type GuestFavItem } from '@/lib/guest-favorites'
+import { ShareFavoritesButton } from './ShareFavoritesButton'
 
 function useGuestFavorites(): GuestFavItem[] {
   // useSyncExternalStore handles SSR/client difference without useEffect:
@@ -38,8 +39,13 @@ export function GuestFavoritesList() {
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="border-b border-white/8 px-4 py-4">
-        <h1 className="text-[22px] font-black tracking-tight text-white">お気に入り</h1>
-        <p className="mt-0.5 text-[11px] text-white/55">{items.length}件</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-[22px] font-black tracking-tight text-white">お気に入り</h1>
+            <p className="mt-0.5 text-[11px] text-white/55">{items.length}件</p>
+          </div>
+          <ShareFavoritesButton titles={items.map((i) => i.title)} />
+        </div>
       </div>
 
       {/* ログイン促進バナー */}
