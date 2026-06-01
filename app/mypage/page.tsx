@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation'
 import { buildUserProfile, topEntries } from '@/lib/personalization'
 import { fetchItemList } from '@/lib/dmm/client'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
+import { BadgeShowcase } from '@/components/badges/BadgeShowcase'
+import { getBadgeProgress } from '@/lib/badge-progress'
 import { OshiActressSetting } from './_components/OshiActressSetting'
 import { OshiDirectorSetting } from './_components/OshiDirectorSetting'
 import { signOut } from './actions'
@@ -443,6 +445,29 @@ function TopActressesSkeleton() {
   )
 }
 
+// ── バッジコレクション（追加14） ─────────────────────────────────────────────
+
+async function BadgeSection({ userId }: { userId: string }) {
+  const badges = await getBadgeProgress(userId)
+  return <BadgeShowcase badges={badges} />
+}
+
+function BadgeSectionSkeleton() {
+  return (
+    <div className="rounded-lg border border-white/8 bg-white/3 p-4">
+      <div className="mb-3 h-3 w-32 animate-pulse rounded bg-white/10" />
+      <div className="flex flex-col gap-2.5">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="h-9 w-9 animate-pulse rounded-full bg-white/10" />
+            <div className="h-3 flex-1 animate-pulse rounded bg-white/8" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── ページ本体 ────────────────────────────────────────────────────────────────
 
 function maskEmail(email: string): string {
@@ -559,6 +584,11 @@ export default async function MyPage() {
             />
           </Suspense>
         )}
+
+        {/* バッジコレクション */}
+        <Suspense fallback={<BadgeSectionSkeleton />}>
+          <BadgeSection userId={claims.sub} />
+        </Suspense>
 
         {/* よく見る女優 */}
         <Suspense fallback={<TopActressesSkeleton />}>

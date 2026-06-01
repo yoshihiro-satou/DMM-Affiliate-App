@@ -354,6 +354,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 | `series_progress` | シリーズ既読（series_id / item_id / status） | 本人のみ読み書き |
 | `followed_series` | フォロー中シリーズ（series_id / series_name / latest_item_id） | 本人のみ読み書き |
 | `view_history` | 閲覧履歴（item_id / item_title / viewed_at） | 本人のみ読み書き |
+| `events` | 自前KPI計測（event_type / session_id / ref / item_id / meta）— ファネル集計用 | サービスロールのみ（`/api/track` 経由）|
 
 DB関数（RPC）:
 - `get_top_favorited_items(limit_count)` — お気に入り上位 N 件の item_id を返す

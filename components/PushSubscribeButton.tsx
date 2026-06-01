@@ -5,6 +5,7 @@ import { Bell, BellOff, BellRing } from 'lucide-react'
 import { saveSubscription, removeSubscription } from '@/actions/push'
 import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
 import { useAuth } from '@/components/providers/auth-provider'
+import { track } from '@/lib/track'
 
 type State = 'unsupported' | 'loading' | 'denied' | 'unsubscribed' | 'subscribed'
 
@@ -51,6 +52,7 @@ export function PushSubscribeButton() {
       startTransition(async () => {
         await saveSubscription({ endpoint: json.endpoint!, keys: json.keys })
         setState('subscribed')
+        track('notify_grant') // ファネル計測: 通知許可（追加12）
       })
     } catch (err) {
       console.error('[PushSubscribeButton] subscribe error:', err)

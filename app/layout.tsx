@@ -7,6 +7,7 @@ import { AuthListener } from '@/components/auth-listener'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
+import { Tracker } from '@/components/Tracker'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
 import { DmmCredit } from '@/components/layout/DmmCredit'
 import { getCurrentUser } from '@/lib/supabase/server'
@@ -125,6 +126,7 @@ export default async function RootLayout({
           <AuthProvider isLoggedIn={!!user} userId={user?.sub ?? null}>
             <AuthListener />
             <ServiceWorkerRegistration />
+            <Tracker />
             {children}
             <DmmCredit />
             <BottomNav />

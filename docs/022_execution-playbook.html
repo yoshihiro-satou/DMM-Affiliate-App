@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>022 サイト拡散 実行手順書 | FANZAピックス</title>
+<style>
+  :root {
+    --bg: #1a0b2e;
+    --bg2: #2a1147;
+    --card: #2d1850;
+    --card2: #3a1f63;
+    --border: rgba(255,255,255,0.10);
+    --text: #ece6f5;
+    --muted: #b3a3cc;
+    --accent: #c084fc;
+    --accent2: #f0abfc;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --green: #4ade80;
+    --blue: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+    background: linear-gradient(160deg, #1a0b2e 0%, #2a1147 50%, #1a0b2e 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 48px 24px 120px; }
+
+  /* ヘッダー */
+  header.hero {
+    text-align: center;
+    padding: 40px 20px 48px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .hero .eyebrow {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    color: var(--accent2);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 30px;
+    margin: 0 0 14px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #f0abfc, #c084fc, #818cf8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p { color: var(--muted); margin: 6px 0; font-size: 14px; }
+
+  /* 方針ボックス */
+  .policy {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+  }
+  .policy h2 { margin: 0 0 12px; font-size: 18px; }
+  .policy p { margin: 8px 0; font-size: 14px; color: var(--text); }
+
+  /* 除外ボックス */
+  .excluded {
+    background: rgba(248,113,113,0.07);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 14px;
+    padding: 20px 26px;
+    margin-bottom: 44px;
+  }
+  .excluded h2 { margin: 0 0 14px; font-size: 17px; color: var(--red); }
+  .excluded ul { margin: 0; padding-left: 0; list-style: none; }
+  .excluded li { margin-bottom: 14px; padding-left: 22px; position: relative; font-size: 14px; }
+  .excluded li::before { content: "✕"; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+  .excluded .why { color: var(--muted); font-size: 13px; }
+
+  /* 目次 */
+  nav.toc {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 26px;
+    margin-bottom: 48px;
+  }
+  nav.toc h2 { margin: 0 0 12px; font-size: 14px; letter-spacing: 0.1em; color: var(--muted); }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin-bottom: 6px; }
+  nav.toc a { color: var(--accent2); text-decoration: none; font-size: 14px; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  /* フェーズ */
+  .phase { margin-bottom: 52px; }
+  .phase-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .phase-num {
+    flex-shrink: 0;
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 20px;
+    background: linear-gradient(135deg, #7b2fbe, #c084fc);
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(192,132,252,0.35);
+  }
+  .phase-head h2 { margin: 0; font-size: 21px; }
+  .phase-when { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
+  .phase-goal {
+    color: var(--accent2);
+    font-size: 13.5px;
+    margin: 10px 0 22px;
+    padding-left: 66px;
+  }
+  @media (max-width: 560px) { .phase-goal { padding-left: 0; } }
+
+  /* 施策カード */
+  .task {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 18px;
+    transition: border-color .2s;
+  }
+  .task:hover { border-color: rgba(192,132,252,0.45); }
+  .task-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .task h3 { margin: 0; font-size: 16.5px; flex: 1 1 auto; }
+  .task .lead { color: var(--muted); font-size: 13.5px; margin: 4px 0 16px; }
+
+  .badge {
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .b-top { background: rgba(248,113,113,0.18); color: #fca5a5; border: 1px solid rgba(248,113,113,0.4); }
+  .b-high { background: rgba(251,191,36,0.16); color: #fcd34d; border: 1px solid rgba(251,191,36,0.4); }
+  .b-mid { background: rgba(96,165,250,0.16); color: #93c5fd; border: 1px solid rgba(96,165,250,0.4); }
+  .b-cost { background: rgba(255,255,255,0.07); color: var(--muted); border: 1px solid var(--border); }
+  .b-orig { background: rgba(192,132,252,0.12); color: var(--accent2); border: 1px solid rgba(192,132,252,0.3); }
+
+  /* チェックリスト手順 */
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+  .steps > li {
+    position: relative;
+    padding: 8px 0 8px 38px;
+    font-size: 14px;
+    border-bottom: 1px dashed rgba(255,255,255,0.06);
+  }
+  .steps > li:last-child { border-bottom: none; }
+  .steps > li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute; left: 0; top: 8px;
+    width: 24px; height: 24px;
+    background: rgba(192,132,252,0.18);
+    color: var(--accent2);
+    border-radius: 7px;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .steps code, .file {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+    background: rgba(0,0,0,0.32);
+    padding: 1.5px 6px;
+    border-radius: 5px;
+    color: #f0abfc;
+  }
+  .note {
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--muted);
+    background: rgba(0,0,0,0.18);
+    border-radius: 8px;
+    padding: 10px 14px;
+    border-left: 3px solid rgba(192,132,252,0.5);
+  }
+  .note strong { color: var(--text); }
+  .warn { border-left-color: rgba(251,191,36,0.7); }
+  .warn strong { color: var(--amber); }
+
+  /* 完了条件 */
+  .done {
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--green);
+    background: rgba(74,222,128,0.07);
+    border: 1px solid rgba(74,222,128,0.25);
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+  .done::before { content: "✓ 完了条件： "; font-weight: 700; }
+
+  /* サマリー表 */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin-top: 20px; font-size: 13px;
+    background: var(--card); border-radius: 12px; overflow: hidden;
+  }
+  th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: rgba(0,0,0,0.25); color: var(--accent2); font-size: 12px; letter-spacing: 0.05em; }
+  td:first-child, th:first-child { text-align: center; width: 60px; }
+  tr:last-child td { border-bottom: none; }
+
+  h2.section { font-size: 22px; margin: 0 0 4px; }
+  footer {
+    margin-top: 60px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 12.5px; text-align: center;
+  }
+
+  @media print {
+    body { background: #fff; color: #111; }
+    .task, .policy, nav.toc, table, .excluded, .phase-num { box-shadow: none; }
+    .hero h1 { -webkit-text-fill-color: #6b21a8; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">EXECUTION PLAYBOOK</span>
+    <h1>サイト拡散 実行手順書</h1>
+    <p>docs/021「拡散施策10選＋専門家レビュー」の<strong>結論を実行可能な手順に落とし込んだもの</strong></p>
+    <p>対象: 1人運営・自動化優先 ／ 作成: 2026-06-01</p>
+  </header>
+
+  <!-- 方針 -->
+  <section class="policy">
+    <h2>📌 このドキュメントの方針</h2>
+    <p>docs/021 第2部（トップ専門家2名 D・E のレビュー）で <strong>「リスク高め」と判定された施策を除外</strong>し、
+    自社チャネル（PWA・プッシュ・メール・Telegram）を中心に据えた<strong>合法かつ凍結リスクの低い施策のみ</strong>を、Phase 0 → 4 の順で並べた実行手順書です。</p>
+    <p>各施策は <span class="badge b-orig">021の施策番号</span> と紐付けてあります。上から順に着手すれば、測定基盤 → 生命線（自社チャネル）→ 外部流入 → SEO → バイラル の順で固まります。</p>
+  </section>
+
+  <!-- 除外施策 -->
+  <section class="excluded">
+    <h2>⚠️ 本手順書から除外した施策（リスク高め）</h2>
+    <ul>
+      <li>
+        <strong>施策1：X 自動投稿（セール速報の cron 自動化）</strong> ― 再評価 3/10<br>
+        <span class="why">新規アカウント＋外部リンク＋アダルト＋bot投稿で凍結フラグが重なり、<code class="file">al.fanza.co.jp</code> 直貼りは過去に大量凍結実績。アフィリンク自動投稿は最も凍結されやすいパターンのため除外。
+        ※ X を使う場合は「自社サイト(<code class="file">/sale</code>)経由・センシティブ設定・頻度制御」を別途設計してから。本手順書では扱わない。</span>
+      </li>
+      <li>
+        <strong>施策8：5ch 等への体験談シード投稿</strong> ― 再評価 2/10<br>
+        <span class="why">2023年10月施行のステマ規制（景表法）により、運営者が第三者を装って自社を宣伝する行為は<strong>違法</strong>。完全に除外し、合法な代替（施策10 ユーザー自発シェア）に投資する。</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- 目次 -->
+  <nav class="toc">
+    <h2>実行フェーズ</h2>
+    <ol>
+      <li><a href="#p0">Phase 0 ― 計測・埋もれ資産の起動（今すぐ）</a></li>
+      <li><a href="#p1">Phase 1 ― 自社チャネルの確立（今週）</a></li>
+      <li><a href="#p2">Phase 2 ― 友好チャネルへの展開（2週間）</a></li>
+      <li><a href="#p3">Phase 3 ― SEO の仕込み（並行）</a></li>
+      <li><a href="#p4">Phase 4 ― バイラル（継続）</a></li>
+      <li><a href="#summary">優先サマリー表</a></li>
+    </ol>
+  </nav>
+
+  <!-- PHASE 0 -->
+  <section class="phase" id="p0">
+    <div class="phase-head">
+      <div class="phase-num">0</div>
+      <div>
+        <h2>計測・埋もれ資産の起動</h2>
+        <p class="phase-when">タイミング：今すぐ ／ 「測定なしに走らない。既存資産をタダで活かす」</p>
+      </div>
+    </div>
+    <p class="phase-goal">▸ ゴール：どの施策が効いたか数字で判断できる土台を作り、実装ゼロで効く既存機能を起こす。</p>
+
+    <!-- 追加12 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>自前KPI計測（ファネル可視化）</h3>
+        <span class="badge b-orig">追加12</span>
+        <span class="badge b-high">優先 高</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">GA4 / Search Console はアダルトで規約上使えない・凍結されるケースがある。自前イベント計測を必須インフラとして先に作る。</p>
+      <ol class="steps">
+        <li>Supabase に <code>events</code> テーブルを追加（<code>event_type</code> / <code>session_id</code> / <code>ref</code> / <code>item_id</code> / <code>created_at</code>）。RLS はサービスロール書き込みのみ。</li>
+        <li>計測する6段階を定義：<code>訪問</code> → <code>Age通過</code> → <code>PWA導入</code> → <code>通知許可</code> → <code>アフィリンククリック</code> → <code>再訪</code>。</li>
+        <li>各イベント送信用の Route Handler <code>app/api/track/route.ts</code> を作成（既存 <code class="file">app/api/view/route.ts</code> のパターンを流用）。</li>
+        <li>流入元計測：外部に出すURL全てに <code>?ref=</code> / UTM を付与（X→<code>?ref=x</code>、メール→<code>?ref=mail</code> 等）。</li>
+        <li>集計用のシンプルなSQLビュー（Phase別の段階通過数）を用意し、週次で確認する。</li>
+      </ol>
+      <div class="done">events テーブルにイベントが記録され、流入元別に段階通過数が出せる。</div>
+    </div>
+
+    <!-- 追加14 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>既存バッジ機能をリテンション燃料に転用</h3>
+        <span class="badge b-orig">追加14</span>
+        <span class="badge b-mid">優先 中</span>
+        <span class="badge b-cost">コスト 小</span>
+      </div>
+      <p class="lead">実装済みなのに使われていない <code class="file">lib/badges.ts</code> を起こす。新規開発ゼロで再訪動機になる。</p>
+      <ol class="steps">
+        <li><code class="file">lib/badge-engine.ts</code> の付与ロジックが有効か確認（ポイントはコメントアウトのまま、バッジのみ）。</li>
+        <li>マイページ / ホームにバッジ獲得状況と「次のバッジまであと◯」の進捗バーを表示。</li>
+        <li>Phase 1 の通知と連携：「あと1日で7日連続ログインバッジ」のリマインド通知を <code class="file">notification_queue</code> に積む。</li>
+      </ol>
+      <div class="note"><strong>狙い：</strong>STREAK_7 / COLLECTOR_50 などは再訪の強力な動機。通知（施策9）と組み合わせると効果が跳ねる。</div>
+      <div class="done">バッジ進捗がUIに表示され、達成間近ユーザーへリマインド通知が飛ぶ。</div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="phase" id="p1">
+    <div class="phase-head">
+      <div class="phase-num">1</div>
+      <div>
+        <h2>自社チャネルの確立</h2>
+        <p class="phase-when">タイミング：今週 ／ 「プラットフォームに殺されない資産を最優先で固める」</p>
+      </div>
+    </div>
+    <p class="phase-goal">▸ ゴール：X や Google に依存せず、凍結されても生き残る「通知許可ユーザー」を増やす。ここが事業の生命線。</p>
+
+    <!-- 施策9 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>Web Push に「セール速報通知」訴求を追加</h3>
+        <span class="badge b-orig">施策9</span>
+        <span class="badge b-top">最優先 9/10</span>
+        <span class="badge b-cost">コスト 小〜中</span>
+      </div>
+      <p class="lead">現状の通知訴求は「推し女優の新作」のみ＝既存ファン向け。「毎日深夜に最大90%OFFのセールが通知で届く」軸を足すと、推し未定ユーザーの登録率が跳ねる。</p>
+      <ol class="steps">
+        <li><code class="file">notification_subscriptions</code> テーブルに <code>notification_type</code> カラムを追加（<code>oshi</code> / <code>sale</code> / <code>both</code>）。</li>
+        <li>通知登録フォームで「推し女優通知」「セール速報通知」を選べるUIにする。</li>
+        <li>登録フォームに <strong>「現在 ◯人が登録中」</strong> を Supabase の実数で表示（景表法上、必ず実データと連動）。</li>
+        <li>通知文面は熱量のある文体に：「{女優名}に待望の新作🎉 今だけ初日特典あり」。</li>
+      </ol>
+      <div class="note warn"><strong>法務注意：</strong>登録者数の表示は<strong>必ず実DB値</strong>を使う。水増しは景表法違反。</div>
+      <div class="done">セール通知でも登録でき、登録者実数が表示され、type別に配信を出し分けられる。</div>
+    </div>
+
+    <!-- 施策3 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>PWA オンボーディング × 推し通知導線の改善</h3>
+        <span class="badge b-orig">施策3</span>
+        <span class="badge b-top">最優先 9/10</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">唐突なブラウザ通知プロンプトは拒否率80%超。事前の価値提示で許可率を上げる。プラットフォーム非依存の唯一の自社チャネルなので最優先。</p>
+      <ol class="steps">
+        <li>Age Check 通過直後の最初の1画面に、PWAインストール訴求＋推し女優登録フローを配置。</li>
+        <li>「推し登録 → 新作が出たらスマホに通知」を<strong>図解付き</strong>で説明してから許可ボタンを押させる。</li>
+        <li>通知許可を2ステップ化：自前モーダル（価値提示）→ ブラウザプロンプト。これで拒否率を下げる。</li>
+        <li>女優ページのヒーローセクション直下にも「推し登録 → 通知」CTAを設置（今は埋もれている）。</li>
+        <li>「PWAインストール方法」FAQページを用意（iPhone/Androidの手順）。「FANZA アプリ iPhone」検索流入も狙える。</li>
+      </ol>
+      <div class="done">Age通過後に価値提示モーダルが出て、2ステップで通知許可が取れる。通知許可率を計測（Phase 0）で追える。</div>
+    </div>
+
+    <!-- 追加13 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>「セール速報」を分散配信アーキテクチャ化</h3>
+        <span class="badge b-orig">追加13</span>
+        <span class="badge b-high">優先 高</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">施策9・施策3・Phase 2 の友好チャネルを束ねる上位戦略。1本の速報を複数チャネルへ同時配信し、どこかが凍結されても他で生き残る。</p>
+      <ol class="steps">
+        <li>速報生成ロジックを1本化（既存の価格監視 Cloudflare Workers cron / <code class="file">fetchDailySaleItems</code> 相当を流用）。</li>
+        <li>生成結果を <strong>ファンアウト</strong>：Web Push（施策9）→ メール → Telegram（Phase 2）へ同一データを配信。</li>
+        <li>配信先を増やしても生成は1箇所。配信アダプタだけ足す設計にする。</li>
+      </ol>
+      <div class="note"><strong>狙い：</strong>「FANZAセール速報の一次ソース」としてブランド化する。個別チャネルの凍結に一喜一憂しない。</div>
+      <div class="done">1回の生成で複数チャネルに速報が配信される。1チャネル停止しても他は継続。</div>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="phase" id="p2">
+    <div class="phase-head">
+      <div class="phase-num">2</div>
+      <div>
+        <h2>友好チャネルへの展開</h2>
+        <p class="phase-when">タイミング：2週間以内 ／ 「敵対的だが大きい から 友好的で濃い へ振り直す」</p>
+      </div>
+    </div>
+    <p class="phase-goal">▸ ゴール：アダルトを許容するチャネルに張り、凍結リスクなしで外部流入を作る。</p>
+
+    <!-- 追加11 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>アダルト許容チャネルへの集中投下</h3>
+        <span class="badge b-orig">追加11</span>
+        <span class="badge b-top">最優先</span>
+        <span class="badge b-cost">コスト 小〜中</span>
+      </div>
+      <p class="lead">一般チャネル（X/TikTok/Instagram/Google）がアダルトに敵対的なら、最初からアダルト許容チャネルに張るのが垂直グロースの定石。ペルソナ（オタク会社員）はここにも必ずいる。</p>
+      <ol class="steps">
+        <li><strong>Telegram「セール速報チャンネル」</strong>を開設。アダルト配信が許容され、プッシュ性も高い。追加13の配信先として接続。</li>
+        <li><strong>自社メールマガジン</strong>を用意（プラットフォーム非依存・一度取得すれば永続資産）。速報の配信先に追加。</li>
+        <li><strong>アダルトまとめ系・アンテナサイト</strong>へ相互リンク / RSS配信で送客（アダルトアフィリの王道）。</li>
+        <li>FANZA/DMM エコシステム内の公式アフィリエイト導線・関連サービスからの送客を確認。</li>
+      </ol>
+      <div class="note"><strong>優先度：</strong>Telegram と メルマガ（自社資産）を先に。まとめサイトは相手探しに時間がかかるので並行で。</div>
+      <div class="done">Telegramチャンネルとメルマガが稼働し、追加13の分散配信に組み込まれている。</div>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="phase" id="p3">
+    <div class="phase-head">
+      <div class="phase-num">3</div>
+      <div>
+        <h2>SEO の仕込み</h2>
+        <p class="phase-when">タイミング：Phase 1・2 と並行 ／ 「3ヶ月先の有機流入を今から仕込む」</p>
+      </div>
+    </div>
+    <p class="phase-goal">▸ ゴール：SafeSearch の制約を理解し、ビッグワードは捨て「指名 × ロングテール」に集中する。</p>
+
+    <div class="note warn" style="margin-bottom:22px;">
+      <strong>前提（D・E指摘）：</strong>アダルトは SafeSearch で一般クエリにほぼ表示されない。狙うのは<strong>指名性の高いクエリ</strong>（「女優名」「作品名」「FANZA セール」）のみ。汎用ビッグワードSEOへの色気は捨てる。
+    </div>
+
+    <!-- 施策4 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>/sale デイリーSEO（タイトルに日付）</h3>
+        <span class="badge b-orig">施策4</span>
+        <span class="badge b-high">優先 高 7/10</span>
+        <span class="badge b-cost">コスト 小</span>
+      </div>
+      <p class="lead">「FANZA セール 今日」は毎日検索される。日付入りタイトルでフレッシュネスシグナルとCTRを上げる。低コスト高効果。</p>
+      <ol class="steps">
+        <li><code class="file">/sale</code> の <code>generateMetadata</code> で h1・description に今日の日付を動的挿入（例：「今日のFANZAセール・割引作品（2026年6月1日更新）」）。</li>
+        <li><strong>canonical は <code>/sale</code> に固定</strong>。日付はh1・descriptionのみ（old URLキャッシュ事故を防ぐ）。</li>
+        <li>「毎時更新」は ISR の事実なので description に明記してよい。</li>
+      </ol>
+      <div class="done">/sale が日付入りタイトルで表示され、canonical は固定されている。実装2時間以内。</div>
+    </div>
+
+    <!-- 施策2 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>女優ページ SEO 強化（指名クエリ）</h3>
+        <span class="badge b-orig">施策2</span>
+        <span class="badge b-high">優先 高 8/10</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">「[女優名] おすすめ 作品」は明確な購買意図クエリ＝SafeSearch下でも露出できる指名性。現状はグリッド中心でテキストが薄い。</p>
+      <ol class="steps">
+        <li><code class="file">app/actress/[id]/page.tsx</code> 本文に追加：h2「{名前}の人気作品ランキング」（review順TOP5）。</li>
+        <li>h2「{名前}の関連女優」（共演頻度の集計済みデータを再利用）。</li>
+        <li><code>generateMetadata</code> の description：「{名前}のFANZA作品を全{N}本掲載。B{x} W{y} H{z}。人気ジャンルは{top3}。」</li>
+        <li><strong>追加APIコールなし</strong>：既存の <code class="file">fetchActressList</code> / <code class="file">fetchItemList</code> のデータを再利用する。</li>
+      </ol>
+      <div class="done">女優ページに構造化テキストが入り、追加API呼び出しゼロで指名クエリ向けの本文が揃う。</div>
+    </div>
+
+    <!-- 施策6 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>ジャンル別 FAQ 充実（AI Overview 引用狙い）</h3>
+        <span class="badge b-orig">施策6</span>
+        <span class="badge b-mid">優先 中 7/10</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">FAQPage 構造化データは実装済み。汎用文を、ジャンル名に合わせた具体的Q&Aに強化するとAI Overview引用・指名検索増に効く。</p>
+      <ol class="steps">
+        <li>上位50ジャンルに絞り、ジャンル名に合わせた具体的Q&Aを手動で強化。</li>
+        <li>FAQに「このサイトでできること（通知・スワイプ）」を含めて機能訴求も兼ねる。</li>
+        <li>「FANZAピックス」というブランド名が回答内に出るよう設計し、指名検索を増やす。</li>
+      </ol>
+      <div class="note"><strong>留意：</strong>AI Overviewはアダルト抑制傾向。ゼロクリックでもブランド認知に繋がる前提で割り切る。</div>
+      <div class="done">上位50ジャンルのFAQが具体的Q&Aに差し替わっている。</div>
+    </div>
+
+    <!-- 施策7 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>比較・ガイドコンテンツ /guide</h3>
+        <span class="badge b-orig">施策7</span>
+        <span class="badge b-mid">優先 中 6/10</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">「FANZA 使い方」「FANZA お得 使う方法」など情報収集フェーズを獲得。優先度は低めでよい。</p>
+      <ol class="steps">
+        <li><code class="file">/guide</code> を静的ページとして新設。「なぜこのサイトを使うか」のLP兼SEOコンテンツに。</li>
+        <li>比較軸：コンテンツ数 / 価格体系 / セール頻度・割引率 / スマホ体験（スワイプ機能が差別化）。</li>
+        <li><strong>価格比較は静的記述</strong>。更新頻度の高い「今月のセール割引率」だけ DMM API で動的取得し鮮度を保つ。</li>
+      </ol>
+      <div class="done">/guide が公開され、動的部分は今月のセール割引率のみAPI取得。</div>
+    </div>
+  </section>
+
+  <!-- PHASE 4 -->
+  <section class="phase" id="p4">
+    <div class="phase-head">
+      <div class="phase-num">4</div>
+      <div>
+        <h2>バイラル（ユーザーを拡散エンジンに）</h2>
+        <p class="phase-when">タイミング：継続 ／ 「ユーザー自身に広めてもらう」</p>
+      </div>
+    </div>
+    <p class="phase-goal">▸ ゴール：合法かつ持続的な口コミ。運営の自作自演（施策8）は使わず、ユーザーの自発シェアに投資する。</p>
+
+    <!-- 施策10 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>お気に入りランキングのシェア機能</h3>
+        <span class="badge b-orig">施策10</span>
+        <span class="badge b-mid">優先 中 7/10</span>
+        <span class="badge b-cost">コスト 小</span>
+      </div>
+      <p class="lead">ユーザーのお気に入りを「自分のFANZAランキング」として1クリックでシェア。ユーザー自身が拡散エンジンになる（合法な口コミ＝施策8の代替）。</p>
+      <ol class="steps">
+        <li><code class="file">/favorites</code> にシェアボタンを追加。<code class="file">app/actress/[id]/page.tsx</code> の既存実装パターンを流用。</li>
+        <li><code>twitter.com/intent/tweet</code> に定型文＋URLを渡すだけ（TOP3＋★評価＋ハッシュタグ）。</li>
+        <li>シェアURLに <code>?ref=share</code> を付与し、Phase 0 の計測でリファラーを追える状態に。</li>
+      </ol>
+      <div class="note"><strong>狙い：</strong>「友人のお気に入り → 自分も試す」FOMO。直帰率の低さが鍵なので計測必須。</div>
+      <div class="done">/favorites にシェアボタンがあり、?ref=share 経由の流入を計測できる。</div>
+    </div>
+
+    <!-- 施策5 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>スワイプ機能デモ動画（投稿先を限定）</h3>
+        <span class="badge b-orig">施策5（改）</span>
+        <span class="badge b-mid">優先 中 5/10</span>
+        <span class="badge b-cost">コスト 小</span>
+      </div>
+      <p class="lead">「FANZA版Tinder」のスワイプUIは最大の WOW。ただし<strong>投稿先の選定が重要</strong>。X/TikTok/Instagramはアダルト禁止のため、そこへの投稿は避ける。</p>
+      <ol class="steps">
+        <li>スマホでスワイプ操作を15秒録画（録画15分・編集30分程度）。</li>
+        <li>冒頭「FANZA版Tinder作ってみた」→ スワイプ→LIKEエフェクト→お気に入り→ 最後にURL。</li>
+        <li><strong>投稿先はアダルト許容チャネルに限定</strong>：Telegram / 自社サイト埋め込み / アダルトまとめ系。X・TikTok・Instagramには出さない。</li>
+        <li>最終フレームに「PWAで使える（インストール不要）」を添えて通知許可へ繋ぐ。</li>
+      </ol>
+      <div class="note warn"><strong>除外との境界：</strong>施策5自体は採用するが、021第2部の指摘どおり一般SNSへの投稿は凍結リスクのため行わない。</div>
+      <div class="done">デモ動画がアダルト許容チャネルにのみ投稿され、URL経由の流入を計測できる。</div>
+    </div>
+  </section>
+
+  <!-- サマリー -->
+  <section id="summary">
+    <h2 class="section">📊 優先サマリー表</h2>
+    <p class="lead" style="color:var(--muted);font-size:13.5px;">着手は上から順。Phase 0・1 を最優先で固める。</p>
+    <table>
+      <thead>
+        <tr><th>順</th><th>施策</th><th>Phase</th><th>021番号</th><th>コスト</th><th>優先度</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>自前KPI計測</td><td>0</td><td>追加12</td><td>中</td><td>高</td></tr>
+        <tr><td>2</td><td>バッジ機能の起動</td><td>0</td><td>追加14</td><td>小</td><td>中</td></tr>
+        <tr><td>3</td><td>Web Push セール通知訴求</td><td>1</td><td>施策9</td><td>小〜中</td><td>最優先</td></tr>
+        <tr><td>4</td><td>PWAオンボーディング改善</td><td>1</td><td>施策3</td><td>中</td><td>最優先</td></tr>
+        <tr><td>5</td><td>速報の分散配信化</td><td>1</td><td>追加13</td><td>中</td><td>高</td></tr>
+        <tr><td>6</td><td>アダルト許容チャネル投下</td><td>2</td><td>追加11</td><td>小〜中</td><td>最優先</td></tr>
+        <tr><td>7</td><td>/sale デイリーSEO</td><td>3</td><td>施策4</td><td>小</td><td>高</td></tr>
+        <tr><td>8</td><td>女優ページSEO強化</td><td>3</td><td>施策2</td><td>中</td><td>高</td></tr>
+        <tr><td>9</td><td>ジャンルFAQ充実</td><td>3</td><td>施策6</td><td>中</td><td>中</td></tr>
+        <tr><td>10</td><td>比較コンテンツ /guide</td><td>3</td><td>施策7</td><td>中</td><td>中</td></tr>
+        <tr><td>11</td><td>お気に入りシェア</td><td>4</td><td>施策10</td><td>小</td><td>中</td></tr>
+        <tr><td>12</td><td>スワイプ動画（投稿先限定）</td><td>4</td><td>施策5改</td><td>小</td><td>中</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <p>FANZAピックス ｜ docs/022 実行手順書 ｜ 出典: docs/021_marketing-strategies.md</p>
+    <p>除外：施策1（X自動投稿・凍結リスク）／施策8（5chシード・ステマ規制）</p>
+  </footer>
+
+</div>
+</body>
+</html>
