@@ -27,15 +27,25 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient()
 
-  // 推し女優 ID が日替わり出演女優と一致するユーザーを取得
-  const { data: profiles } = await admin
-    .from('profiles')
-    .select('id, oshi_actress_id, oshi_actress_name')
-    .in('oshi_actress_id', [...actressMap.keys()])
+  // 推し女優（最大5人）が日替わり出演女優と一致するユーザーを取得
+  const { data: oshiRows } = await admin
+    .from('oshi_actresses')
+    .select('user_id, actress_id, actress_name')
+    .in('actress_id', [...actressMap.keys()])
 
-  if (!profiles || profiles.length === 0) {
+  if (!oshiRows || oshiRows.length === 0) {
     return Response.json({ notified: 0, reason: 'no users with matching oshi' })
   }
+
+  // ユーザーごとに1件（最初にマッチした推し）へ集約して通知の重複を防ぐ
+  const profiles = [
+    ...new Map(
+      oshiRows.map((r) => [
+        r.user_id,
+        { id: r.user_id, oshi_actress_id: r.actress_id, oshi_actress_name: r.actress_name },
+      ])
+    ).values(),
+  ]
 
   // 今日すでに同タイプの通知を送ったユーザーはスキップ
   const todayJst = new Date(Date.now() + 9 * 60 * 60 * 1000)

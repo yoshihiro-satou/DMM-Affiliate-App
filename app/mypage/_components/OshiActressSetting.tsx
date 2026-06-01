@@ -1,36 +1,43 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import type { DmmActress } from '@/types/dmm'
-import { setOshiActress, clearOshiActress } from '../actions'
+import { addOshiActress, removeOshiActress, MAX_OSHI_ACTRESSES } from '../actions'
+
+type Oshi = { id: string; name: string }
 
 interface Props {
-  current: { id: string | null; name: string } | null
+  current: Oshi[]
 }
 
 export function OshiActressSetting({ current }: Props) {
   const router = useRouter()
-  const [editing, setEditing] = useState(false)
+  const [list, setList] = useState<Oshi[]>(current)
+  const [adding, setAdding] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<DmmActress[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [oshi, setOshi] = useState(current)
+  const [limitMsg, setLimitMsg] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const full = list.length >= MAX_OSHI_ACTRESSES
+
   useEffect(() => {
+    const q = query.trim()
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (!query.trim()) {
-      setResults([])
-      setLoading(false)
-      return
-    }
-    setLoading(true)
+    // setState は effect 本体ではなくコールバック内でのみ呼ぶ
     debounceRef.current = setTimeout(async () => {
+      if (!q) {
+        setResults([])
+        setLoading(false)
+        return
+      }
+      setLoading(true)
       try {
-        const res = await fetch(`/api/dmm/actresses?keyword=${encodeURIComponent(query.trim())}&hits=8`)
+        const res = await fetch(`/api/dmm/actresses?keyword=${encodeURIComponent(q)}&hits=8`)
         const data = await res.json()
         setResults(data.actress ?? [])
       } catch {
@@ -38,78 +45,99 @@ export function OshiActressSetting({ current }: Props) {
       } finally {
         setLoading(false)
       }
-    }, 300)
+    }, q ? 300 : 0)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [query])
 
-  const confirm = async (actress: DmmActress) => {
+  const add = async (actress: DmmActress) => {
+    if (list.some((o) => o.id === actress.id)) return
+    if (list.length >= MAX_OSHI_ACTRESSES) {
+      setLimitMsg(true)
+      return
+    }
     setSaving(true)
-    await setOshiActress(actress.id, actress.name)
-    setOshi({ id: actress.id, name: actress.name })
-    setEditing(false)
+    setList((prev) => [...prev, { id: actress.id, name: actress.name }]) // 楽観的更新
+    const res = await addOshiActress(actress.id, actress.name)
+    if (!res.ok) {
+      setList((prev) => prev.filter((o) => o.id !== actress.id))
+      if (res.limitReached) setLimitMsg(true)
+    }
+    setAdding(false)
     setQuery('')
     setResults([])
     setSaving(false)
     router.refresh()
   }
 
-  const clear = async () => {
+  const remove = async (actressId: string) => {
     setSaving(true)
-    await clearOshiActress()
-    setOshi(null)
+    setLimitMsg(false)
+    setList((prev) => prev.filter((o) => o.id !== actressId)) // 楽観的更新
+    await removeOshiActress(actressId)
     setSaving(false)
     router.refresh()
   }
 
-  const startEditing = () => {
-    setEditing(true)
+  const startAdding = () => {
+    setAdding(true)
     setQuery('')
     setResults([])
+    setLimitMsg(false)
   }
 
   return (
     <div className="rounded-lg border border-white/8 bg-white/3 p-4">
-      <p
-        className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-white/55"
-        style={{ fontFamily: 'ui-monospace, monospace' }}
-      >
-        推し女優
-      </p>
+      <div className="mb-3 flex items-center justify-between">
+        <p
+          className="text-[10px] font-semibold tracking-[0.2em] text-white/55"
+          style={{ fontFamily: 'ui-monospace, monospace' }}
+        >
+          推し女優
+        </p>
+        <span className="text-[11px] tabular-nums text-white/45">
+          {list.length} / {MAX_OSHI_ACTRESSES}
+        </span>
+      </div>
 
-      {!editing ? (
-        <div className="flex items-center justify-between gap-3">
-          {oshi ? (
-            <a
-              href={`/actress/${oshi.id}`}
-              className="text-[14px] font-bold text-white transition-colors hover:text-red-400"
-            >
-              {oshi.name}
-            </a>
-          ) : (
-            <span className="text-[13px] text-white/55">まだ設定されていません</span>
-          )}
-          <div className="flex shrink-0 gap-2">
-            <button
-              onClick={startEditing}
-              className="rounded-md border border-white/12 px-3 py-1.5 text-[11px] text-white/70 transition-colors hover:border-white/20 hover:text-white"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              {oshi ? '変更' : '設定する'}
-            </button>
-            {oshi && (
+      {/* 登録済みリスト */}
+      {list.length > 0 ? (
+        <ul className="mb-3 flex flex-col gap-2">
+          {list.map((o) => (
+            <li key={o.id} className="flex items-center justify-between gap-2">
+              <a
+                href={`/actress/${o.id}`}
+                className="truncate text-[14px] font-bold text-white transition-colors hover:text-red-400"
+              >
+                {o.name}
+              </a>
               <button
-                onClick={clear}
+                onClick={() => remove(o.id)}
                 disabled={saving}
-                className="rounded-md border border-white/8 px-3 py-1.5 text-[11px] text-white/55 transition-colors hover:border-white/12 hover:text-white/60 disabled:opacity-40"
+                aria-label={`${o.name}を解除`}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/8 text-white/45 transition-colors hover:border-white/15 hover:text-white/70 disabled:opacity-40"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                解除
+                <X size={14} />
               </button>
-            )}
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mb-3 text-[13px] text-white/55">まだ登録されていません</p>
+      )}
+
+      {/* 追加 */}
+      {!adding ? (
+        <button
+          onClick={startAdding}
+          disabled={full}
+          className="w-full rounded-md border border-white/12 py-2 text-[12px] text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:opacity-40"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
+          {full ? `登録上限（${MAX_OSHI_ACTRESSES}人）です` : '＋ 推し女優を追加'}
+        </button>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="relative">
@@ -128,26 +156,42 @@ export function OshiActressSetting({ current }: Props) {
 
           {results.length > 0 && (
             <ul className="flex flex-col divide-y divide-white/5">
-              {results.map((a) => (
-                <li key={a.id} className="flex items-center justify-between gap-2 py-1.5">
-                  <span className="text-[13px] text-white/70 px-2">{a.name}</span>
-                  <button
-                    onClick={() => confirm(a)}
-                    disabled={saving}
-                    className="shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white transition-opacity disabled:opacity-50"
-                    style={{ WebkitTapHighlightColor: 'transparent' }}
-                  >
-                    設定する
-                  </button>
-                </li>
-              ))}
+              {results.map((a) => {
+                const already = list.some((o) => o.id === a.id)
+                return (
+                  <li key={a.id} className="flex items-center justify-between gap-2 py-1.5">
+                    <span className="px-2 text-[13px] text-white/70">{a.name}</span>
+                    <button
+                      onClick={() => add(a)}
+                      disabled={saving || already}
+                      className="shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white transition-opacity disabled:opacity-40"
+                      style={{ WebkitTapHighlightColor: 'transparent' }}
+                    >
+                      {already ? '登録済み' : '追加'}
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           )}
 
           {!loading && query.trim() && results.length === 0 && (
             <p className="text-[11px] text-white/55">見つかりませんでした</p>
           )}
+
+          <button
+            onClick={() => setAdding(false)}
+            className="text-[12px] text-white/50 transition-colors hover:text-white/70"
+          >
+            閉じる
+          </button>
         </div>
+      )}
+
+      {limitMsg && (
+        <p className="mt-2 text-[11px] text-white/55">
+          推し女優は{MAX_OSHI_ACTRESSES}人までです。不要な推しを解除してから追加してください。
+        </p>
       )}
     </div>
   )

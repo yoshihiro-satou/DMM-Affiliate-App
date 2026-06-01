@@ -344,7 +344,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 | テーブル | 用途 | RLS |
 |---------|------|-----|
-| `profiles` | id / display_name / email / oshi_actress_id / oshi_actress_name / points | 本人のみ読み書き |
+| `profiles` | id / display_name / email / oshi_director_name / points（`oshi_actress_id` / `oshi_actress_name` は `oshi_actresses` へ移行済みの旧カラム） | 本人のみ読み書き |
+| `oshi_actresses` | 推し女優（最大5人・actress_id / actress_name）。`lib/oshi.ts` の `getOshiActresses` で取得 | 本人のみ読み書き |
 | `favorites` | お気に入り（item_id / item_title / image_url / price） | 本人のみ読み書き |
 | `swipe_history` | スワイプ履歴（item_id / direction） | 本人のみ読み書き |
 | `price_history` | 価格履歴（item_id / price / fetched_at） | 全員読み取り・書き込みはサービスロールのみ |

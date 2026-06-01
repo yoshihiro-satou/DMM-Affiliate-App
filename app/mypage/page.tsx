@@ -5,6 +5,7 @@ import { createClient, getCurrentUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { buildUserProfile, topEntries } from '@/lib/personalization'
+import { getOshiActresses } from '@/lib/oshi'
 import { fetchItemList } from '@/lib/dmm/client'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
 import { BadgeShowcase } from '@/components/badges/BadgeShowcase'
@@ -49,9 +50,8 @@ function RankingSkeleton({ label }: { label: string }) {
 async function CommunityActressRanking() {
   const admin = createAdminClient()
   const { data } = await admin
-    .from('profiles')
-    .select('oshi_actress_id, oshi_actress_name')
-    .not('oshi_actress_id', 'is', null)
+    .from('oshi_actresses')
+    .select('actress_id, actress_name')
 
   const THRESHOLD = 15
 
@@ -73,10 +73,10 @@ async function CommunityActressRanking() {
 
   const counts = new Map<string, { name: string; count: number }>()
   for (const row of data) {
-    if (!row.oshi_actress_id || !row.oshi_actress_name) continue
-    const existing = counts.get(row.oshi_actress_id)
+    if (!row.actress_id || !row.actress_name) continue
+    const existing = counts.get(row.actress_id)
     if (existing) existing.count++
-    else counts.set(row.oshi_actress_id, { name: row.oshi_actress_name, count: 1 })
+    else counts.set(row.actress_id, { name: row.actress_name, count: 1 })
   }
 
   const top3 = Array.from(counts.entries())
@@ -483,11 +483,14 @@ export default async function MyPage() {
   if (!claims) redirect('/login')
 
   const supabase = await createClient()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('display_name, email, oshi_actress_id, oshi_actress_name, oshi_director_name')
-    .eq('id', claims.sub)
-    .single()
+  const [{ data: profile }, oshiList] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('display_name, email, oshi_director_name')
+      .eq('id', claims.sub)
+      .single(),
+    getOshiActresses(),
+  ])
 
   const metaDisplayName = (
     (claims as Record<string, unknown>).user_metadata as Record<string, string> | undefined
@@ -505,9 +508,7 @@ export default async function MyPage() {
     })
   }
   const email = maskEmail(rawEmail)
-  const oshiActress = profile?.oshi_actress_name
-    ? { id: profile.oshi_actress_id ?? null, name: profile.oshi_actress_name }
-    : null
+  const primaryOshi = oshiList[0] ?? null
   const oshiDirector = profile?.oshi_director_name ?? null
 
   return (
@@ -544,15 +545,15 @@ export default async function MyPage() {
           <div className="h-px w-full bg-white/8" />
         </div>
 
-        {/* 推し女優設定 */}
-        <OshiActressSetting current={oshiActress} />
+        {/* 推し女優設定（最大5人） */}
+        <OshiActressSetting current={oshiList} />
 
-        {/* 推し女優の最新作 */}
-        {oshiActress && (
-          <Suspense fallback={<WorksScrollSkeleton label={`${oshiActress.name} の最新作`} />}>
-            <OshiActressWorks actressId={oshiActress.id} actressName={oshiActress.name} />
+        {/* 推し女優ごとの最新作 */}
+        {oshiList.map((o) => (
+          <Suspense key={o.id} fallback={<WorksScrollSkeleton label={`${o.name} の最新作`} />}>
+            <OshiActressWorks actressId={o.id} actressName={o.name} />
           </Suspense>
-        )}
+        ))}
 
         {/* みんなの推し女優ランキング */}
         <Suspense fallback={<RankingSkeleton label="みんなの推し女優ランキング" />}>
@@ -574,12 +575,12 @@ export default async function MyPage() {
           <CommunityDirectorRanking />
         </Suspense>
 
-        {/* 推し女優 × 推し監督 */}
-        {oshiActress && oshiDirector && (
-          <Suspense fallback={<WorksScrollSkeleton label={`${oshiActress.name} × ${oshiDirector}`} />}>
+        {/* 推し女優 × 推し監督（代表の推し1人） */}
+        {primaryOshi && oshiDirector && (
+          <Suspense fallback={<WorksScrollSkeleton label={`${primaryOshi.name} × ${oshiDirector}`} />}>
             <OshiCombinedWorks
-              actressId={oshiActress.id}
-              actressName={oshiActress.name}
+              actressId={primaryOshi.id}
+              actressName={primaryOshi.name}
               directorName={oshiDirector}
             />
           </Suspense>

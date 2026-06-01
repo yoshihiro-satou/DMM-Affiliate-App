@@ -2,7 +2,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { fetchActressList, fetchItemList } from '@/lib/dmm/client'
-import { getCurrentUser, createClient } from '@/lib/supabase/server'
+import { getOshiActresses } from '@/lib/oshi'
 import { GridCard } from '@/components/product/GridCard'
 import { OshiCtaInline } from '@/components/actress/OshiCtaInline'
 import { WorkTabs, type WorkTab } from './WorkTabs'
@@ -15,18 +15,6 @@ const BENTO_PATTERN = [true, false, false, false, true, false, false, true, fals
 
 async function getActressById(actressId: number) {
   return fetchActressList({ actress_id: actressId }).catch(() => null)
-}
-
-async function getCurrentOshiId(): Promise<string | null> {
-  const claims = await getCurrentUser()
-  if (!claims) return null
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('profiles')
-    .select('oshi_actress_id')
-    .eq('id', claims.sub)
-    .single()
-  return data?.oshi_actress_id ?? null
 }
 
 async function getActressWorkCount(actressId: number): Promise<number | null> {
@@ -96,7 +84,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     return <ActressNotFound id={id} />
   }
 
-  const [actressResult, worksResult, currentOshiId] = await Promise.all([
+  const [actressResult, worksResult, oshiList] = await Promise.all([
     getActressById(actressId),
     Promise.resolve()
       .then(() => fetchItemList({
@@ -108,7 +96,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
         sort: currentTab === 'popular' ? 'rank' : 'date',
       }))
       .catch(() => null),
-    getCurrentOshiId(),
+    getOshiActresses(),
   ])
 
   // API エラー（null）→ 一時障害のためリトライ画面（永続的な 404 にしない）
@@ -234,7 +222,8 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
       <OshiCtaInline
         actressId={id}
         actressName={actress.name}
-        initialIsOshi={currentOshiId === id}
+        initialIsOshi={oshiList.some((o) => o.id === id)}
+        initialOshiCount={oshiList.length}
       />
 
       {/* FANZA リンク + PR + X シェア */}
