@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { fetchActressList, fetchItemList } from '@/lib/dmm/client'
 import { GridCard } from '@/components/product/GridCard'
+import { OshiCtaInline } from '@/components/actress/OshiCtaInline'
 import { WorkTabs, type WorkTab } from './WorkTabs'
 
 export const dynamic = 'force-dynamic'
@@ -214,6 +215,9 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
           </div>
         </div>
       </div>
+
+      {/* 推しに設定 CTA（施策3） */}
+      <OshiCtaInline actressId={id} actressName={actress.name} />
 
       {/* FANZA リンク + PR + X シェア */}
       <div className="flex items-center justify-between px-4 py-1.5">

@@ -26,5 +26,11 @@ export async function confirmAge(formData: FormData) {
   const from = formData.get('from') as string | null
   // 外部URLやプロトコル相対URLへのオープンリダイレクトを防止
   const destination = from && from.startsWith('/') ? from : '/'
+
+  // 初回はオンボーディング（/welcome）へ。完了済みなら本来の遷移先へ（施策3）
+  const onboarded = cookieStore.get('fp_onboarded')?.value === '1'
+  if (!onboarded && !destination.startsWith('/welcome')) {
+    redirect(`/welcome?from=${encodeURIComponent(destination)}`)
+  }
   redirect(destination)
 }
