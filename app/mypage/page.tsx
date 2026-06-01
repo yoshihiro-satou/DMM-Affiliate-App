@@ -8,6 +8,7 @@ import { buildUserProfile, topEntries } from '@/lib/personalization'
 import { getOshiActresses } from '@/lib/oshi'
 import { fetchItemList } from '@/lib/dmm/client'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
+import { OshiCombinedSelector } from '@/components/mypage/OshiCombinedSelector'
 import { BadgeShowcase } from '@/components/badges/BadgeShowcase'
 import { getBadgeProgress } from '@/lib/badge-progress'
 import { OshiActressSetting } from './_components/OshiActressSetting'
@@ -51,11 +52,13 @@ async function CommunityActressRanking() {
   const admin = createAdminClient()
   const { data } = await admin
     .from('oshi_actresses')
-    .select('actress_id, actress_name')
+    .select('user_id, actress_id, actress_name')
 
+  // 閾値は「行数」でなく「登録した人数」で判定（複数推しでの早期表示を防ぐ）
   const THRESHOLD = 15
+  const userCount = new Set((data ?? []).map((r) => r.user_id)).size
 
-  if (!data || data.length < THRESHOLD) {
+  if (!data || userCount < THRESHOLD) {
     return (
       <div className="rounded-lg border border-white/8 bg-white/3 p-4">
         <p
@@ -302,77 +305,6 @@ async function OshiDirectorWorks({ directorName }: { directorName: string }) {
   )
 }
 
-async function OshiCombinedWorks({
-  actressId,
-  actressName,
-  directorName,
-}: {
-  actressId: string | null
-  actressName: string
-  directorName: string
-}) {
-  if (!actressId) return null
-  const id = parseInt(actressId, 10)
-  if (isNaN(id)) return null
-
-  const result = await fetchItemList({
-    article: 'actress',
-    article_id: id,
-    keyword: directorName,
-    sort: 'review',
-    hits: 12,
-    service: 'digital',
-    floor: 'videoa',
-  }).catch(() => null)
-
-  const items = result?.items ?? []
-
-  return (
-    <div className="rounded-lg border border-rose-900/30 bg-rose-950/20 p-4">
-      <p
-        className="mb-1 text-[10px] font-semibold tracking-[0.2em] text-rose-400/60"
-        style={{ fontFamily: 'ui-monospace, monospace' }}
-      >
-        推し女優 × 推し監督
-      </p>
-      <p className="mb-3 text-[11px] text-white/65">
-        {actressName} × {directorName}
-      </p>
-      {items.length === 0 ? (
-        <p className="text-[13px] text-white/55">コラボなし（登録データ上）</p>
-      ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          {items.map((item) => (
-            <a
-              key={item.content_id}
-              href={item.affiliateURL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative shrink-0 w-20 overflow-hidden rounded-lg bg-white/5"
-            >
-              {item.imageURL?.list && (
-                <Image
-                  src={item.imageURL.list}
-                  alt={item.title}
-                  width={80}
-                  height={107}
-                  className="aspect-80/107 w-full object-cover"
-                />
-              )}
-              <span className="absolute left-1 top-1 rounded bg-black/60 px-1 py-px text-[7px] font-bold tracking-wider text-white/65">
-                PR
-              </span>
-              <p className="line-clamp-2 px-1 pb-1 pt-0.5 text-[8px] leading-tight text-white/70">
-                {item.title}
-              </p>
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── よく見る女優 TOP5（低速・DMM API あり） ──────────────────────────────────
 
 async function TopActresses({ userId }: { userId: string }) {
@@ -508,7 +440,6 @@ export default async function MyPage() {
     })
   }
   const email = maskEmail(rawEmail)
-  const primaryOshi = oshiList[0] ?? null
   const oshiDirector = profile?.oshi_director_name ?? null
 
   return (
@@ -575,15 +506,9 @@ export default async function MyPage() {
           <CommunityDirectorRanking />
         </Suspense>
 
-        {/* 推し女優 × 推し監督（代表の推し1人） */}
-        {primaryOshi && oshiDirector && (
-          <Suspense fallback={<WorksScrollSkeleton label={`${primaryOshi.name} × ${oshiDirector}`} />}>
-            <OshiCombinedWorks
-              actressId={primaryOshi.id}
-              actressName={primaryOshi.name}
-              directorName={oshiDirector}
-            />
-          </Suspense>
+        {/* 推し女優 × 推し監督（女優を選択可能） */}
+        {oshiList.length > 0 && oshiDirector && (
+          <OshiCombinedSelector oshiList={oshiList} directorName={oshiDirector} />
         )}
 
         {/* バッジコレクション */}
