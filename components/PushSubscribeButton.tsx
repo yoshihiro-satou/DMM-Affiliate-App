@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { Bell, BellOff, BellRing } from 'lucide-react'
-import { saveSubscription, removeSubscription } from '@/actions/push'
+import { saveSubscription, removeSubscription, type NotificationType } from '@/actions/push'
 import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
+import { NotifyChoiceSheet } from '@/components/ui/NotifyChoiceSheet'
 import { useAuth } from '@/components/providers/auth-provider'
 import { track } from '@/lib/track'
 
@@ -18,6 +19,7 @@ export function PushSubscribeButton() {
     return 'loading'
   })
   const [showPrompt, setShowPrompt] = useState(false)
+  const [showChoice, setShowChoice] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -29,9 +31,15 @@ export function PushSubscribeButton() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function subscribe() {
+  // ステップ1: 種別選択シートを開く（事前の価値提示で許可率を上げる）
+  function startSubscribe() {
     if (!isLoggedIn) { setShowPrompt(true); return }
+    setShowChoice(true)
+  }
 
+  // ステップ2: 種別決定 → ブラウザの許可プロンプト → 購読保存
+  async function subscribeWithType(notificationType: NotificationType) {
+    setShowChoice(false)
     try {
       const reg = await navigator.serviceWorker.ready
       const permission = await Notification.requestPermission()
@@ -50,9 +58,9 @@ export function PushSubscribeButton() {
       const json = sub.toJSON()
       if (!json.endpoint) return
       startTransition(async () => {
-        await saveSubscription({ endpoint: json.endpoint!, keys: json.keys })
+        await saveSubscription({ endpoint: json.endpoint!, keys: json.keys, notificationType })
         setState('subscribed')
-        track('notify_grant') // ファネル計測: 通知許可（追加12）
+        track('notify_grant', { meta: { type: notificationType } }) // ファネル計測（追加12）
       })
     } catch (err) {
       console.error('[PushSubscribeButton] subscribe error:', err)
@@ -73,7 +81,7 @@ export function PushSubscribeButton() {
 
   function handleClick() {
     if (state === 'subscribed') unsubscribe()
-    else if (state === 'unsubscribed') subscribe()
+    else if (state === 'unsubscribed') startSubscribe()
   }
 
   if (state === 'unsupported') return null
@@ -120,6 +128,13 @@ export function PushSubscribeButton() {
           <BellRing size={20} className="text-white/65" />
         )}
       </button>
+
+      {showChoice && (
+        <NotifyChoiceSheet
+          onChoose={subscribeWithType}
+          onClose={() => setShowChoice(false)}
+        />
+      )}
 
       {showPrompt && (
         <LoginPromptSheet

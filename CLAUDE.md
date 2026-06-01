@@ -142,6 +142,8 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 - Service Worker: `public/sw.js`（オフラインキャッシュ・プッシュ受信）
 - VAPID 鍵ペアが必要: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`（公開）/ `VAPID_PRIVATE_KEY_JWK`（秘密・JWK形式）
 - 推し女優日替わり通知フロー: daily-revalidate Worker（JST 0:01）→ `/api/oshi-notify` → `notification_queue` → push-notify Worker（15分ごと）→ Web Push 送信
+- セール速報通知フロー（追加13・分散配信）: daily-revalidate Worker → `/api/sale-notify` → `lib/broadcast/sale-broadcast.ts`（`buildSaleBroadcast` で生成 → Web Push / Telegram / メール各アダプタへファンアウト）→ `notification_queue` → push-notify Worker。Telegram・メールアダプタは Phase 2 でスタブ。`?dry=1` で対象者数のみ算出する安全な検証が可能
+- 通知種別: `notification_subscriptions.notification_type`（`oshi` / `sale` / `both`）で出し分け。購読UIは `NotifyChoiceSheet` で種別選択＋登録者実数（`/api/subscriber-count`）を表示
 - iOS Safari は PWA（ホーム画面追加済み）としての動作時のみ受信可能
 
 ## Next.js App Router ベストプラクティス
@@ -349,7 +351,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 | `user_badges` | バッジ付与記録（badge_type / earned_at） | 本人のみ読み取り・書き込みはサービスロールのみ |
 | `user_points` | ポイント（amount / reason）— 現在停止中 | サービスロールのみ |
 | `login_streaks` | 連続ログイン日数（current_streak / last_login_date） | サービスロールのみ |
-| `notification_subscriptions` | Web Push 購読情報（endpoint / keys） | 本人のみ読み書き |
+| `notification_subscriptions` | Web Push 購読情報（endpoint / keys / notification_type: oshi/sale/both） | 本人のみ読み書き |
 | `notification_queue` | 通知送信キュー（type / payload / status） | サービスロールのみ |
 | `series_progress` | シリーズ既読（series_id / item_id / status） | 本人のみ読み書き |
 | `followed_series` | フォロー中シリーズ（series_id / series_name / latest_item_id） | 本人のみ読み書き |
