@@ -151,6 +151,13 @@
   .b-mid { background: rgba(96,165,250,0.16); color: #93c5fd; border: 1px solid rgba(96,165,250,0.4); }
   .b-cost { background: rgba(255,255,255,0.07); color: var(--muted); border: 1px solid var(--border); }
   .b-orig { background: rgba(192,132,252,0.12); color: var(--accent2); border: 1px solid rgba(192,132,252,0.3); }
+  .b-done { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.4); }
+  .b-todo { background: rgba(251,191,36,0.14); color: var(--amber); border: 1px solid rgba(251,191,36,0.4); }
+  .st-done { color: var(--green); font-weight: 700; }
+  .st-todo { color: var(--amber); font-weight: 700; }
+  .status-banner { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--green); border-radius: 14px; padding: 24px 28px; margin-bottom: 36px; }
+  .status-banner h2 { margin: 0 0 12px; font-size: 18px; }
+  .status-banner p { margin: 8px 0; font-size: 14px; color: var(--text); }
 
   /* チェックリスト手順 */
   .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
@@ -248,6 +255,26 @@
     <p>各施策は <span class="badge b-orig">021の施策番号</span> と紐付けてあります。上から順に着手すれば、測定基盤 → 生命線（自社チャネル）→ 外部流入 → SEO → バイラル の順で固まります。</p>
   </section>
 
+  <!-- 実装状況 -->
+  <section class="status-banner">
+    <h2>✅ 実装状況（2026-06-01 時点）</h2>
+    <p>外部依存のない施策は<strong>すべて実装・本番デプロイ済み</strong>。残るは外部の認証情報（Telegram Bot トークン／メール配信基盤）が必要な Phase 2 のみ。</p>
+    <table>
+      <thead>
+        <tr><th>Phase</th><th>内容</th><th>状態</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0</td><td>自前KPI計測・バッジ起動（追加12 / 追加14）</td><td class="st-done">実装済み</td></tr>
+        <tr><td>1</td><td>Web Pushセール通知・PWAオンボ・分散配信（施策9 / 施策3 / 追加13）</td><td class="st-done">実装済み</td></tr>
+        <tr><td>3</td><td>SEO：/sale日付・女優ページ・ジャンルFAQ・/guide（施策4 / 2 / 6 / 7）</td><td class="st-done">実装済み</td></tr>
+        <tr><td>4</td><td>お気に入りXシェア（施策10）</td><td class="st-done">実装済み</td></tr>
+        <tr><td>2</td><td>友好チャネル：Telegram / メルマガ / まとめサイト（追加11）</td><td class="st-todo">未着手（外部準備待ち）</td></tr>
+        <tr><td>4</td><td>スワイプデモ動画（施策5改）</td><td class="st-todo">未着手（手作業：録画・投稿）</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12.5px;color:var(--muted);">下部「<a href="#extra" style="color:var(--accent2);">追加施策（コードレビューで発見）</a>」に、実装後のコードから見つかった新しい改善案を追記。</p>
+  </section>
+
   <!-- 除外施策 -->
   <section class="excluded">
     <h2>⚠️ 本手順書から除外した施策（リスク高め）</h2>
@@ -273,6 +300,7 @@
       <li><a href="#p2">Phase 2 ― 友好チャネルへの展開（2週間）</a></li>
       <li><a href="#p3">Phase 3 ― SEO の仕込み（並行）</a></li>
       <li><a href="#p4">Phase 4 ― バイラル（継続）</a></li>
+      <li><a href="#extra">追加施策（コードレビューで発見）</a></li>
       <li><a href="#summary">優先サマリー表</a></li>
     </ol>
   </nav>
@@ -560,27 +588,181 @@
     </div>
   </section>
 
+  <!-- 追加施策（コードレビューで発見） -->
+  <section class="phase" id="extra">
+    <div class="phase-head">
+      <div class="phase-num">+</div>
+      <div>
+        <h2>追加施策（コードレビューで発見）</h2>
+        <p class="phase-when">実装を進める中でコードから見つかった改善案 ／ 既存資産を活かす・小コスト中心</p>
+      </div>
+    </div>
+    <p class="phase-goal">▸ ゴール：すでに作った仕組み（通知基盤・計測・複数推し）の「あと一歩」を埋め、死蔵をなくす。</p>
+
+    <!-- 追加15 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>通知種別をあとから変更できるUI</h3>
+        <span class="badge b-orig">追加15</span>
+        <span class="badge b-high">優先 高</span>
+        <span class="badge b-cost">コスト 小</span>
+      </div>
+      <p class="lead">施策9で <code class="file">notification_type</code>（oshi/sale/both）を導入したが、購読時にしか選べず後から変更できない。既存購読は全て <code>both</code> 既定のため、セール通知だけ切りたい人の離脱・通知オフ化を招く恐れ。</p>
+      <ol class="steps">
+        <li>マイページの通知ボタン付近に種別トグル（推し / セール / 両方）を追加。</li>
+        <li>変更は <code class="file">notification_subscriptions</code> の該当行を update（既存 <code class="file">saveSubscription</code> を再利用）。</li>
+      </ol>
+      <div class="done">購読後でも通知種別を変更でき、「全部オフ」以外の選択肢を提示できている。</div>
+    </div>
+
+    <!-- 追加16 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>バッジ獲得間近リマインド通知</h3>
+        <span class="badge b-orig">追加16</span>
+        <span class="badge b-high">優先 高</span>
+        <span class="badge b-cost">コスト 小</span>
+      </div>
+      <p class="lead">Phase 0 で保留していた「あと1日で◯バッジ」通知。<strong>Phase 1 の通知基盤（notification_queue → push-notify Worker）が完成したので実装可能に。</strong>進捗UIは出したが、能動的な引き戻し（通知）がまだ無い。</p>
+      <ol class="steps">
+        <li>連続ログインが <code>2 / 6 / 29</code> 日（あと1日で STREAK_3/7/30）のユーザーを日次で抽出。</li>
+        <li>「あと1日で◯◯バッジ🔥」を <code class="file">notification_queue</code>（type: badge）へ投入 → 既存 Worker が送信。</li>
+        <li>daily-revalidate Worker から secret 付きで叩く新エンドポイント <code class="file">/api/badge-remind</code> を追加。</li>
+      </ol>
+      <div class="done">達成間近ユーザーに毎日1通リマインドが届き、ストリーク継続率が計測できる。</div>
+    </div>
+
+    <!-- 追加17 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>KPIダッシュボード（ファネル可視化）</h3>
+        <span class="badge b-orig">追加17</span>
+        <span class="badge b-high">優先 高</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">追加12で <code class="file">funnel_daily</code> / <code class="file">funnel_by_ref</code> ビューを作ったが、<strong>閲覧するUIが無く測定が死蔵</strong>。数字を見られないと「やめる施策」を即決できない（D の指摘の核心）。</p>
+      <ol class="steps">
+        <li>管理用ページ <code class="file">/admin/kpi</code>（noindex・自分のみアクセス）を新設。</li>
+        <li>サービスロールで2ビューを読み、日次の 訪問→Age→PWA→通知→クリック と ref別流入を表示。</li>
+        <li>シェア（<code>ref=share</code>）流入や通知経由の効果をひと目で確認できるように。</li>
+      </ol>
+      <div class="done">毎朝ダッシュボードで前日のファネルと流入元を確認できる。</div>
+    </div>
+
+    <!-- 追加18 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>通知 → クリックのコンバージョン計測</h3>
+        <span class="badge b-orig">追加18</span>
+        <span class="badge b-mid">優先 中</span>
+        <span class="badge b-cost">コスト 小〜中</span>
+      </div>
+      <p class="lead">セール速報・推し通知を送れるようになったが、<strong>「通知が実際にクリック→送客に繋がったか」が測れていない</strong>。通知の文面・タイミング改善の判断材料が無い。</p>
+      <ol class="steps">
+        <li>通知 payload の URL に <code>?ref=push_sale</code> / <code>?ref=push_oshi</code> を付与。</li>
+        <li>Service Worker の通知クリックで該当URLを開く → Tracker が ref を計測（既存の ref 保持の仕組みに乗る）。</li>
+        <li>追加17 のダッシュボードで通知種別ごとのクリック率を表示。</li>
+      </ol>
+      <div class="done">通知種別ごとの開封後クリックが ref 別に集計できる。</div>
+    </div>
+
+    <!-- 追加19 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>推し監督の複数化＆新作通知</h3>
+        <span class="badge b-orig">追加19</span>
+        <span class="badge b-mid">優先 中</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">推し女優は5人まで対応したが、<strong>推し監督は <code class="file">profiles.oshi_director_name</code> の単一カラムのまま</strong>で不整合。監督ファンの取りこぼし。</p>
+      <ol class="steps">
+        <li><code class="file">oshi_directors</code> テーブルを新設（女優と同じ最大5人・RLS本人のみ）。</li>
+        <li>マイページUIを女優と同じ複数登録パターンに統一。</li>
+        <li>監督名は DMM API のキーワード検索で新作監視 → 通知（oshi-notify と同じ仕組み）。</li>
+      </ol>
+      <div class="done">推し監督も複数登録でき、新作が通知される。</div>
+    </div>
+
+    <!-- 追加20 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>内部リンク強化（フッター / ガイド導線）</h3>
+        <span class="badge b-orig">追加20</span>
+        <span class="badge b-mid">優先 中</span>
+        <span class="badge b-cost">コスト 小</span>
+      </div>
+      <p class="lead"><code class="file">/guide</code>・<code class="file">/pwa</code> を作ったが <strong>sitemap 登録のみで内部リンクが薄い</strong>。クローラビリティと回遊が弱く、SEO効果を取りこぼす。</p>
+      <ol class="steps">
+        <li>全ページ共通フッター（または マイページ）に <code>/guide</code> <code>/pwa</code> 主要カテゴリへのリンクを設置。</li>
+        <li>女優・ジャンルページ間の関連リンク（実装済みの関連女優/ジャンル）をホームにも展開。</li>
+      </ol>
+      <div class="done">主要ページが2クリック以内で相互に到達でき、内部リンクが増えている。</div>
+    </div>
+
+    <!-- 追加21 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>動的OGP画像生成</h3>
+        <span class="badge b-orig">追加21</span>
+        <span class="badge b-mid">優先 中</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">施策10（お気に入りシェア）・施策2（女優ページ）を作ったが、OGP画像が <strong>共通の <code class="file">/og/default.png</code> 固定</strong>。Xシェア時の見栄えが弱く、バイラルのクリック率を損なう。</p>
+      <ol class="steps">
+        <li>Next.js の <code class="file">opengraph-image</code>（Satori）で女優名・作品数・セール割引率を載せた動的OGPを生成。</li>
+        <li>女優ページ・/sale・お気に入りシェアで個別OGPを出す。</li>
+      </ol>
+      <div class="note warn"><strong>規約注意：</strong>DMM公式画像の改変は禁止。OGPは<strong>テキスト主体のデザイン</strong>で作り、公式サムネを加工しない。</div>
+      <div class="done">シェア時に内容に応じたOGP画像が表示される。</div>
+    </div>
+
+    <!-- 追加22 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>値下げ通知パイプラインの稼働確認</h3>
+        <span class="badge b-orig">追加22</span>
+        <span class="badge b-mid">優先 中</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead"><code class="file">price-monitor</code> Worker と <code class="file">price_history</code> テーブルは存在するが<strong>データが0件＝実質未稼働の疑い</strong>。お気に入りの値下げ通知（price_drop）はサイトの目玉差別化なのに動いていない可能性。</p>
+      <ol class="steps">
+        <li>price-monitor cron が回り <code class="file">price_history</code> に記録されているか確認（ログ／件数）。</li>
+        <li>お気に入り作品の価格を定期取得 → 下落検知で <code>price_drop</code> 通知を <code class="file">notification_queue</code> へ。</li>
+        <li>追加17 ダッシュボードで price_history の蓄積件数を監視。</li>
+      </ol>
+      <div class="done">価格が継続記録され、お気に入りの値下げが通知される。</div>
+    </div>
+  </section>
+
   <!-- サマリー -->
   <section id="summary">
     <h2 class="section">📊 優先サマリー表</h2>
     <p class="lead" style="color:var(--muted);font-size:13.5px;">着手は上から順。Phase 0・1 を最優先で固める。</p>
     <table>
       <thead>
-        <tr><th>順</th><th>施策</th><th>Phase</th><th>021番号</th><th>コスト</th><th>優先度</th></tr>
+        <tr><th>順</th><th>施策</th><th>Phase</th><th>021番号</th><th>コスト</th><th>優先度</th><th>状態</th></tr>
       </thead>
       <tbody>
-        <tr><td>1</td><td>自前KPI計測</td><td>0</td><td>追加12</td><td>中</td><td>高</td></tr>
-        <tr><td>2</td><td>バッジ機能の起動</td><td>0</td><td>追加14</td><td>小</td><td>中</td></tr>
-        <tr><td>3</td><td>Web Push セール通知訴求</td><td>1</td><td>施策9</td><td>小〜中</td><td>最優先</td></tr>
-        <tr><td>4</td><td>PWAオンボーディング改善</td><td>1</td><td>施策3</td><td>中</td><td>最優先</td></tr>
-        <tr><td>5</td><td>速報の分散配信化</td><td>1</td><td>追加13</td><td>中</td><td>高</td></tr>
-        <tr><td>6</td><td>アダルト許容チャネル投下</td><td>2</td><td>追加11</td><td>小〜中</td><td>最優先</td></tr>
-        <tr><td>7</td><td>/sale デイリーSEO</td><td>3</td><td>施策4</td><td>小</td><td>高</td></tr>
-        <tr><td>8</td><td>女優ページSEO強化</td><td>3</td><td>施策2</td><td>中</td><td>高</td></tr>
-        <tr><td>9</td><td>ジャンルFAQ充実</td><td>3</td><td>施策6</td><td>中</td><td>中</td></tr>
-        <tr><td>10</td><td>比較コンテンツ /guide</td><td>3</td><td>施策7</td><td>中</td><td>中</td></tr>
-        <tr><td>11</td><td>お気に入りシェア</td><td>4</td><td>施策10</td><td>小</td><td>中</td></tr>
-        <tr><td>12</td><td>スワイプ動画（投稿先限定）</td><td>4</td><td>施策5改</td><td>小</td><td>中</td></tr>
+        <tr><td>1</td><td>自前KPI計測</td><td>0</td><td>追加12</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
+        <tr><td>2</td><td>バッジ機能の起動</td><td>0</td><td>追加14</td><td>小</td><td>中</td><td class="st-done">済</td></tr>
+        <tr><td>3</td><td>Web Push セール通知訴求</td><td>1</td><td>施策9</td><td>小〜中</td><td>最優先</td><td class="st-done">済</td></tr>
+        <tr><td>4</td><td>PWAオンボーディング改善</td><td>1</td><td>施策3</td><td>中</td><td>最優先</td><td class="st-done">済</td></tr>
+        <tr><td>5</td><td>速報の分散配信化</td><td>1</td><td>追加13</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
+        <tr><td>6</td><td>アダルト許容チャネル投下</td><td>2</td><td>追加11</td><td>小〜中</td><td>最優先</td><td class="st-todo">未</td></tr>
+        <tr><td>7</td><td>/sale デイリーSEO</td><td>3</td><td>施策4</td><td>小</td><td>高</td><td class="st-done">済</td></tr>
+        <tr><td>8</td><td>女優ページSEO強化</td><td>3</td><td>施策2</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
+        <tr><td>9</td><td>ジャンルFAQ充実</td><td>3</td><td>施策6</td><td>中</td><td>中</td><td class="st-done">済</td></tr>
+        <tr><td>10</td><td>比較コンテンツ /guide</td><td>3</td><td>施策7</td><td>中</td><td>中</td><td class="st-done">済</td></tr>
+        <tr><td>11</td><td>お気に入りシェア</td><td>4</td><td>施策10</td><td>小</td><td>中</td><td class="st-done">済</td></tr>
+        <tr><td>12</td><td>スワイプ動画（投稿先限定）</td><td>4</td><td>施策5改</td><td>小</td><td>中</td><td class="st-todo">未</td></tr>
+        <tr><td>13</td><td>通知種別の変更UI</td><td>+</td><td>追加15</td><td>小</td><td>高</td><td class="st-todo">未</td></tr>
+        <tr><td>14</td><td>バッジ間近リマインド通知</td><td>+</td><td>追加16</td><td>小</td><td>高</td><td class="st-todo">未</td></tr>
+        <tr><td>15</td><td>KPIダッシュボード</td><td>+</td><td>追加17</td><td>中</td><td>高</td><td class="st-todo">未</td></tr>
+        <tr><td>16</td><td>通知→クリック計測</td><td>+</td><td>追加18</td><td>小〜中</td><td>中</td><td class="st-todo">未</td></tr>
+        <tr><td>17</td><td>推し監督の複数化・通知</td><td>+</td><td>追加19</td><td>中</td><td>中</td><td class="st-todo">未</td></tr>
+        <tr><td>18</td><td>内部リンク強化</td><td>+</td><td>追加20</td><td>小</td><td>中</td><td class="st-todo">未</td></tr>
+        <tr><td>19</td><td>動的OGP画像</td><td>+</td><td>追加21</td><td>中</td><td>中</td><td class="st-todo">未</td></tr>
+        <tr><td>20</td><td>値下げ通知の稼働確認</td><td>+</td><td>追加22</td><td>中</td><td>中</td><td class="st-todo">未</td></tr>
       </tbody>
     </table>
   </section>
@@ -588,6 +770,7 @@
   <footer>
     <p>FANZAピックス ｜ docs/022 実行手順書 ｜ 出典: docs/021_marketing-strategies.md</p>
     <p>除外：施策1（X自動投稿・凍結リスク）／施策8（5chシード・ステマ規制）</p>
+    <p>更新: 2026-06-01 — Phase 0/1/3/4 実装済み・追加施策15〜22を追記</p>
   </footer>
 
 </div>
