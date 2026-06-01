@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from 'next'
 import { fetchItemList } from '@/lib/dmm/client'
 import { sortByDiscount } from '@/lib/ranking'
+import { todayJstLabel } from '@/lib/jst-date'
 import { ProductCard } from '@/components/product/ProductCard'
 import { FavoriteButton } from '@/components/product/FavoriteButton'
 
@@ -8,15 +9,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 export const revalidate = 3600
 
-export const metadata: Metadata = {
-  title: '今日のFANZAセール・値引き作品',
-  description: 'FANZAで今日値引き中の作品一覧。毎時更新・割引率の高い順に掲載。最大90%OFFのセール作品をチェック。',
-  openGraph: {
-    title: '今日のFANZAセール・値引き作品 | FANZAピックス',
-    description: 'FANZAで今日値引き中の作品一覧。毎時更新・割引率の高い順に掲載。',
-    url: '/sale',
-  },
-  alternates: { canonical: '/sale' },
+// 日付はタイトル・h1・description のみに使い、canonical は /sale に固定（鮮度シグナル）
+export function generateMetadata(): Metadata {
+  const date = todayJstLabel()
+  const title = `今日のFANZAセール・割引作品（${date}更新）`
+  const description = `${date}時点でFANZA値引き中の作品一覧。毎時更新・割引率の高い順に掲載。最大90%OFFのセール作品をチェック。`
+  return {
+    title,
+    description,
+    openGraph: { title: `${title} | FANZAピックス`, description, url: '/sale' },
+    alternates: { canonical: '/sale' },
+  }
 }
 
 export default async function SalePage() {
@@ -29,9 +32,11 @@ export default async function SalePage() {
         SALE
       </span>
       <h1 className="mt-1 text-[22px] font-black tracking-tight text-white">
-        今日のFANZAセール
+        今日のFANZAセール・割引作品
       </h1>
-      <p className="mt-0.5 text-[11px] text-white/50">値引き作品を割引率の高い順に掲載</p>
+      <p className="mt-0.5 text-[11px] text-white/50">
+        {todayJstLabel()}更新 · 値引き作品を割引率の高い順に掲載
+      </p>
     </div>
   )
 

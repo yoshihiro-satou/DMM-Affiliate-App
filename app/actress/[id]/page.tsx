@@ -129,6 +129,26 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     .slice(0, 8)
     .map(([genreId, { name }]) => ({ id: genreId, name }))
 
+  // 人気作品ランキング（レビュー評価順 TOP5・テキストSEO用）
+  const popularWorks = [...works]
+    .filter((w) => w.review?.average)
+    .sort((a, b) => Number(b.review?.average ?? 0) - Number(a.review?.average ?? 0))
+    .slice(0, 5)
+
+  // 共演女優（出演作からの共演頻度・上位8人）
+  const coActressMap = new Map<number, { name: string; count: number }>()
+  for (const item of works) {
+    for (const a of item.iteminfo?.actress ?? []) {
+      if (a.id == null || a.id === actressId || !a.name) continue
+      const prev = coActressMap.get(a.id)
+      coActressMap.set(a.id, { name: a.name, count: (prev?.count ?? 0) + 1 })
+    }
+  }
+  const coActresses = [...coActressMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 8)
+    .map(([coId, { name, count }]) => ({ id: coId, name, count }))
+
   const profileStats = [
     actress.height ? { label: '身長', value: `${actress.height}cm` } : null,
     actress.bust
@@ -295,6 +315,59 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
           </div>
         )}
       </div>
+
+      {/* 人気作品ランキング（SEOテキスト・指名クエリ向け） */}
+      {popularWorks.length > 0 && (
+        <section className="border-t border-white/8 px-4 pb-6 pt-5">
+          <h2 className="mb-3 text-[15px] font-black tracking-tight text-white">
+            {actress.name}の人気作品ランキング
+          </h2>
+          <ol className="flex flex-col gap-2">
+            {popularWorks.map((item, i) => (
+              <li key={item.content_id} className="flex items-center gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] font-black text-white/70">
+                  {i + 1}
+                </span>
+                <a
+                  href={item.affiliateURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="line-clamp-1 flex-1 text-[12px] text-white/70 hover:text-white"
+                >
+                  {item.title}
+                </a>
+                {item.review?.average && (
+                  <span className="shrink-0 text-[10px] tabular-nums text-amber-400/80">
+                    ★{Number(item.review.average).toFixed(2)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+          <p className="mt-2 text-[9px] text-white/35">PR · レビュー評価順</p>
+        </section>
+      )}
+
+      {/* 関連女優（共演・内部リンク） */}
+      {coActresses.length > 0 && (
+        <section className="border-t border-white/8 px-4 pb-8 pt-5">
+          <h2 className="mb-3 text-[15px] font-black tracking-tight text-white">
+            {actress.name}の関連女優
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {coActresses.map((a) => (
+              <a
+                key={a.id}
+                href={`/actress/${a.id}`}
+                className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/70 hover:border-red-500/40 hover:bg-red-950/30 hover:text-white active:opacity-70"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                {a.name}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   )
 }

@@ -99,27 +99,38 @@ export default async function GenrePage({ params }: Props) {
     ],
   }
 
+  const topActressNames = topActresses.slice(0, 3).map((a) => a.name).join('・')
+
+  // ジャンル別 FAQ（AI Overview / 指名検索向け・画面にも表示）
+  const faqItems: Array<{ q: string; a: string }> = [
+    {
+      q: `${genreName}とはどんなジャンルですか？`,
+      a: `${genreName}はFANZAで人気のジャンルです。このページではレビュー評価の高い${genreName}作品を、人気順・最新順に厳選して紹介しています。`,
+    },
+    {
+      q: `${genreName}のおすすめ作品はどこで見られますか？`,
+      a: `FANZAピックスの${genreName}ページで、レビュー評価・人気順に並んだ作品一覧を無料で閲覧できます。各作品のFANZA購入ページへのリンクも掲載しています。`,
+    },
+    {
+      q: `${genreName}のセール・割引はありますか？`,
+      a: `FANZAでは毎日セールが入れ替わり、${genreName}作品も最大90%OFFになることがあります。FANZAピックスのセールページで当日の割引作品をまとめてチェックできます。`,
+    },
+    ...(topActressNames
+      ? [{
+          q: `${genreName}で人気の女優は誰ですか？`,
+          a: `このジャンルの人気作に多く出演しているのは${topActressNames}などです。各女優ページから出演作・関連作品をたどれます。`,
+        }]
+      : []),
+  ]
+
   const jsonLdFaq = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: `${genreName}とはどんなジャンルですか？`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: `${genreName}はFANZAで人気のジャンルです。このページではレビュー評価の高い${genreName}作品を厳選して紹介しています。`,
-        },
-      },
-      {
-        '@type': 'Question',
-        name: `${genreName}のおすすめ作品はどこで見られますか？`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: `FANZAピックスの${genreName}ページでは、レビュー評価・人気順に並んだ作品一覧を無料で閲覧できます。各作品のFANZA購入ページへのリンクも掲載しています。`,
-        },
-      },
-    ],
+    mainEntity: faqItems.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
   }
 
   return (
@@ -183,6 +194,21 @@ export default async function GenrePage({ params }: Props) {
           </div>
         </div>
       )}
+
+      {/* よくある質問（AI Overview / 指名検索向け） */}
+      <section className="border-t border-white/8 px-4 pb-8 pt-5">
+        <h2 className="mb-3 text-[15px] font-black tracking-tight text-white">
+          {genreName} のよくある質問
+        </h2>
+        <div className="flex flex-col gap-2">
+          {faqItems.map((f) => (
+            <div key={f.q} className="rounded-xl border border-white/8 bg-white/3 p-3.5">
+              <p className="text-[13px] font-bold text-white">{f.q}</p>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-white/65">{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   )
 }
