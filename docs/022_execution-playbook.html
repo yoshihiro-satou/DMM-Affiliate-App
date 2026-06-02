@@ -273,6 +273,7 @@
       </tbody>
     </table>
     <p style="font-size:12.5px;color:var(--muted);">下部「<a href="#extra" style="color:var(--accent2);">追加施策（コードレビューで発見）</a>」に、実装後のコードから見つかった新しい改善案を追記。</p>
+    <p style="font-size:12.5px;color:var(--muted);"><strong style="color:var(--green);">2026-06 追記：</strong>セール速報の<strong>ゲスト購読（メール登録不要）</strong>と <code class="file">/sale</code> 高インテント・ナッジ、<strong>お気に入りの値下げ可視化・並び替え</strong>を実装（<a href="#extra" style="color:var(--accent2);">追加23・24</a>）。あわせて お気に入り画像の高精細化（横長ジャケット・モバイル1列）と ホーム非日替わりセクションの <strong>VR 除外</strong> も対応。</p>
   </section>
 
   <!-- 除外施策 -->
@@ -381,6 +382,7 @@
         <li>通知文面は熱量のある文体に：「{女優名}に待望の新作🎉 今だけ初日特典あり」。</li>
       </ol>
       <div class="note warn"><strong>法務注意：</strong>登録者数の表示は<strong>必ず実DB値</strong>を使う。水増しは景表法違反。</div>
+      <div class="note"><strong>2026-06 強化：</strong>セール速報を<strong>ログイン不要（メール登録なし）で購読可</strong>に拡張（<code class="file">notification_subscriptions.user_id</code> を nullable 化、ゲストは <code>sale</code> 固定）。<code class="file">/welcome</code>・<code class="file">/sale</code> に導線を設置し、/sale では高インテント・ナッジで促す。登録ハードルを下げ通知母数を拡大 → <a href="#extra" style="color:var(--accent2);">追加24</a>。</div>
       <div class="done">セール通知でも登録でき、登録者実数が表示され、type別に配信を出し分けられる。</div>
     </div>
 
@@ -730,7 +732,46 @@
         <li>お気に入り作品の価格を定期取得 → 下落検知で <code>price_drop</code> 通知を <code class="file">notification_queue</code> へ。</li>
         <li>追加17 ダッシュボードで price_history の蓄積件数を監視。</li>
       </ol>
+      <div class="note"><strong>2026-06 進捗：</strong>消費側の<strong>お気に入り値下げ可視化</strong>（<code class="file">get_latest_price_details</code> RPC・保存後比の値下げ/割引バッジ・並び替え）は実装済み → <a href="#extra" style="color:var(--accent2);">追加23</a>。残るは price-monitor cron の稼働確認と <code>price_drop</code> 通知の <code class="file">notification_queue</code> 投入。</div>
       <div class="done">価格が継続記録され、お気に入りの値下げが通知される。</div>
+    </div>
+
+    <!-- 追加23 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>お気に入りの値下げ可視化＆並び替え</h3>
+        <span class="badge b-orig">追加23</span>
+        <span class="badge b-done">実装済み</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">サイトの目玉「値下げ」を一覧で可視化。保存時価格と現在価格（<code class="file">price_history</code>）を比較し、下がった作品にバッジを出す。差別化UXであり「値下げチェックのための再訪」動機になる。</p>
+      <ol class="steps">
+        <li><code class="file">favorites.list_price</code> を追加し、<code class="file">get_latest_price_details</code> RPC で現在価格を取得。</li>
+        <li>保存後の値下げ → 「値下げ」バッジ＋元価格取り消し線＋割引率、現在セール中 → 「N%OFF」。ヘッダーに「値下げ中 N件」。</li>
+        <li><code class="file">app/favorites/FavoritesBrowser.tsx</code> で並び替え（追加/値下げ/割引率/価格）＋フィルタ（値下げ中/セール中）。</li>
+        <li>画像を大サイズ（横長ジャケット <code>pl.jpg</code>）に正規化しモバイル1列で表示。表示価格は必ず実データ連動（景表法）。</li>
+      </ol>
+      <div class="note"><strong>関連：</strong>値下げ「通知」(price_drop) と price-monitor cron の稼働確認は <a href="#summary" style="color:var(--accent2);">追加22</a> で継続。</div>
+      <div class="done">お気に入りで値下げ・割引がバッジ表示され、並び替え・絞り込みができる。</div>
+    </div>
+
+    <!-- 追加24 -->
+    <div class="task">
+      <div class="task-top">
+        <h3>セール速報のゲスト購読＋高インテント・ナッジ</h3>
+        <span class="badge b-orig">追加24</span>
+        <span class="badge b-done">実装済み</span>
+        <span class="badge b-cost">コスト 中</span>
+      </div>
+      <p class="lead">Phase 1 の生命線「通知許可ユーザーを増やす」を直接強化。セール速報は<strong>メール登録なし（ゲスト）でも購読可</strong>にし登録ハードルを撤廃。推し/値下げ等のパーソナライズ通知は引き続き登録動機として残す。</p>
+      <ol class="steps">
+        <li><code class="file">notification_subscriptions.user_id</code> を nullable 化、ゲストは <code>sale</code> 固定で購読（admin client で upsert）。</li>
+        <li>送信は <code class="file">notification_queue.endpoint</code> にゲスト送信先を保持し push-notify Worker が endpoint 直送。</li>
+        <li><code class="file">/welcome</code>・<code class="file">/sale</code> に導線。/sale は一定スクロール後の控えめなナッジ（<code class="file">SaleNotifyNudge</code>・7日 dismiss 記憶）。</li>
+        <li>購読ロジックは <code class="file">usePushSubscribe</code> に集約。登録者数（<code class="file">/api/subscriber-count</code>）は distinct endpoint の実数（景表法）。</li>
+      </ol>
+      <div class="note"><strong>狙い：</strong>「DL → 通知許可 → セール速報」をメール登録なしで成立させ通知母数を最大化。施策9・施策3の上積み。</div>
+      <div class="done">未ログインでもセール速報を購読でき、高インテント時にナッジが出る。</div>
     </div>
   </section>
 
@@ -762,7 +803,9 @@
         <tr><td>17</td><td>推し監督の複数化・通知</td><td>+</td><td>追加19</td><td>中</td><td>中</td><td class="st-todo">未</td></tr>
         <tr><td>18</td><td>内部リンク強化</td><td>+</td><td>追加20</td><td>小</td><td>中</td><td class="st-todo">未</td></tr>
         <tr><td>19</td><td>動的OGP画像</td><td>+</td><td>追加21</td><td>中</td><td>中</td><td class="st-todo">未</td></tr>
-        <tr><td>20</td><td>値下げ通知の稼働確認</td><td>+</td><td>追加22</td><td>中</td><td>中</td><td class="st-todo">未</td></tr>
+        <tr><td>20</td><td>値下げ通知の稼働確認</td><td>+</td><td>追加22</td><td>中</td><td>中</td><td class="st-todo">未（可視化は済）</td></tr>
+        <tr><td>21</td><td>お気に入り値下げ可視化・並び替え</td><td>+</td><td>追加23</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
+        <tr><td>22</td><td>セール速報ゲスト購読＋ナッジ</td><td>+</td><td>追加24</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
       </tbody>
     </table>
   </section>
@@ -770,7 +813,7 @@
   <footer>
     <p>FANZAピックス ｜ docs/022 実行手順書 ｜ 出典: docs/021_marketing-strategies.md</p>
     <p>除外：施策1（X自動投稿・凍結リスク）／施策8（5chシード・ステマ規制）</p>
-    <p>更新: 2026-06-01 — Phase 0/1/3/4 実装済み・追加施策15〜22を追記</p>
+    <p>更新: 2026-06-02 — セール速報ゲスト購読＋ナッジ・お気に入り値下げ可視化/並び替えを実装（追加23・24）／画像高精細化・VR除外も対応</p>
   </footer>
 
 </div>
