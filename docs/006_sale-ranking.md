@@ -119,3 +119,16 @@ wrangler deploy --config workers/daily-revalidate.toml
 - [x] ProductCard に「PR」バッジを全カード右上に表示
 - [x] クーポンバナーに「PR · PICKUP」表記
 - [x] ランキングページ各セクションヘッダーに「PR · FANZAアフィリエイトリンク」表記
+
+## 追加（2026-06）: VR除外・セール速報ナッジ
+
+### 非日替わりセクションの VR 除外
+- [x] `lib/dmm/client.ts` に `isVrItem(item)` を追加（ジャンル名に「VR」を含む or タイトルが「【VR】」プレフィックス）
+- [x] `fetchItemListMixed` に `excludeVr` オプションを追加（デフォルト false。discover/search には影響なし）
+- [x] ホームの「今週のランキング」「本日のおすすめ（fallback）」で `excludeVr: true`
+- [x] 「あなたへのおすすめ」(`app/api/recommend/route.ts`) も `isVrItem` で除外（ゲスト/ログイン/ジャンル/女優の各候補）
+- [x] 「日替わり（今日だけの特別価格）」は対象外（VRを残す）。`fetchDailySaleItems` は従来どおり VR を除外
+
+### セール速報ナッジ（/sale）
+- [x] `components/push/usePushSubscribe.ts` に購読ロジックを集約（`PushSubscribeButton` と共有）
+- [x] `components/sale/SaleNotifyNudge.tsx`：一定スクロール（高インテント）後に控えめなバナーで「セール速報を受け取る（登録不要）」を提示。購読済み/ブロック中/非対応/7日以内に閉じた場合は非表示（`useSyncExternalStore` で localStorage 判定）

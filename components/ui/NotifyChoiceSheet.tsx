@@ -7,6 +7,9 @@ import type { NotificationType } from '@/actions/push'
 type Props = {
   onChoose: (type: NotificationType) => void
   onClose: () => void
+  /** false の場合、推し/両方はログイン必須として onRequireLogin を呼ぶ（セール速報のみゲスト可） */
+  isLoggedIn?: boolean
+  onRequireLogin?: () => void
 }
 
 const OPTIONS: Array<{
@@ -39,7 +42,12 @@ const OPTIONS: Array<{
  * 通知購読時の種別選択シート（施策9）。
  * 値提示＋登録者の実数（ソーシャルプルーフ）を見せてから許可へ進ませる。
  */
-export function NotifyChoiceSheet({ onChoose, onClose }: Props) {
+export function NotifyChoiceSheet({
+  onChoose,
+  onClose,
+  isLoggedIn = true,
+  onRequireLogin,
+}: Props) {
   const [count, setCount] = useState<number | null>(null)
 
   useEffect(() => {
@@ -74,24 +82,38 @@ export function NotifyChoiceSheet({ onChoose, onClose }: Props) {
         <div className="mt-4 flex flex-col gap-2.5">
           {OPTIONS.map((opt) => {
             const Icon = opt.icon
+            // ゲストはセール速報のみ。推し/両方はログイン必須。
+            const requiresLogin = !isLoggedIn && opt.type !== 'sale'
             return (
               <button
                 key={opt.type}
-                onClick={() => onChoose(opt.type)}
+                onClick={() => (requiresLogin ? onRequireLogin?.() : onChoose(opt.type))}
                 className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/3 px-4 py-3.5 text-left transition-colors hover:border-red-600/40 hover:bg-red-600/5"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-red-600/12 text-red-400">
                   <Icon size={18} />
                 </span>
-                <span className="flex flex-col">
-                  <span className="text-[14px] font-bold text-white">{opt.label}</span>
+                <span className="flex flex-1 flex-col">
+                  <span className="flex items-center gap-1.5 text-[14px] font-bold text-white">
+                    {opt.label}
+                    {requiresLogin && (
+                      <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-white/60">
+                        要登録
+                      </span>
+                    )}
+                  </span>
                   <span className="text-[11px] leading-snug text-white/55">{opt.desc}</span>
                 </span>
               </button>
             )
           })}
         </div>
+        {!isLoggedIn && (
+          <p className="mt-3 text-[11px] leading-snug text-white/45">
+            セール速報は登録不要で受け取れます。推し女優の新作通知は無料登録で利用できます。
+          </p>
+        )}
 
         <button
           onClick={onClose}

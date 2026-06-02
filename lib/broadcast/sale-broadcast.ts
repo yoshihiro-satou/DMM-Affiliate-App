@@ -97,27 +97,37 @@ export const webPushAdapter: BroadcastAdapter = {
   async deliver(message, opts): Promise<DeliverResult> {
     const admin = createAdminClient()
 
+    // セール速報を希望する購読者。ログイン勢は user_id、ゲストは endpoint で識別する。
     const { data: subs } = await admin
       .from('notification_subscriptions')
-      .select('user_id, notification_type')
+      .select('user_id, endpoint, notification_type')
       .in('notification_type', ['sale', 'both'])
 
-    const userIds = [...new Set((subs ?? []).map((s) => s.user_id))]
-    if (userIds.length === 0) {
+    const memberIds = [...new Set((subs ?? []).map((s) => s.user_id).filter(Boolean))] as string[]
+    const guestEndpoints = [
+      ...new Set((subs ?? []).filter((s) => !s.user_id).map((s) => s.endpoint)),
+    ] as string[]
+    const totalSubs = memberIds.length + guestEndpoints.length
+    if (totalSubs === 0) {
       return { channel: 'web_push', delivered: 0, skipped: 0, reason: 'no sale subscribers' }
     }
 
-    // 本日すでにセール速報を積んだユーザーを除外
+    // 本日すでにセール速報を積んだ対象を除外（ログインは user_id、ゲストは endpoint）
     const { data: already } = await admin
       .from('notification_queue')
-      .select('user_id')
+      .select('user_id, endpoint')
       .eq('type', 'sale_broadcast')
       .gte('created_at', jstDayStartUtcIso())
-    const alreadyIds = new Set((already ?? []).map((r) => r.user_id))
+    const alreadyIds = new Set((already ?? []).map((r) => r.user_id).filter(Boolean))
+    const alreadyEndpoints = new Set((already ?? []).map((r) => r.endpoint).filter(Boolean))
 
-    const targets = userIds.filter((id) => !alreadyIds.has(id))
-    if (targets.length === 0) {
-      return { channel: 'web_push', delivered: 0, skipped: userIds.length, reason: 'all sent today' }
+    const memberTargets = memberIds.filter((id) => !alreadyIds.has(id))
+    const guestTargets = guestEndpoints.filter((ep) => !alreadyEndpoints.has(ep))
+    const targetCount = memberTargets.length + guestTargets.length
+    const skipped = totalSubs - targetCount
+
+    if (targetCount === 0) {
+      return { channel: 'web_push', delivered: 0, skipped, reason: 'all sent today' }
     }
 
     // dry-run: 実投入せず対象者数のみ返す
@@ -125,29 +135,41 @@ export const webPushAdapter: BroadcastAdapter = {
       return {
         channel: 'web_push',
         delivered: 0,
-        skipped: userIds.length - targets.length,
-        reason: `dry-run: would queue ${targets.length}`,
+        skipped,
+        reason: `dry-run: would queue ${targetCount} (members ${memberTargets.length}, guests ${guestTargets.length})`,
       }
     }
 
-    const rows = targets.map((user_id) => ({
-      user_id,
-      type: 'sale_broadcast',
-      status: 'pending',
-      payload: {
-        title: message.title,
-        body: message.body,
-        url: message.url,
-        tag: message.tag,
-      },
-    }))
+    const payload = {
+      title: message.title,
+      body: message.body,
+      url: message.url,
+      tag: message.tag,
+    }
+    const rows = [
+      ...memberTargets.map((user_id) => ({
+        user_id,
+        endpoint: null,
+        type: 'sale_broadcast',
+        status: 'pending',
+        payload,
+      })),
+      // ゲスト行は user_id なし。送信先 endpoint を直接保持する。
+      ...guestTargets.map((endpoint) => ({
+        user_id: null,
+        endpoint,
+        type: 'sale_broadcast',
+        status: 'pending',
+        payload,
+      })),
+    ]
 
     const { error } = await admin.from('notification_queue').insert(rows)
     if (error) {
-      return { channel: 'web_push', delivered: 0, skipped: userIds.length, reason: error.message }
+      return { channel: 'web_push', delivered: 0, skipped: totalSubs, reason: error.message }
     }
 
-    return { channel: 'web_push', delivered: targets.length, skipped: userIds.length - targets.length }
+    return { channel: 'web_push', delivered: targetCount, skipped }
   },
 }
 

@@ -10,11 +10,12 @@ export const runtime = 'nodejs'
 export async function GET(): Promise<Response> {
   try {
     const supabase = createAdminClient()
-    const { data } = await supabase.from('notification_subscriptions').select('user_id')
-    const uniqueUsers = new Set((data ?? []).map((r) => r.user_id)).size
+    // endpoint は購読デバイス単位で一意。ゲスト購読（user_id null）も実数に含める。
+    const { data } = await supabase.from('notification_subscriptions').select('endpoint')
+    const uniqueDevices = new Set((data ?? []).map((r) => r.endpoint)).size
 
     return Response.json(
-      { count: uniqueUsers },
+      { count: uniqueDevices },
       { headers: { 'Cache-Control': 'public, max-age=300' } }
     )
   } catch {

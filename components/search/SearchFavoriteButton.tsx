@@ -38,6 +38,7 @@ export function SearchFavoriteButton({ item, initialFavorited = false }: Props) 
               item_url: item.affiliate_url,
               image_url: item.image_url,
               price: item.price,
+              list_price: item.list_price,
             })
             if (result.newBadges.length > 0) setNewBadges(result.newBadges)
           } else {

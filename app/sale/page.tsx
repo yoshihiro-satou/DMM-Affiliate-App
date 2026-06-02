@@ -4,6 +4,8 @@ import { sortByDiscount } from '@/lib/ranking'
 import { todayJstLabel } from '@/lib/jst-date'
 import { ProductCard } from '@/components/product/ProductCard'
 import { FavoriteButton } from '@/components/product/FavoriteButton'
+import { PushSubscribeButton } from '@/components/PushSubscribeButton'
+import { SaleNotifyNudge } from '@/components/sale/SaleNotifyNudge'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
@@ -39,6 +41,16 @@ export default async function SalePage() {
       </p>
     </div>
   )
+
+  // セール速報の通知購読（登録不要で受け取れる）。
+  // try/catch の外で構築し、JSX-in-try の lint 違反を増やさない。
+  const notifyBanner = (
+    <div className="px-3 pb-1">
+      <PushSubscribeButton />
+    </div>
+  )
+  // 高インテント時（スクロール後）に控えめに出すセール速報ナッジ
+  const saleNudge = <SaleNotifyNudge />
 
   try {
     const result = await fetchItemList({
@@ -84,6 +96,7 @@ export default async function SalePage() {
         <p className="px-4 pb-2 pt-1 text-[11px] text-white/55">
           PR · 割引率の高い順 · {result.total_count.toLocaleString('ja-JP')}件以上
         </p>
+        {notifyBanner}
         <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {items.map((item, i) => (
             <ProductCard
@@ -94,6 +107,7 @@ export default async function SalePage() {
             />
           ))}
         </div>
+        {saleNudge}
       </main>
     )
   } catch {

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 // ------------------------------------
 async function RankingSection() {
   try {
-    const result = await fetchItemListMixed({ sort: 'rank', hits: 10 })
+    const result = await fetchItemListMixed({ sort: 'rank', hits: 10, excludeVr: true })
     const ranked = sortByRankingScore(result.items)
 
     const jsonLd = {
@@ -62,7 +62,7 @@ async function DailySaleSection() {
     const saleItems = await fetchDailySaleItems(10)
 
     if (saleItems.length === 0) {
-      const result = await fetchItemListMixed({ sort: 'date', hits: 10 })
+      const result = await fetchItemListMixed({ sort: 'date', hits: 10, excludeVr: true })
       return (
         <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
           {result.items.map((item, i) => (

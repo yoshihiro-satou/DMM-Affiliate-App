@@ -113,7 +113,10 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 
 ### お気に入り・値下げ通知
 
-価格監視は Cloudflare Workers cron（毎時）で DMM API → Supabase `price_history` テーブルに記録。
+価格監視は Cloudflare Workers cron（毎時）で DMM API → Supabase `price_history` テーブルに記録（`get_top_favorited_items` で上位100件を対象）。
+
+- **お気に入りページの値下げ可視化**: 保存時 `price`（と `list_price`）を記録し、`get_latest_price_details` で現在価格を引いて比較。保存後に値下げされた作品に「値下げ」バッジ＋元価格の取り消し線・割引率を表示。現在セール中は「N%OFF」バッジ。`app/favorites/FavoritesBrowser.tsx`（クライアント）で並び替え（追加順/値下げ順/割引率順/価格安順）とフィルタ（値下げ中/セール中）。ゲストは上限5件・現在価格を持たないため保存時 `list_price` でセールバッジのみ。
+- **画像**: お気に入りは横長ジャケット（`pl.jpg`・800x538）をモバイル1列で表示。保存・表示は `lib/dmm/image.ts` の `toLargeDmmImageUrl`（pt/ps→pl 正規化）を経由。
 
 ### ゲーミフィケーション・バッジ・ポイント
 
@@ -144,6 +147,8 @@ pnpm cf:deploy    # Cloudflare Pages へデプロイ
 - 推し女優日替わり通知フロー: daily-revalidate Worker（JST 0:01）→ `/api/oshi-notify` → `notification_queue` → push-notify Worker（15分ごと）→ Web Push 送信
 - セール速報通知フロー（追加13・分散配信）: daily-revalidate Worker → `/api/sale-notify` → `lib/broadcast/sale-broadcast.ts`（`buildSaleBroadcast` で生成 → Web Push / Telegram / メール各アダプタへファンアウト）→ `notification_queue` → push-notify Worker。Telegram・メールアダプタは Phase 2 でスタブ。`?dry=1` で対象者数のみ算出する安全な検証が可能
 - 通知種別: `notification_subscriptions.notification_type`（`oshi` / `sale` / `both`）で出し分け。購読UIは `NotifyChoiceSheet` で種別選択＋登録者実数（`/api/subscriber-count`）を表示
+- **セール速報はゲスト購読可（メール登録不要）**: 未ログインでも `notification_type='sale'` 固定・`user_id=null` で購読できる（`actions/push.ts` は admin client で upsert）。推し/お気に入り値下げ/シリーズ新刊はユーザー固有データ依存のためログイン必須。ゲスト導線は `/welcome`・`/sale` に設置。送信時、ゲスト sale 行は `notification_queue.endpoint` に送信先を直接保持し、push-notify Worker が endpoint 直指定で送る（`user_id` ありはログイン勢として user_id で購読を引く）
+- 購読ロジックは `components/push/usePushSubscribe.ts`（状態管理＋購読/解除）に集約し、`PushSubscribeButton` と `SaleNotifyNudge`（`/sale` で一定スクロール後に控えめに出すセール速報バナー・7日間 dismiss 記憶）で共有
 - iOS Safari は PWA（ホーム画面追加済み）としての動作時のみ受信可能
 
 ## Next.js App Router ベストプラクティス
@@ -346,14 +351,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 |---------|------|-----|
 | `profiles` | id / display_name / email / oshi_director_name / points（`oshi_actress_id` / `oshi_actress_name` は `oshi_actresses` へ移行済みの旧カラム） | 本人のみ読み書き |
 | `oshi_actresses` | 推し女優（最大5人・actress_id / actress_name）。`lib/oshi.ts` の `getOshiActresses` で取得 | 本人のみ読み書き |
-| `favorites` | お気に入り（item_id / item_title / image_url / price） | 本人のみ読み書き |
+| `favorites` | お気に入り（item_id / item_title / image_url / price / list_price） | 本人のみ読み書き |
 | `swipe_history` | スワイプ履歴（item_id / direction） | 本人のみ読み書き |
 | `price_history` | 価格履歴（item_id / price / fetched_at） | 全員読み取り・書き込みはサービスロールのみ |
 | `user_badges` | バッジ付与記録（badge_type / earned_at） | 本人のみ読み取り・書き込みはサービスロールのみ |
 | `user_points` | ポイント（amount / reason）— 現在停止中 | サービスロールのみ |
 | `login_streaks` | 連続ログイン日数（current_streak / last_login_date） | サービスロールのみ |
-| `notification_subscriptions` | Web Push 購読情報（endpoint / keys / notification_type: oshi/sale/both） | 本人のみ読み書き |
-| `notification_queue` | 通知送信キュー（type / payload / status） | サービスロールのみ |
+| `notification_subscriptions` | Web Push 購読情報（user_id（**nullable**=ゲスト sale 購読） / endpoint / keys / notification_type: oshi/sale/both） | 本人のみ読み書き（ゲスト書き込みは Server Action の admin client 経由） |
+| `notification_queue` | 通知送信キュー（user_id / **endpoint**（ゲスト sale 送信先） / type / payload / status） | サービスロールのみ |
 | `series_progress` | シリーズ既読（series_id / item_id / status） | 本人のみ読み書き |
 | `followed_series` | フォロー中シリーズ（series_id / series_name / latest_item_id） | 本人のみ読み書き |
 | `view_history` | 閲覧履歴（item_id / item_title / viewed_at） | 本人のみ読み書き |
@@ -362,6 +367,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 DB関数（RPC）:
 - `get_top_favorited_items(limit_count)` — お気に入り上位 N 件の item_id を返す
 - `get_latest_prices(item_ids)` — 各 item_id の最新価格のみを返す（DISTINCT ON）
+- `get_latest_price_details(item_ids)` — 各 item_id の最新の価格詳細（price / list_price / discount_rate / recorded_at）を返す（DISTINCT ON）。お気に入りの値下げ可視化で使用
 - `increment_user_points(p_user_id, p_amount)` — ポイントをアトミックに加算（現在停止中）
 
 ## ドキュメント一覧

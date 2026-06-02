@@ -3,8 +3,9 @@
 import { useSyncExternalStore, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart } from 'lucide-react'
+import { Heart, Tag } from 'lucide-react'
 import { removeGuestFavorite, type GuestFavItem } from '@/lib/guest-favorites'
+import { toLargeDmmImageUrl } from '@/lib/dmm/image'
 import { ShareFavoritesButton } from './ShareFavoritesButton'
 
 function useGuestFavorites(): GuestFavItem[] {
@@ -65,7 +66,7 @@ export function GuestFavoritesList() {
       {items.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 md:grid-cols-3">
           {items.map((item) => (
             <GuestFavCard key={item.item_id} item={item} onRemove={remove} />
           ))}
@@ -82,6 +83,13 @@ function GuestFavCard({
   item: GuestFavItem
   onRemove: (id: string) => void
 }) {
+  // 既存データは小サイズ（pt/ps）で保存されている場合があるため大サイズへ正規化
+  const imageUrl = toLargeDmmImageUrl(item.image_url)
+  // 保存時の定価より安ければセール中バッジ（ゲストは現在価格を持たないため保存値で判定）
+  const discount =
+    item.list_price && item.price && item.list_price > item.price
+      ? Math.round((1 - item.price / item.list_price) * 100)
+      : 0
   return (
     <div className="flex flex-col">
       <a
@@ -90,20 +98,28 @@ function GuestFavCard({
         rel="noopener noreferrer"
         className="relative block overflow-hidden rounded-lg bg-white/5"
       >
-        {item.image_url ? (
+        {imageUrl ? (
           <Image
-            src={item.image_url}
+            src={imageUrl}
             alt={item.title}
-            width={184}
-            height={250}
-            className="aspect-[184/250] w-full object-cover"
+            width={400}
+            height={269}
+            className="aspect-[800/538] w-full object-cover"
           />
         ) : (
-          <div className="aspect-[184/250] w-full bg-white/5" />
+          <div className="aspect-[800/538] w-full bg-white/5" />
         )}
-        <span className="absolute left-1.5 top-1.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/70 backdrop-blur-sm">
-          PR
-        </span>
+        <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
+          <span className="rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold tracking-wider text-white/70 backdrop-blur-sm">
+            PR
+          </span>
+          {discount > 0 && (
+            <span className="flex items-center gap-0.5 rounded bg-rose-500/90 px-1.5 py-0.5 text-[10px] font-black text-white shadow">
+              <Tag size={10} strokeWidth={3} />
+              {discount}%OFF
+            </span>
+          )}
+        </div>
         <button
           onClick={(e) => {
             e.preventDefault()

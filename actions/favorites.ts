@@ -11,6 +11,7 @@ export type FavoriteItem = {
   item_url: string
   image_url: string | null
   price: number | null
+  list_price?: number | null
 }
 
 export async function addFavorite(item: FavoriteItem): Promise<{ newBadges: BadgeType[] }> {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser, createClient } from '@/lib/supabase/server'
-import { fetchItemList } from '@/lib/dmm/client'
+import { fetchItemList, isVrItem } from '@/lib/dmm/client'
 import { buildUserProfile, scoreItem, topEntries } from '@/lib/personalization'
 import type { DmmItem } from '@/types/dmm'
 
@@ -29,7 +29,9 @@ export async function GET(request: Request): Promise<Response> {
   if (!user) {
     const pool = await fetchItemList({ sort: 'rank', hits: 30, service: 'digital', floor: 'videoa' })
     const guestSeenSet = new Set(guestSeenIds)
-    const items = pool.items.filter((item) => !guestSeenSet.has(item.content_id)).slice(0, 20)
+    const items = pool.items
+      .filter((item) => !guestSeenSet.has(item.content_id) && !isVrItem(item))
+      .slice(0, 20)
     return NextResponse.json({
       items,
       genreItems: [],
@@ -59,7 +61,9 @@ export async function GET(request: Request): Promise<Response> {
   const pool = await fetchItemList({ sort: 'rank', hits: 50, service: 'digital', floor: 'videoa' })
 
   // 既見除外 → スコア降順
-  const candidates = pool.items.filter((item) => !profile.seenItemIds.has(item.content_id))
+  const candidates = pool.items.filter(
+    (item) => !profile.seenItemIds.has(item.content_id) && !isVrItem(item)
+  )
   const scored = candidates
     .map((item) => ({ item, score: scoreItem(item, profile) }))
     .sort((a, b) => b.score - a.score)
@@ -93,11 +97,11 @@ export async function GET(request: Request): Promise<Response> {
   ])
 
   const genreItems = (genreResult?.items ?? [])
-    .filter((item) => !profile.seenItemIds.has(item.content_id))
+    .filter((item) => !profile.seenItemIds.has(item.content_id) && !isVrItem(item))
     .slice(0, 8)
 
   const actressItems = (actressResult?.items ?? [])
-    .filter((item) => !profile.seenItemIds.has(item.content_id))
+    .filter((item) => !profile.seenItemIds.has(item.content_id) && !isVrItem(item))
     .slice(0, 6)
 
   return NextResponse.json({

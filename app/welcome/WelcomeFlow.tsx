@@ -108,8 +108,10 @@ export function WelcomeFlow({ isLoggedIn, dest }: Props) {
             </>
           ) : (
             <>
+              {/* ゲストでもセール速報だけは登録不要で購読できる */}
+              <PushSubscribeButton />
               <p className="text-[12px] leading-relaxed text-white/55">
-                無料登録すると、推し女優の新作・セール速報をプッシュ通知で受け取れます。
+                推し女優の新作・お気に入りの値下げ通知は、無料登録で受け取れます。
               </p>
               <Link
                 href="/login"

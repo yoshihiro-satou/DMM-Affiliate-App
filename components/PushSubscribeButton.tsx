@@ -1,82 +1,29 @@
 ﻿'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState } from 'react'
 import { Bell, BellOff, BellRing } from 'lucide-react'
-import { saveSubscription, removeSubscription, type NotificationType } from '@/actions/push'
+import type { NotificationType } from '@/actions/push'
 import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
 import { NotifyChoiceSheet } from '@/components/ui/NotifyChoiceSheet'
 import { useAuth } from '@/components/providers/auth-provider'
-import { track } from '@/lib/track'
-
-type State = 'unsupported' | 'loading' | 'denied' | 'unsubscribed' | 'subscribed'
+import { usePushSubscribe } from '@/components/push/usePushSubscribe'
 
 export function PushSubscribeButton() {
   const { isLoggedIn } = useAuth()
-  const [state, setState] = useState<State>(() => {
-    if (typeof window === 'undefined') return 'loading'
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return 'unsupported'
-    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return 'denied'
-    return 'loading'
-  })
+  const { state, isPending, subscribeWithType, unsubscribe } = usePushSubscribe()
   const [showPrompt, setShowPrompt] = useState(false)
   const [showChoice, setShowChoice] = useState(false)
-  const [isPending, startTransition] = useTransition()
 
-  useEffect(() => {
-    if (state !== 'loading') return
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => setState(sub ? 'subscribed' : 'unsubscribed'))
-      .catch(() => setState('unsubscribed'))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // ステップ1: 種別選択シートを開く（事前の価値提示で許可率を上げる）
+  // ステップ1: 種別選択シートを開く（事前の価値提示で許可率を上げる）。
+  // ゲストでも開く。シート内でセール速報のみ選択可（推し/両方は登録誘導）。
   function startSubscribe() {
-    if (!isLoggedIn) { setShowPrompt(true); return }
     setShowChoice(true)
   }
 
   // ステップ2: 種別決定 → ブラウザの許可プロンプト → 購読保存
-  async function subscribeWithType(notificationType: NotificationType) {
+  function handleChoose(notificationType: NotificationType) {
     setShowChoice(false)
-    try {
-      const reg = await navigator.serviceWorker.ready
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') { setState('denied'); return }
-
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidKey) {
-        console.error('[PushSubscribeButton] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set')
-        return
-      }
-
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidKey,
-      })
-      const json = sub.toJSON()
-      if (!json.endpoint) return
-      startTransition(async () => {
-        await saveSubscription({ endpoint: json.endpoint!, keys: json.keys, notificationType })
-        setState('subscribed')
-        track('notify_grant', { meta: { type: notificationType } }) // ファネル計測（追加12）
-      })
-    } catch (err) {
-      console.error('[PushSubscribeButton] subscribe error:', err)
-      setState('unsubscribed')
-    }
-  }
-
-  async function unsubscribe() {
-    const reg = await navigator.serviceWorker.ready
-    const sub = await reg.pushManager.getSubscription()
-    if (!sub) { setState('unsubscribed'); return }
-    await sub.unsubscribe()
-    startTransition(async () => {
-      await removeSubscription(sub.endpoint)
-      setState('unsubscribed')
-    })
+    void subscribeWithType(notificationType)
   }
 
   function handleClick() {
@@ -131,15 +78,20 @@ export function PushSubscribeButton() {
 
       {showChoice && (
         <NotifyChoiceSheet
-          onChoose={subscribeWithType}
+          onChoose={handleChoose}
           onClose={() => setShowChoice(false)}
+          isLoggedIn={isLoggedIn}
+          onRequireLogin={() => {
+            setShowChoice(false)
+            setShowPrompt(true)
+          }}
         />
       )}
 
       {showPrompt && (
         <LoginPromptSheet
-          title="通知を受け取るには登録が必要です"
-          body="無料登録するとお気に入り作品の値下げ・新着・シリーズ新刊をプッシュ通知でお知らせします。"
+          title="推しの新作通知は登録で受け取れます"
+          body="無料登録すると推し女優の新作・お気に入りの値下げ・シリーズ新刊もプッシュ通知でお知らせします。セール速報は登録なしでもOKです。"
           onClose={() => setShowPrompt(false)}
         />
       )}

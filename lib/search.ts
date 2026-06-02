@@ -1,6 +1,7 @@
 import 'server-only'
 import { fetchItemList, fetchItemListMixed } from '@/lib/dmm/client'
 import { parsePrice } from '@/lib/ranking'
+import { toLargeDmmImageUrl } from '@/lib/dmm/image'
 import type { DmmItem } from '@/types/dmm'
 
 // ── 型定義 ────────────────────────────────────────────────────────────────────
@@ -42,11 +43,14 @@ function dmmToResult(item: DmmItem): SearchResultItem {
     content_id: item.content_id,
     title: item.title,
     affiliate_url: item.affiliateURL,
-    image_url:
+    // 一覧・お気に入りで荒くならないよう大サイズ優先＋pl正規化
+    image_url: toLargeDmmImageUrl(
       item.sampleImageURL?.sample_l?.image?.[3] ??
-      item.imageURL.list ??
-      item.imageURL.large ??
-      null,
+        item.imageURL.large ??
+        item.imageURL.small ??
+        item.imageURL.list ??
+        null
+    ),
     price,
     list_price: listPrice,
     discount_rate: discountRate,

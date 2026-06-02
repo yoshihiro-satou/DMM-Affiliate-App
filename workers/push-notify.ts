@@ -162,6 +162,7 @@ function sbHeaders(env: Env) {
 type NotificationRecord = {
   id: string
   user_id: string | null
+  endpoint: string | null
   type: string
   payload: Record<string, unknown>
 }
@@ -172,7 +173,7 @@ type SubscriptionRecord = {
 }
 
 async function getPendingNotifications(env: Env): Promise<NotificationRecord[]> {
-  const url = `${env.SUPABASE_URL}/rest/v1/notification_queue?status=eq.pending&select=id,user_id,type,payload&limit=50`
+  const url = `${env.SUPABASE_URL}/rest/v1/notification_queue?status=eq.pending&select=id,user_id,endpoint,type,payload&limit=50`
   const res = await fetch(url, { headers: sbHeaders(env) })
   if (!res.ok) { console.error('[push-notify] getPending error:', res.status); return [] }
   return (await res.json()) as NotificationRecord[]
@@ -180,6 +181,14 @@ async function getPendingNotifications(env: Env): Promise<NotificationRecord[]> 
 
 async function getSubscriptions(env: Env, userId: string): Promise<SubscriptionRecord[]> {
   const url = `${env.SUPABASE_URL}/rest/v1/notification_subscriptions?user_id=eq.${userId}&select=endpoint,keys`
+  const res = await fetch(url, { headers: sbHeaders(env) })
+  if (!res.ok) return []
+  return (await res.json()) as SubscriptionRecord[]
+}
+
+// ゲスト（user_id なし）の sale 行: endpoint 直指定で1件取得する
+async function getSubscriptionByEndpoint(env: Env, endpoint: string): Promise<SubscriptionRecord[]> {
+  const url = `${env.SUPABASE_URL}/rest/v1/notification_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}&select=endpoint,keys`
   const res = await fetch(url, { headers: sbHeaders(env) })
   if (!res.ok) return []
   return (await res.json()) as SubscriptionRecord[]
@@ -243,14 +252,23 @@ async function runPushNotify(env: Env): Promise<void> {
   if (notifications.length === 0) { console.log('[push-notify] no pending notifications'); return }
 
   for (const notif of notifications) {
-    if (!notif.user_id) {
+    // 送信先サブスクリプションを解決する。
+    // - ログイン勢: user_id で購読を引く（複数デバイス対応）
+    // - ゲスト sale: endpoint 直指定で1件引く
+    const subs = notif.user_id
+      ? await getSubscriptions(env, notif.user_id)
+      : notif.endpoint
+        ? await getSubscriptionByEndpoint(env, notif.endpoint)
+        : []
+    const ref = notif.user_id ?? notif.endpoint ?? 'unknown'
+
+    if (!notif.user_id && !notif.endpoint) {
       await markNotification(env, notif.id, 'failed')
       continue
     }
 
-    const subs = await getSubscriptions(env, notif.user_id)
     if (subs.length === 0) {
-      await markNotification(env, notif.id, 'sent') // ユーザーが購読解除済み
+      await markNotification(env, notif.id, 'sent') // 購読解除済み
       continue
     }
 
@@ -263,12 +281,12 @@ async function runPushNotify(env: Env): Promise<void> {
         } else if (status === 410 || status === 404) {
           // 購読期限切れ → 削除
           await deleteSubscription(env, sub.endpoint)
-          console.log(`[push-notify] removed expired subscription for ${notif.user_id}`)
+          console.log(`[push-notify] removed expired subscription for ${ref}`)
         } else {
-          console.error(`[push-notify] send failed: ${status} for ${notif.user_id}`)
+          console.error(`[push-notify] send failed: ${status} for ${ref}`)
         }
       } catch (err) {
-        console.error(`[push-notify] send error for ${notif.user_id}:`, err)
+        console.error(`[push-notify] send error for ${ref}:`, err)
       }
     }
 

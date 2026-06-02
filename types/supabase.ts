@@ -53,6 +53,7 @@ export type Database = {
           item_url: string | null
           image_url: string | null
           price: number | null
+          list_price: number | null
           created_at: string
         }
         Insert: {
@@ -63,6 +64,7 @@ export type Database = {
           item_url?: string | null
           image_url?: string | null
           price?: number | null
+          list_price?: number | null
           created_at?: string
         }
         Update: {
@@ -73,6 +75,7 @@ export type Database = {
           item_url?: string | null
           image_url?: string | null
           price?: number | null
+          list_price?: number | null
           created_at?: string
         }
       }
@@ -189,23 +192,26 @@ export type Database = {
       notification_subscriptions: {
         Row: {
           id: string
-          user_id: string
+          user_id: string | null
           endpoint: string
           keys: Json
+          notification_type: 'oshi' | 'sale' | 'both'
           created_at: string
         }
         Insert: {
           id?: string
-          user_id: string
+          user_id?: string | null
           endpoint: string
           keys: Json
+          notification_type?: 'oshi' | 'sale' | 'both'
           created_at?: string
         }
         Update: {
           id?: string
-          user_id?: string
+          user_id?: string | null
           endpoint?: string
           keys?: Json
+          notification_type?: 'oshi' | 'sale' | 'both'
           created_at?: string
         }
       }
@@ -337,7 +343,8 @@ export type Database = {
         Row: {
           id: string
           user_id: string | null
-          type: 'new_release' | 'price_drop' | 'badge'
+          endpoint: string | null
+          type: 'new_release' | 'price_drop' | 'badge' | 'oshi_daily_deal' | 'sale_broadcast'
           payload: Json
           sent_at: string | null
           status: 'pending' | 'sent' | 'failed'
@@ -346,7 +353,8 @@ export type Database = {
         Insert: {
           id?: string
           user_id?: string | null
-          type: 'new_release' | 'price_drop' | 'badge'
+          endpoint?: string | null
+          type: 'new_release' | 'price_drop' | 'badge' | 'oshi_daily_deal' | 'sale_broadcast'
           payload?: Json
           sent_at?: string | null
           status?: 'pending' | 'sent' | 'failed'
@@ -355,7 +363,8 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string | null
-          type?: 'new_release' | 'price_drop' | 'badge'
+          endpoint?: string | null
+          type?: 'new_release' | 'price_drop' | 'badge' | 'oshi_daily_deal' | 'sale_broadcast'
           payload?: Json
           sent_at?: string | null
           status?: 'pending' | 'sent' | 'failed'

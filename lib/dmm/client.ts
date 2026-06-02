@@ -212,6 +212,16 @@ async function fetchBatch(sort: 'rank' | 'review'): Promise<DmmItem[]> {
   return parsed.success ? parsed.data.result.items : []
 }
 
+/**
+ * VR作品判定。ジャンル名に「VR」を含むもの（ハイクオリティVR / VR専用 等）と
+ * タイトルの「【VR】」プレフィックスで判定する。
+ */
+export function isVrItem(item: DmmItem): boolean {
+  if (item.iteminfo?.genre?.some((g) => g.name?.includes('VR'))) return true
+  if (item.title?.includes('【VR】')) return true
+  return false
+}
+
 export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
   // rank上位100 + review上位100 を並列取得して合算
   const [rankItems, reviewItems] = await Promise.all([
@@ -228,7 +238,7 @@ export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
       seen.add(item.content_id)
 
       // VR作品を除外
-      if (item.iteminfo?.genre?.some(g => g.name?.includes('VR'))) return false
+      if (isVrItem(item)) return false
 
       const hasActiveCampaign = item.campaign?.some(c => c.date_end >= today)
       const p  = parseFloat((item.prices.price      ?? '').replace('~', ''))
@@ -288,11 +298,12 @@ export const fetchGenreList = cache(
 // videoa + videoc を並列取得してインターリーブマージ
 // ------------------------------------
 export async function fetchItemListMixed(
-  params: Omit<FetchItemListParams, 'service' | 'floor'> = {}
+  params: Omit<FetchItemListParams, 'service' | 'floor'> & { excludeVr?: boolean } = {}
 ): Promise<DmmItemListResponse['result']> {
+  const { excludeVr, ...listParams } = params
   const [videoa, videoc] = await Promise.all([
-    fetchItemList({ ...params, service: 'digital', floor: 'videoa' }),
-    fetchItemList({ ...params, service: 'digital', floor: 'videoc' }),
+    fetchItemList({ ...listParams, service: 'digital', floor: 'videoa' }),
+    fetchItemList({ ...listParams, service: 'digital', floor: 'videoc' }),
   ])
 
   const seen = new Set<string>()
@@ -309,9 +320,11 @@ export async function fetchItemListMixed(
     }
   }
 
+  const items = excludeVr ? merged.filter((it) => !isVrItem(it)) : merged
+
   return {
     ...videoa,
-    items: merged,
+    items,
     total_count: videoa.total_count + videoc.total_count,
   }
 }
