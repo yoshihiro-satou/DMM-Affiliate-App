@@ -10,16 +10,14 @@
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- 角丸スクエア背景（POPなグラデーション） -->
-  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#bg)"/>
-  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#glow)"/>
-  <!-- 太字ラウンドF（白）-->
+  <!-- フチなし背景（iOS等が角丸に処理する）-->
+  <rect x="0" y="0" width="512" height="512" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="512" fill="url(#glow)"/>
   <g fill="#ffffff">
     <rect x="170" y="140" width="78" height="232" rx="24"/>
     <rect x="170" y="140" width="190" height="70" rx="24"/>
     <rect x="170" y="234" width="150" height="64" rx="24"/>
   </g>
-  <!-- キラッ（スパークル）-->
   <g fill="#ffffff">
     <path d="M372 132 q6 22 28 28 q-22 6 -28 28 q-6 -22 -28 -28 q22 -6 28 -28 Z" opacity="0.95"/>
     <circle cx="138" cy="372" r="11" opacity="0.85"/>

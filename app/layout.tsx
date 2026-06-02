@@ -37,6 +37,11 @@ export const metadata: Metadata = {
   },
   description: 'FANZAのセール・ランキング・推し女優を管理するアプリ。スワイプで作品発見、値下げ通知、お気に入り管理。',
   applicationName: 'FANZAピックス',
+  appleWebApp: {
+    capable: true,
+    title: 'FANZAピックス',
+    statusBarStyle: 'black-translucent',
+  },
   openGraph: {
     type: 'website',
     locale: 'ja_JP',

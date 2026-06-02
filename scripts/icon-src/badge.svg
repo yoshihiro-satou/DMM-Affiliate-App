@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- Androidの通知バッジ用: 透過背景・白単色シルエット。
+       OSがアルファでマスクするため形状のみ意味を持つ -->
+  <g fill="#ffffff" transform="translate(48 48) scale(0.82) translate(-48 -48)">
+    <rect x="30" y="20" width="16" height="56" rx="5"/>
+    <rect x="30" y="20" width="40" height="15" rx="5"/>
+    <rect x="30" y="42" width="32" height="14" rx="5"/>
+  </g>
+</svg>

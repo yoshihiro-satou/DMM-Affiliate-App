@@ -50,7 +50,7 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title || 'FANZA お知らせ', {
       body: data.body || '',
       icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      badge: '/icons/notification-badge.png',
       data: { url: data.url || '/' },
       tag: data.tag || 'fanza',
       requireInteraction: false,

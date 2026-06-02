@@ -13,6 +13,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const FONT_DIR = join(ROOT, 'node_modules/@fontsource/noto-sans-jp/files')
 
+// 新アイコン（ロゴマーク）を data URI で読み込み、OGにも同じFマークでブランドＦを統一
+const LOGO_DATA_URI =
+  'data:image/png;base64,' +
+  readFileSync(join(ROOT, 'public/icons/icon-512.png')).toString('base64')
+
 // satori は同名フォントが複数あると最初の1つしか使わないため、
 // サブセットごとに別のファミリー名を付けてフォールバックスタックを構築する
 const JP_SUBSETS = ['101','105','107','111','114','116','117','118','119']
@@ -72,6 +77,24 @@ const svg = await satori(
               width: '480px', height: '480px', borderRadius: '50%',
               backgroundColor: 'rgba(251,113,133,0.18)',
             },
+          },
+        },
+        // ロゴマーク（右側中央）— アイコンとブランドを統一
+        {
+          type: 'div',
+          props: {
+            style: {
+              position: 'absolute', right: '90px', top: '195px',
+              width: '240px', height: '240px', borderRadius: '56px',
+              display: 'flex', overflow: 'hidden',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
+            },
+            children: [
+              {
+                type: 'img',
+                props: { src: LOGO_DATA_URI, width: 240, height: 240 },
+              },
+            ],
           },
         },
         // 左下の光彩
