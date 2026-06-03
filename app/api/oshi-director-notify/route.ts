@@ -96,8 +96,8 @@ export async function POST(request: NextRequest) {
     payload: {
       title: `${nr.name}監督の新作が登場🎬`,
       body: `「${nr.title.slice(0, 40)}」が新着。チェックしてみよう`,
-      // ?ref=push_oshi で「通知→クリック」を計測（追加18）
-      url: '/?ref=push_oshi',
+      // ?ref=push_director で「通知→クリック」を計測（追加18）
+      url: '/?ref=push_director',
       tag: 'director_new_release',
     },
   }))

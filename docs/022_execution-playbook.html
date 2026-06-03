@@ -732,7 +732,7 @@
       <div class="task-top">
         <h3>値下げ通知パイプラインの稼働確認</h3>
         <span class="badge b-orig">追加22</span>
-        <span class="badge b-mid">優先 中</span>
+        <span class="badge b-done">実装済み</span>
         <span class="badge b-cost">コスト 中</span>
       </div>
       <p class="lead"><code class="file">price-monitor</code> Worker と <code class="file">price_history</code> テーブルは存在するが<strong>データが0件＝実質未稼働の疑い</strong>。お気に入りの値下げ通知（price_drop）はサイトの目玉差別化なのに動いていない可能性。</p>
@@ -741,7 +741,7 @@
         <li>お気に入り作品の価格を定期取得 → 下落検知で <code>price_drop</code> 通知を <code class="file">notification_queue</code> へ。</li>
         <li>追加17 ダッシュボードで price_history の蓄積件数を監視。</li>
       </ol>
-      <div class="note"><strong>2026-06 進捗：</strong>消費側の<strong>お気に入り値下げ可視化</strong>（<code class="file">get_latest_price_details</code> RPC・保存後比の値下げ/割引バッジ・並び替え）は実装済み → <a href="#extra" style="color:var(--accent2);">追加23</a>。残るは price-monitor cron の稼働確認と <code>price_drop</code> 通知の <code class="file">notification_queue</code> 投入。</div>
+      <div class="note"><strong>原因＝Worker未デプロイ（2026-06-03 判明・解消）：</strong><code class="file">dmm-price-monitor</code> が<strong>本番に一度もデプロイされておらず</strong> price_history が0件だった。① Worker をデプロイ＋4シークレット設定（hourly cron 稼働）② <code class="file">price-monitor.ts</code> に<strong>前回価格との比較で値下げ検知 → お気に入り＆push購読ユーザーへ <code>price_drop</code> を <code class="file">notification_queue</code> 投入</strong>（24h重複ガード・<code>?ref=push_drop</code> 計測・手動トリガー用 <code>fetch</code> ハンドラ）を実装。手動トリガーで <strong>価格記録（recorded 4）と値下げ→キュー投入（drops 1 / queued 1・payload 検証）をエンドツーエンドで実証</strong>。追加17 ダッシュボードに「お気に入り値下げ」チャネルも追加。消費側の値下げ可視化は <a href="#extra" style="color:var(--accent2);">追加23</a>。</div>
       <div class="done">価格が継続記録され、お気に入りの値下げが通知される。</div>
     </div>
 
@@ -812,7 +812,7 @@
         <tr><td>17</td><td>推し監督の複数化・通知</td><td>+</td><td>追加19</td><td>中</td><td>中</td><td class="st-done">済</td></tr>
         <tr><td>18</td><td>内部リンク強化</td><td>+</td><td>追加20</td><td>小</td><td>中</td><td class="st-done">済</td></tr>
         <tr><td>19</td><td>動的OGP画像</td><td>+</td><td>追加21</td><td>中</td><td>中</td><td class="st-todo">保留（Cloudflare非互換）</td></tr>
-        <tr><td>20</td><td>値下げ通知の稼働確認</td><td>+</td><td>追加22</td><td>中</td><td>中</td><td class="st-todo">未（可視化は済）</td></tr>
+        <tr><td>20</td><td>値下げ通知の稼働確認</td><td>+</td><td>追加22</td><td>中</td><td>中</td><td class="st-done">済</td></tr>
         <tr><td>21</td><td>お気に入り値下げ可視化・並び替え</td><td>+</td><td>追加23</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
         <tr><td>22</td><td>セール速報ゲスト購読＋ナッジ</td><td>+</td><td>追加24</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
       </tbody>
@@ -822,7 +822,7 @@
   <footer>
     <p>FANZAピックス ｜ docs/022 実行手順書 ｜ 出典: docs/021_marketing-strategies.md</p>
     <p>除外：施策1（X自動投稿・凍結リスク）／施策8（5chシード・ステマ規制）</p>
-    <p>更新: 2026-06-03 — 推し監督の複数化＆新作通知・内部リンク強化（共通フッター）を実装（追加19・20）。追加21（動的OGP）は Cloudflare 非互換で保留／前段で追加15〜18も実装</p>
+    <p>更新: 2026-06-03 — 値下げ通知パイプラインを稼働化（追加22・price-monitor 未デプロイを解消＋price_drop実装・E2E実証）。推し監督複数化／内部リンク（追加19・20）も実装。追加21（動的OGP）は Cloudflare 非互換で保留／前段で追加15〜18も実装</p>
   </footer>
 
 </div>

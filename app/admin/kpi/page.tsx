@@ -33,6 +33,8 @@ type FunnelRef = {
 const NOTIFY_CHANNELS: Array<{ label: string; queueType: string; ref: string }> = [
   { label: 'セール速報', queueType: 'sale_broadcast', ref: 'push_sale' },
   { label: '推し新作', queueType: 'oshi_daily_deal', ref: 'push_oshi' },
+  { label: '監督新作', queueType: 'new_release', ref: 'push_director' },
+  { label: 'お気に入り値下げ', queueType: 'price_drop', ref: 'push_drop' },
   { label: 'バッジ間近', queueType: 'badge', ref: 'push_badge' },
 ]
 
