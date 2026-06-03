@@ -268,7 +268,7 @@
         <tr><td>1</td><td>Web Pushセール通知・PWAオンボ・分散配信（施策9 / 施策3 / 追加13）</td><td class="st-done">実装済み</td></tr>
         <tr><td>3</td><td>SEO：/sale日付・女優ページ・ジャンルFAQ・/guide（施策4 / 2 / 6 / 7）</td><td class="st-done">実装済み</td></tr>
         <tr><td>4</td><td>お気に入りXシェア（施策10）</td><td class="st-done">実装済み</td></tr>
-        <tr><td>2</td><td>友好チャネル：Telegram / メルマガ / まとめサイト（追加11）</td><td class="st-todo">未着手（外部準備待ち）</td></tr>
+        <tr><td>2</td><td>友好チャネル：Telegram / メルマガ / まとめサイト（追加11）</td><td class="st-done">Telegram稼働（メルマガ/まとめ未）</td></tr>
         <tr><td>4</td><td>スワイプデモ動画（施策5改）</td><td class="st-todo">未着手（手作業：録画・投稿）</td></tr>
       </tbody>
     </table>
@@ -453,7 +453,7 @@
         <li>FANZA/DMM エコシステム内の公式アフィリエイト導線・関連サービスからの送客を確認。</li>
       </ol>
       <div class="note"><strong>優先度：</strong>Telegram と メルマガ（自社資産）を先に。まとめサイトは相手探しに時間がかかるので並行で。</div>
-      <div class="note"><strong>2026-06-03 進捗（Telegram コード側 実装済み）：</strong><code class="file">lib/broadcast/sale-broadcast.ts</code> の <code class="file">telegramAdapter</code> を実装（スタブ→本実装）。セール速報を Telegram Bot API でチャンネルへ1投稿、リンクは <code>/sale?ref=telegram</code> に集約して <code class="file">funnel_by_ref</code> で計測。env <code class="file">TELEGRAM_BOT_TOKEN</code> / <code class="file">TELEGRAM_CHANNEL_ID</code> 未設定なら no-op（分散配信なので他チャネル継続）。<code>?dry=1</code> で投稿せず設定確認可。<strong>残るは外部作業：</strong>BotFather で Bot 作成・チャンネル開設・Bot を管理者追加・2 secret 登録。メルマガ／まとめサイトは未着手。</div>
+      <div class="note"><strong>2026-06-03 Telegram 稼働開始：</strong><code class="file">lib/broadcast/sale-broadcast.ts</code> の <code class="file">telegramAdapter</code> を本実装し、Bot 作成・公開チャンネル <code class="file">@fanzapicks_sale</code> 開設・Bot 管理者追加・2 secret 登録まで完了。<strong>実投稿テストで delivered 1 を確認</strong>（毎日 JST 0:01 に Web Push と同時配信）。リンクは <code>/sale?ref=telegram</code> に集約し <code class="file">funnel_by_ref</code> で計測。<code>?dry=1</code> で投稿せず設定確認可。<strong>残り：</strong>メルマガ（要ドメインDNS＋送信サービス）・まとめサイト相互リンクは未着手。</div>
       <div class="done">Telegramチャンネルとメルマガが稼働し、追加13の分散配信に組み込まれている。</div>
     </div>
   </section>
@@ -799,7 +799,7 @@
         <tr><td>3</td><td>Web Push セール通知訴求</td><td>1</td><td>施策9</td><td>小〜中</td><td>最優先</td><td class="st-done">済</td></tr>
         <tr><td>4</td><td>PWAオンボーディング改善</td><td>1</td><td>施策3</td><td>中</td><td>最優先</td><td class="st-done">済</td></tr>
         <tr><td>5</td><td>速報の分散配信化</td><td>1</td><td>追加13</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
-        <tr><td>6</td><td>アダルト許容チャネル投下</td><td>2</td><td>追加11</td><td>小〜中</td><td>最優先</td><td class="st-todo">未</td></tr>
+        <tr><td>6</td><td>アダルト許容チャネル投下</td><td>2</td><td>追加11</td><td>小〜中</td><td>最優先</td><td class="st-done">Telegram済</td></tr>
         <tr><td>7</td><td>/sale デイリーSEO</td><td>3</td><td>施策4</td><td>小</td><td>高</td><td class="st-done">済</td></tr>
         <tr><td>8</td><td>女優ページSEO強化</td><td>3</td><td>施策2</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
         <tr><td>9</td><td>ジャンルFAQ充実</td><td>3</td><td>施策6</td><td>中</td><td>中</td><td class="st-done">済</td></tr>
