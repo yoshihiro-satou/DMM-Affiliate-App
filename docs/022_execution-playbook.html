@@ -453,6 +453,7 @@
         <li>FANZA/DMM エコシステム内の公式アフィリエイト導線・関連サービスからの送客を確認。</li>
       </ol>
       <div class="note"><strong>優先度：</strong>Telegram と メルマガ（自社資産）を先に。まとめサイトは相手探しに時間がかかるので並行で。</div>
+      <div class="note"><strong>2026-06-03 進捗（Telegram コード側 実装済み）：</strong><code class="file">lib/broadcast/sale-broadcast.ts</code> の <code class="file">telegramAdapter</code> を実装（スタブ→本実装）。セール速報を Telegram Bot API でチャンネルへ1投稿、リンクは <code>/sale?ref=telegram</code> に集約して <code class="file">funnel_by_ref</code> で計測。env <code class="file">TELEGRAM_BOT_TOKEN</code> / <code class="file">TELEGRAM_CHANNEL_ID</code> 未設定なら no-op（分散配信なので他チャネル継続）。<code>?dry=1</code> で投稿せず設定確認可。<strong>残るは外部作業：</strong>BotFather で Bot 作成・チャンネル開設・Bot を管理者追加・2 secret 登録。メルマガ／まとめサイトは未着手。</div>
       <div class="done">Telegramチャンネルとメルマガが稼働し、追加13の分散配信に組み込まれている。</div>
     </div>
   </section>

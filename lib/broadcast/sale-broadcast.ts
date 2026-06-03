@@ -174,15 +174,87 @@ export const webPushAdapter: BroadcastAdapter = {
   },
 }
 
-// ── Telegram / メール アダプタ（Phase 2 で実装） ──────────────────────────────
+// ── Telegram アダプタ（Phase 2・追加11） ──────────────────────────────────────
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+/**
+ * セール速報を Telegram「セール速報チャンネル」へ1投稿する。
+ * 必要な env（Cloudflare secret）:
+ *   TELEGRAM_BOT_TOKEN   ... BotFather で発行
+ *   TELEGRAM_CHANNEL_ID  ... 投稿先（@channelusername もしくは -100xxxxxxxxxx）
+ * どちらか未設定なら no-op（分散配信なので他チャネルは継続）。
+ * リンクは自社 /sale?ref=telegram に集約し、流入を funnel_by_ref で計測する。
+ */
 export const telegramAdapter: BroadcastAdapter = {
   name: 'telegram',
-  async deliver(): Promise<DeliverResult> {
-    // TODO(Phase 2): Telegram Bot API で「セール速報チャンネル」へ送信
-    return { channel: 'telegram', delivered: 0, skipped: 0, reason: 'not configured (Phase 2)' }
+  async deliver(message, opts): Promise<DeliverResult> {
+    const token = process.env.TELEGRAM_BOT_TOKEN
+    const chatId = process.env.TELEGRAM_CHANNEL_ID
+    if (!token || !chatId) {
+      return {
+        channel: 'telegram',
+        delivered: 0,
+        skipped: 0,
+        reason: 'not configured (TELEGRAM_BOT_TOKEN / TELEGRAM_CHANNEL_ID 未設定)',
+      }
+    }
+
+    const link = `${SITE_URL}/sale?ref=telegram`
+    const itemLines = message.items
+      .slice(0, 3)
+      .map((it, i) => `${i + 1}. ${escapeHtml(it.title.slice(0, 40))}（${it.discountRate}%OFF）`)
+    const text = [
+      `<b>${escapeHtml(message.title)}</b>`,
+      '',
+      escapeHtml(message.body),
+      ...(itemLines.length ? ['', ...itemLines] : []),
+      '',
+      `👉 <a href="${link}">セール一覧を見る</a>`,
+    ].join('\n')
+
+    if (opts?.dryRun) {
+      return { channel: 'telegram', delivered: 0, skipped: 0, reason: `dry-run: would post to ${chatId}` }
+    }
+
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          parse_mode: 'HTML',
+          disable_web_page_preview: false,
+        }),
+      })
+      if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        return {
+          channel: 'telegram',
+          delivered: 0,
+          skipped: 0,
+          reason: `telegram api ${res.status}: ${body.slice(0, 200)}`,
+        }
+      }
+      // チャンネル投稿は1件＝全チャンネル購読者へ到達
+      return { channel: 'telegram', delivered: 1, skipped: 0 }
+    } catch (err) {
+      return {
+        channel: 'telegram',
+        delivered: 0,
+        skipped: 0,
+        reason: err instanceof Error ? err.message : 'error',
+      }
+    }
   },
 }
+
+// ── メール アダプタ（Phase 2 で実装） ─────────────────────────────────────────
 
 export const emailAdapter: BroadcastAdapter = {
   name: 'email',
