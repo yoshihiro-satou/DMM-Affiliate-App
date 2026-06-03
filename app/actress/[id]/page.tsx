@@ -68,7 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `/actress/${id}`,
       title: `${title} | FANZAピックス`,
       description,
-      // OGP画像は app/actress/[id]/opengraph-image.tsx の動的生成を使う（追加21）
+      images: actress.imageURL?.large ? [{ url: actress.imageURL.large, alt: actress.name }] : undefined,
     },
   }
 }

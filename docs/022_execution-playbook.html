@@ -275,7 +275,7 @@
     <p style="font-size:12.5px;color:var(--muted);">下部「<a href="#extra" style="color:var(--accent2);">追加施策（コードレビューで発見）</a>」に、実装後のコードから見つかった新しい改善案を追記。</p>
     <p style="font-size:12.5px;color:var(--muted);"><strong style="color:var(--green);">2026-06 追記：</strong>セール速報の<strong>ゲスト購読（メール登録不要）</strong>と <code class="file">/sale</code> 高インテント・ナッジ、<strong>お気に入りの値下げ可視化・並び替え</strong>を実装（<a href="#extra" style="color:var(--accent2);">追加23・24</a>）。あわせて お気に入り画像の高精細化（横長ジャケット・モバイル1列）と ホーム非日替わりセクションの <strong>VR 除外</strong> も対応。</p>
     <p style="font-size:12.5px;color:var(--muted);"><strong style="color:var(--green);">2026-06 追記（追加15〜18）：</strong><strong>通知種別の後変更UI</strong>（マイページのトグル）・<strong>バッジ間近リマインド通知</strong>（<code class="file">/api/badge-remind</code>）・<strong>KPIダッシュボード</strong>（<code class="file">/admin/kpi</code>・自分のみ）・<strong>通知→クリック計測</strong>（<code>push_*</code> ref を last-touch 計測）を実装（<a href="#extra" style="color:var(--accent2);">追加15・16・17・18</a>）。これで Phase 0 で死蔵していた測定の可視化と、通知効果の検証ループが揃った。</p>
-    <p style="font-size:12.5px;color:var(--muted);"><strong style="color:var(--green);">2026-06 追記（追加19〜21）：</strong><strong>推し監督の複数化＆新作通知</strong>（<code class="file">oshi_directors</code> テーブル・<code class="file">/api/oshi-director-notify</code>）・<strong>全ページ共通フッターによる内部リンク強化</strong>（<code class="file">SiteFooter</code>）・<strong>動的OGP画像</strong>（ルート/<code class="file">/sale</code>/女優ページ・日本語サブセットフォント）を実装（<a href="#extra" style="color:var(--accent2);">追加19・20・21</a>）。残る未着手は Phase 2（友好チャネル・外部準備待ち）とスワイプ動画、値下げ通知 cron の稼働確認のみ。</p>
+    <p style="font-size:12.5px;color:var(--muted);"><strong style="color:var(--green);">2026-06 追記（追加19〜21）：</strong><strong>推し監督の複数化＆新作通知</strong>（<code class="file">oshi_directors</code> テーブル・<code class="file">/api/oshi-director-notify</code>）・<strong>全ページ共通フッターによる内部リンク強化</strong>（<code class="file">SiteFooter</code>）を実装。<strong>動的OGP（追加21）は <code class="file">next/og</code> が当リポジトリの Cloudflare（opennext）ビルドと非互換のため一旦保留</strong>し静的OGに戻した（<a href="#extra" style="color:var(--accent2);">詳細</a>）。残る未着手は Phase 2（友好チャネル）・スワイプ動画・値下げ通知 cron 確認・追加21 の Cloudflare 対応再実装。</p>
   </section>
 
   <!-- 除外施策 -->
@@ -714,7 +714,7 @@
       <div class="task-top">
         <h3>動的OGP画像生成</h3>
         <span class="badge b-orig">追加21</span>
-        <span class="badge b-done">実装済み</span>
+        <span class="badge b-todo">保留（要対応）</span>
         <span class="badge b-cost">コスト 中</span>
       </div>
       <p class="lead">施策10（お気に入りシェア）・施策2（女優ページ）を作ったが、OGP画像が <strong>共通の <code class="file">/og/default.png</code> 固定</strong>。Xシェア時の見栄えが弱く、バイラルのクリック率を損なう。</p>
@@ -722,8 +722,8 @@
         <li>Next.js の <code class="file">opengraph-image</code>（Satori）で女優名・作品数・セール割引率を載せた動的OGPを生成。</li>
         <li>女優ページ・/sale・お気に入りシェアで個別OGPを出す。</li>
       </ol>
-      <div class="note"><strong>実装：</strong>テキスト主体の共通テンプレート <code class="file">lib/og/template.tsx</code> ＋ 描画ヘルパー <code class="file">renderOgImage</code>。3面：ルート <code class="file">app/opengraph-image.tsx</code>（=お気に入りシェア着地 <code>/?ref=share</code>・本日最大割引%をピル表示／全ページ既定として継承）・<code class="file">/sale</code>（日付＋最大%OFF）・<code class="file">/actress/[id]</code>（名前・全作品数・3サイズ）。日本語は <strong>Google Fonts 動的サブセット（旧UAでTTF取得）</strong>を <code class="file">lib/og/font.ts</code> で読み込み、失敗時は <code class="file">/og/default.png</code> へ自動フォールバック。<code class="file">force-dynamic</code> で実行時生成＋ Cache-Control でキャッシュ。</div>
-      <div class="note warn"><strong>規約注意：</strong>DMM公式画像の改変は禁止。OGPは<strong>テキスト主体のデザイン</strong>で作り、公式サムネを加工しない（本実装も公式サムネ不使用）。</div>
+      <div class="note warn"><strong>保留理由（2026-06-03）：</strong>一度 <code class="file">next/og</code>（@vercel/og）でルート/<code class="file">/sale</code>/女優の3面・日本語サブセットフォントまで実装し <code class="file">next build</code> は成功したが、<strong>本番の <code class="file">opennextjs-cloudflare</code> deploy（esbuild バンドル）が @vercel/og の <code class="file">yoga.wasm</code> / <code class="file">resvg.wasm</code> を解決できず失敗</strong>（当リポジトリは Next16+Turbopack 向けに <code class="file">scripts/patch-worker.js</code> で多数パッチ済みの特殊構成）。デプロイをブロックしないため <strong>一旦差し戻し</strong>、静的 <code class="file">/og/default.png</code> に戻した。再開時は Cloudflare Workers 対応の <code class="file">workers-og</code> での再実装、または OGPを別 Worker / edge runtime に分離する方針で対応する。</div>
+      <div class="note warn"><strong>規約注意：</strong>DMM公式画像の改変は禁止。再実装時もOGPは<strong>テキスト主体のデザイン</strong>で作り、公式サムネを加工しない。</div>
       <div class="done">シェア時に内容に応じたOGP画像が表示される。</div>
     </div>
 
@@ -811,7 +811,7 @@
         <tr><td>16</td><td>通知→クリック計測</td><td>+</td><td>追加18</td><td>小〜中</td><td>中</td><td class="st-done">済</td></tr>
         <tr><td>17</td><td>推し監督の複数化・通知</td><td>+</td><td>追加19</td><td>中</td><td>中</td><td class="st-done">済</td></tr>
         <tr><td>18</td><td>内部リンク強化</td><td>+</td><td>追加20</td><td>小</td><td>中</td><td class="st-done">済</td></tr>
-        <tr><td>19</td><td>動的OGP画像</td><td>+</td><td>追加21</td><td>中</td><td>中</td><td class="st-done">済</td></tr>
+        <tr><td>19</td><td>動的OGP画像</td><td>+</td><td>追加21</td><td>中</td><td>中</td><td class="st-todo">保留（Cloudflare非互換）</td></tr>
         <tr><td>20</td><td>値下げ通知の稼働確認</td><td>+</td><td>追加22</td><td>中</td><td>中</td><td class="st-todo">未（可視化は済）</td></tr>
         <tr><td>21</td><td>お気に入り値下げ可視化・並び替え</td><td>+</td><td>追加23</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
         <tr><td>22</td><td>セール速報ゲスト購読＋ナッジ</td><td>+</td><td>追加24</td><td>中</td><td>高</td><td class="st-done">済</td></tr>
@@ -822,7 +822,7 @@
   <footer>
     <p>FANZAピックス ｜ docs/022 実行手順書 ｜ 出典: docs/021_marketing-strategies.md</p>
     <p>除外：施策1（X自動投稿・凍結リスク）／施策8（5chシード・ステマ規制）</p>
-    <p>更新: 2026-06-03 — 推し監督の複数化＆新作通知・内部リンク強化（共通フッター）・動的OGP画像を実装（追加19〜21）／前段で追加15〜18も実装</p>
+    <p>更新: 2026-06-03 — 推し監督の複数化＆新作通知・内部リンク強化（共通フッター）を実装（追加19・20）。追加21（動的OGP）は Cloudflare 非互換で保留／前段で追加15〜18も実装</p>
   </footer>
 
 </div>

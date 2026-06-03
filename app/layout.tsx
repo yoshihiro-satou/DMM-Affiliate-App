@@ -47,13 +47,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'ja_JP',
     siteName: 'FANZAピックス',
-    // OGP画像はルートの動的生成（app/opengraph-image.tsx）を全ページの既定として継承（追加21）
+    images: [{ url: '/og/default.png', width: 1200, height: 630, alt: 'FANZAピックス' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@yoshihirock0710',
     creator: '@yoshihirock0710',
-    // twitter:image も opengraph-image を継承（個別指定しない）
+    images: ['/og/default.png'],
   },
   verification: {
     google: 'd2702fb0af647cea',
