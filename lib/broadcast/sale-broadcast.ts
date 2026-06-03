@@ -66,7 +66,8 @@ export async function buildSaleBroadcast(): Promise<BroadcastMessage | null> {
     title: '🔥 本日のFANZAセール速報',
     // 熱量のある文体（施策9・Bの指摘）
     body: `【${maxOff}%OFF】「${lead}」ほか本日限りの特価が登場🎉 最大${maxOff}%OFFを今すぐチェック`,
-    url: '/sale',
+    // ?ref=push_sale で「通知→クリック」を funnel_by_ref に計測（追加18）
+    url: '/sale?ref=push_sale',
     tag: 'sale_broadcast',
     items: top.map(({ item, rate }) => ({
       title: item.title,

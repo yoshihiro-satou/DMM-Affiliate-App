@@ -4,8 +4,14 @@ import type { EventType } from './events'
 
 const SID_KEY = 'fp_sid'
 const REF_KEY = 'fp_ref'
+const OVERRIDE_KEY = 'fp_ref_campaign' // last-touch（push通知など）の当該セッション上書き
 const SID_COOKIE = 'fp_sid'
 const REF_COOKIE = 'fp_ref'
+
+/** push通知クリックなど、first-touch を上書きして当該流入を計測すべき last-touch ref か。 */
+function isCampaignRef(ref: string | null): boolean {
+  return !!ref && /^push_/.test(ref)
+}
 
 function setCookie(name: string, value: string, maxAgeSec: number) {
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSec}; samesite=lax`
@@ -29,8 +35,11 @@ export function getSessionId(): string {
 }
 
 /**
- * 流入元（first-touch）。URLの ?ref= または ?utm_source= を初回のみ保存する。
- * サーバーアクション（age_pass）からも参照できるよう Cookie にも保存。
+ * 流入元を解決する（追加12・追加18）。
+ * 基本は first-touch（初回の ?ref= / ?utm_source= を永続保存）。ただし push 通知由来の
+ * キャンペーン ref（push_sale 等）は再訪ユーザーでも first-touch に埋もれてしまい計測
+ * できないため、当該セッションに限り last-touch として上書きする。これにより「通知 →
+ * クリック」のコンバージョンを funnel_by_ref で ref 別に集計できる。
  */
 export function captureRef(): string | null {
   if (typeof window === 'undefined') return null
@@ -40,12 +49,20 @@ export function captureRef(): string | null {
     const cookieRef = document.cookie.match(/(?:^|;\s*)fp_ref=([^;]+)/)?.[1]
     const incoming = params.get('ref') ?? params.get('utm_source') ?? (cookieRef ? decodeURIComponent(cookieRef) : null)
     const stored = localStorage.getItem(REF_KEY)
-    const ref = stored ?? incoming
-    if (ref && !stored) {
-      localStorage.setItem(REF_KEY, ref)
+
+    // first-touch を確定・永続化（push ref で上書きしない）
+    const firstTouch = stored ?? incoming
+    if (firstTouch && !stored) localStorage.setItem(REF_KEY, firstTouch)
+    if (firstTouch) setCookie(REF_COOKIE, firstTouch, 60 * 60 * 24 * 90)
+
+    // push 通知由来はこのセッションの last-touch として優先する
+    if (isCampaignRef(incoming)) {
+      try { sessionStorage.setItem(OVERRIDE_KEY, incoming!) } catch {}
+      return incoming
     }
-    if (ref) setCookie(REF_COOKIE, ref, 60 * 60 * 24 * 90)
-    return ref
+    let override: string | null = null
+    try { override = sessionStorage.getItem(OVERRIDE_KEY) } catch {}
+    return override ?? firstTouch
   } catch {
     return null
   }

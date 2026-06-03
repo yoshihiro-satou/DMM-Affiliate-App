@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
           body: firstItem
             ? `「${firstItem.title.slice(0, 40)}」が本日限り特別価格`
             : '今日だけの特別価格をチェック',
-          url: '/',
+          // ?ref=push_oshi で「通知→クリック」を funnel_by_ref に計測（追加18）
+          url: '/?ref=push_oshi',
           tag: 'oshi_daily_deal',
         },
       }

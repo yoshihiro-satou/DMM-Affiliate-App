@@ -59,6 +59,8 @@ self.addEventListener('push', (event) => {
 })
 
 // 通知タップ: 対象URLへ遷移
+// URL には ?ref=push_* が付与されており（追加18）、開いたページの Tracker が
+// 流入元として計測する。既存ウィンドウがある場合も navigate して ref を必ず通す。
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = event.notification.data?.url || '/'
@@ -66,8 +68,13 @@ self.addEventListener('notificationclick', (event) => {
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === url && 'focus' in client) return client.focus()
+        const existing = clientList[0]
+        if (existing) {
+          const focused = existing.focus()
+          if ('navigate' in existing) {
+            return Promise.resolve(focused).then(() => existing.navigate(url).catch(() => {}))
+          }
+          return focused
         }
         return clients.openWindow(url)
       })

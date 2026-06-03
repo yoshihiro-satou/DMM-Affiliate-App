@@ -5,14 +5,16 @@ import { createClient, getCurrentUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { buildUserProfile, topEntries } from '@/lib/personalization'
-import { getOshiActresses } from '@/lib/oshi'
+import { getOshiActresses, getOshiDirectors } from '@/lib/oshi'
 import { fetchItemList } from '@/lib/dmm/client'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
+import { NotifyTypeToggle } from '@/components/mypage/NotifyTypeToggle'
+import { getMyNotificationType } from '@/actions/push'
 import { OshiCombinedSelector } from '@/components/mypage/OshiCombinedSelector'
 import { BadgeShowcase } from '@/components/badges/BadgeShowcase'
 import { getBadgeProgress } from '@/lib/badge-progress'
 import { OshiActressSetting } from './_components/OshiActressSetting'
-import { OshiDirectorSetting } from './_components/OshiDirectorSetting'
+import { OshiDirectorsSetting } from './_components/OshiDirectorsSetting'
 import { signOut } from './actions'
 
 export const metadata = {
@@ -119,13 +121,14 @@ async function CommunityActressRanking() {
 async function CommunityDirectorRanking() {
   const admin = createAdminClient()
   const { data } = await admin
-    .from('profiles')
-    .select('oshi_director_name')
-    .not('oshi_director_name', 'is', null)
+    .from('oshi_directors')
+    .select('user_id, director_name')
 
+  // 閾値は「登録した人数」で判定（複数推しでの早期表示を防ぐ）
   const THRESHOLD = 15
+  const userCount = new Set((data ?? []).map((r) => r.user_id)).size
 
-  if (!data || data.length < THRESHOLD) {
+  if (!data || userCount < THRESHOLD) {
     return (
       <div className="rounded-lg border border-white/8 bg-white/3 p-4">
         <p
@@ -143,7 +146,7 @@ async function CommunityDirectorRanking() {
 
   const counts = new Map<string, number>()
   for (const row of data) {
-    const name = row.oshi_director_name
+    const name = row.director_name
     if (!name) continue
     counts.set(name, (counts.get(name) ?? 0) + 1)
   }
@@ -415,13 +418,15 @@ export default async function MyPage() {
   if (!claims) redirect('/login')
 
   const supabase = await createClient()
-  const [{ data: profile }, oshiList] = await Promise.all([
+  const [{ data: profile }, oshiList, oshiDirectors, notifyType] = await Promise.all([
     supabase
       .from('profiles')
-      .select('display_name, email, oshi_director_name')
+      .select('display_name, email')
       .eq('id', claims.sub)
       .single(),
     getOshiActresses(),
+    getOshiDirectors(),
+    getMyNotificationType(),
   ])
 
   const metaDisplayName = (
@@ -440,7 +445,8 @@ export default async function MyPage() {
     })
   }
   const email = maskEmail(rawEmail)
-  const oshiDirector = profile?.oshi_director_name ?? null
+  const directorNames = oshiDirectors.map((d) => d.name)
+  const primaryDirector = directorNames[0] ?? null
 
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -491,15 +497,15 @@ export default async function MyPage() {
           <CommunityActressRanking />
         </Suspense>
 
-        {/* 推し監督設定 */}
-        <OshiDirectorSetting current={oshiDirector} />
+        {/* 推し監督設定（最大5人） */}
+        <OshiDirectorsSetting current={directorNames} />
 
-        {/* 推し監督の最新作 */}
-        {oshiDirector && (
-          <Suspense fallback={<WorksScrollSkeleton label={`${oshiDirector} の最新作`} />}>
-            <OshiDirectorWorks directorName={oshiDirector} />
+        {/* 推し監督ごとの最新作 */}
+        {directorNames.map((name) => (
+          <Suspense key={name} fallback={<WorksScrollSkeleton label={`${name} の最新作`} />}>
+            <OshiDirectorWorks directorName={name} />
           </Suspense>
-        )}
+        ))}
 
         {/* みんなの推し監督ランキング */}
         <Suspense fallback={<RankingSkeleton label="みんなの推し監督ランキング" />}>
@@ -507,8 +513,8 @@ export default async function MyPage() {
         </Suspense>
 
         {/* 推し女優 × 推し監督（女優を選択可能） */}
-        {oshiList.length > 0 && oshiDirector && (
-          <OshiCombinedSelector oshiList={oshiList} directorName={oshiDirector} />
+        {oshiList.length > 0 && primaryDirector && (
+          <OshiCombinedSelector oshiList={oshiList} directorName={primaryDirector} />
         )}
 
         {/* バッジコレクション */}
@@ -524,6 +530,7 @@ export default async function MyPage() {
         {/* 右カラム: ボタン群 */}
         <div className="flex h-full flex-col gap-3">
           <PushSubscribeButton />
+          <NotifyTypeToggle initialType={notifyType} />
           <Link
             href="/forgot-password"
             className="block w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/65 transition-colors duration-150 hover:border-white/20 hover:text-white/60"

@@ -10,6 +10,7 @@ import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistratio
 import { Tracker } from '@/components/Tracker'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
 import { DmmCredit } from '@/components/layout/DmmCredit'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { getCurrentUser } from '@/lib/supabase/server'
 import { GA_ID } from '@/lib/analytics'
 import './globals.css'
@@ -46,13 +47,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'ja_JP',
     siteName: 'FANZAピックス',
-    images: [{ url: '/og/default.png', width: 1200, height: 630, alt: 'FANZAピックス' }],
+    // OGP画像はルートの動的生成（app/opengraph-image.tsx）を全ページの既定として継承（追加21）
   },
   twitter: {
     card: 'summary_large_image',
     site: '@yoshihirock0710',
     creator: '@yoshihirock0710',
-    images: ['/og/default.png'],
+    // twitter:image も opengraph-image を継承（個別指定しない）
   },
   verification: {
     google: 'd2702fb0af647cea',
@@ -133,6 +134,7 @@ export default async function RootLayout({
             <ServiceWorkerRegistration />
             <Tracker />
             {children}
+            <SiteFooter />
             <DmmCredit />
             <BottomNav />
           </AuthProvider>
