@@ -25,8 +25,8 @@ export type XPost = {
   angleLabel: string
   /** コピペ用の投稿本文（リンク・ハッシュタグ込み） */
   text: string
-  /** 添付推奨画像（DMM公式パッケージ・無改変で添付）。null ならテキストのみ */
-  imageUrl: string | null
+  /** 添付候補画像（先頭=パッケージ、以降=サンプル画像全部・無改変で添付）。その都度選んで使う */
+  images: string[]
   /** 元作品タイトル（参考表示用） */
   itemTitle: string | null
   /** X の重み付き文字数（CJKは2）。280以内が目安 */
@@ -61,11 +61,19 @@ function trimTitle(title: string, max = 22): string {
   return t.length > max ? `${t.slice(0, max)}…` : t
 }
 
-function packageImage(item: DmmItem): string | null {
-  const raw = item.imageURL?.large ?? item.imageURL?.list ?? null
-  if (!raw) return null
-  // 無改変で添付（DMM規約）。pt/ps→pl 正規化のみ行う
-  return toLargeDmmImageUrl(raw)
+/**
+ * 添付候補画像を集める: 先頭にパッケージ（大）、続けてサンプル画像（大優先・無ければ小）を全部。
+ * すべて無改変（DMM規約）。重複・空は除外。その都度この中から選んで添付する想定。
+ */
+function collectImages(item: DmmItem): string[] {
+  const out: string[] = []
+  const pkg = toLargeDmmImageUrl(item.imageURL?.large ?? item.imageURL?.list ?? null)
+  if (pkg) out.push(pkg)
+  const samples = item.sampleImageURL?.sample_l?.image ?? item.sampleImageURL?.sample_s?.image ?? []
+  for (const url of samples) {
+    if (url) out.push(url)
+  }
+  return [...new Set(out)]
 }
 
 /** 今日のセール/新作から、熱量別のX投稿案を生成する。 */
@@ -99,7 +107,7 @@ export async function buildXPosts(): Promise<XPost[]> {
       angle: 'wow',
       angleLabel: 'WOW（驚き）',
       text,
-      imageUrl: packageImage(top),
+      images: collectImages(top),
       itemTitle: top.title,
       weight: xWeight(text),
     })
@@ -118,7 +126,7 @@ export async function buildXPosts(): Promise<XPost[]> {
       angle: 'lifehack',
       angleLabel: '知っトク（ライフハック）',
       text,
-      imageUrl: packageImage(ranked[1] ?? ranked[0]),
+      images: collectImages(ranked[1] ?? ranked[0]),
       itemTitle: (ranked[1] ?? ranked[0]).title,
       weight: xWeight(text),
     })
@@ -137,7 +145,7 @@ export async function buildXPosts(): Promise<XPost[]> {
       angle: 'want',
       angleLabel: 'WANT（潜在物欲）',
       text,
-      imageUrl: packageImage(fresh0),
+      images: collectImages(fresh0),
       itemTitle: fresh0.title,
       weight: xWeight(text),
     })
@@ -155,7 +163,7 @@ export async function buildXPosts(): Promise<XPost[]> {
       angle: 'telegram',
       angleLabel: 'Telegram集客',
       text,
-      imageUrl: top ? packageImage(top) : null,
+      images: top ? collectImages(top) : [],
       itemTitle: null,
       weight: xWeight(text),
     })

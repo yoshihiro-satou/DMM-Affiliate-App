@@ -30,21 +30,45 @@ function PostCard({ post }: { post: XPost }) {
         {post.text}
       </pre>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3">
         <CopyButton text={post.text} label="投稿文をコピー" />
-        {post.imageUrl ? (
-          <a
-            href={post.imageUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[12px] font-bold text-white/75 transition-colors hover:border-white/30"
-          >
-            添付画像を開く
-          </a>
-        ) : (
-          <span className="text-[11px] text-white/40">画像なし（テキスト投稿）</span>
-        )}
       </div>
+
+      {post.images.length > 0 ? (
+        <div className="mt-3">
+          <p className="mb-1.5 text-[11px] text-white/45">
+            添付候補（その都度選択・タップで原寸を開いて保存） · {post.images.length}枚
+          </p>
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+            {post.images.map((src, i) => (
+              <a
+                key={src}
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative block overflow-hidden rounded-md border border-white/10 bg-black/30"
+                title={i === 0 ? 'パッケージ' : `サンプル ${i}`}
+              >
+                {/* 管理用ツールのため next/image ではなく素の img（無改変表示・DMM規約遵守） */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={i === 0 ? 'パッケージ画像' : `サンプル画像 ${i}`}
+                  loading="lazy"
+                  className="aspect-[3/2] w-full object-cover transition-opacity group-hover:opacity-80"
+                />
+                {i === 0 ? (
+                  <span className="absolute left-1 top-1 rounded bg-black/70 px-1 text-[9px] font-bold text-white/85">
+                    パッケージ
+                  </span>
+                ) : null}
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="mt-3 text-[11px] text-white/40">画像なし（テキスト投稿）</p>
+      )}
 
       {post.itemTitle ? (
         <p className="mt-2 truncate text-[10px] text-white/35">元作品: {post.itemTitle}</p>
