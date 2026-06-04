@@ -17,19 +17,11 @@ import {
  * Web Push へは積まない（毎日のセール速報と重複する通知疲れを避けるため）。
  */
 
-const JST_OFFSET_MS = 9 * 60 * 60 * 1000
-
-/** JST の YYYY-MM-DD（当日・前日）を返す。新作の鮮度判定に使う。 */
-function recentJstDates(): Set<string> {
-  const nowJst = new Date(Date.now() + JST_OFFSET_MS)
-  const today = nowJst.toISOString().slice(0, 10)
-  const yesterday = new Date(nowJst.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  return new Set([today, yesterday])
-}
-
 /**
- * 発売日順で新作を取得し、当日/前日リリースの人気作TOP3で速報メッセージを組み立てる。
- * 鮮度の高い新作が無ければ null（=配信スキップ）。
+ * 発売日順の新作TOP3で速報メッセージを組み立てる。
+ * fetchItemListMixed は videoa（AV）と videoc（素人）を発売日順でインターリーブして返すため、
+ * 先頭3件をそのまま採用すれば AV と素人がバランスよく混ざる（素人偏重を避ける）。
+ * 取得が空のときのみ null（=配信スキップ）。
  */
 export async function buildNewReleaseBroadcast(): Promise<BroadcastMessage | null> {
   const result = await fetchItemListMixed({ sort: 'date', hits: 30, excludeVr: true }).catch(
@@ -38,13 +30,7 @@ export async function buildNewReleaseBroadcast(): Promise<BroadcastMessage | nul
   const items = result?.items ?? []
   if (items.length === 0) return null
 
-  const recent = recentJstDates()
-  const fresh = items.filter((it) => {
-    const d = (it.date ?? '').slice(0, 10)
-    return d && recent.has(d)
-  })
-  // 当日/前日の新作が薄い日は、発売日順の先頭をそのまま新作として扱う（毎日必ず1本出す）
-  const picked = (fresh.length >= 3 ? fresh : items).slice(0, 3)
+  const picked = items.slice(0, 3)
   if (picked.length === 0) return null
 
   const lead = picked[0].title.slice(0, 24)
