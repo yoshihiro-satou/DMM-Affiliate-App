@@ -1,5 +1,5 @@
 import 'server-only'
-import { fetchItemListMixed } from '@/lib/dmm/client'
+import { fetchItemList, isVrItem } from '@/lib/dmm/client'
 import {
   type BroadcastAdapter,
   type BroadcastMessage,
@@ -19,15 +19,18 @@ import {
 
 /**
  * 発売日順の新作TOP3で速報メッセージを組み立てる。
- * fetchItemListMixed は videoa（AV）と videoc（素人）を発売日順でインターリーブして返すため、
- * 先頭3件をそのまま採用すれば AV と素人がバランスよく混ざる（素人偏重を避ける）。
+ * 「推し女優の新作」のチャンネル版なので videoa（AV＝女優作品）を対象にし、VR を除外する。
+ * 素人（videoc）は毎日大量に出て新着の先頭を埋めてしまうためここでは混ぜない。
  * 取得が空のときのみ null（=配信スキップ）。
  */
 export async function buildNewReleaseBroadcast(): Promise<BroadcastMessage | null> {
-  const result = await fetchItemListMixed({ sort: 'date', hits: 30, excludeVr: true }).catch(
-    () => null
-  )
-  const items = result?.items ?? []
+  const result = await fetchItemList({
+    sort: 'date',
+    hits: 30,
+    service: 'digital',
+    floor: 'videoa',
+  }).catch(() => null)
+  const items = (result?.items ?? []).filter((it) => !isVrItem(it))
   if (items.length === 0) return null
 
   const picked = items.slice(0, 3)
