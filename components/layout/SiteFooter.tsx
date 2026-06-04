@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { TelegramJoinCard } from '@/components/telegram/TelegramJoinCard'
 
 // BottomNav と同じく、年齢ゲート・認証画面では出さない
 const NO_FOOTER_PREFIXES = ['/age-check', '/login', '/auth', '/register', '/welcome']
@@ -78,6 +79,9 @@ export function SiteFooter() {
           FANZAのセール・ランキング・推し女優をアプリ感覚でチェック。掲載リンクには広告（PR）を含みます。
           18歳未満の方はご利用いただけません。
         </p>
+        <div className="mt-3">
+          <TelegramJoinCard placement="footer" variant="footer" />
+        </div>
       </div>
     </footer>
   )

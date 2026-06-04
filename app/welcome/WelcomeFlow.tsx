@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Sparkles, BellRing, Flame, Heart } from 'lucide-react'
 import { InstallButton } from '@/components/pwa/InstallButton'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
+import { TelegramJoinCard } from '@/components/telegram/TelegramJoinCard'
 
 type Props = {
   isLoggedIn: boolean
@@ -123,6 +124,14 @@ export function WelcomeFlow({ isLoggedIn, dest }: Props) {
               </Link>
             </>
           )}
+        </div>
+
+        {/* ②' Telegram（アプリ不要・登録不要で受け取れる別チャネル） */}
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] font-semibold tracking-wider text-white/45">
+            または Telegram で受け取る
+          </p>
+          <TelegramJoinCard placement="welcome" />
         </div>
 
         {/* スキップ */}

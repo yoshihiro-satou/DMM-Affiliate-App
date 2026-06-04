@@ -14,6 +14,8 @@ export const EVENT_TYPES = [
   'notify_grant',
   'affiliate_click',
   'revisit',
+  // 追加11: サイト→Telegram「セール速報」チャンネルへの送客クリック（meta.placement で出稿面を識別）
+  'telegram_click',
 ] as const
 
 export type EventType = (typeof EVENT_TYPES)[number]

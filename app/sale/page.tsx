@@ -6,6 +6,7 @@ import { ProductCard } from '@/components/product/ProductCard'
 import { FavoriteButton } from '@/components/product/FavoriteButton'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
 import { SaleNotifyNudge } from '@/components/sale/SaleNotifyNudge'
+import { TelegramJoinCard } from '@/components/telegram/TelegramJoinCard'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
@@ -45,8 +46,9 @@ export default async function SalePage() {
   // セール速報の通知購読（登録不要で受け取れる）。
   // try/catch の外で構築し、JSX-in-try の lint 違反を増やさない。
   const notifyBanner = (
-    <div className="px-3 pb-1">
+    <div className="flex flex-col gap-2 px-3 pb-1">
       <PushSubscribeButton />
+      <TelegramJoinCard placement="sale" />
     </div>
   )
   // 高インテント時（スクロール後）に控えめに出すセール速報ナッジ
