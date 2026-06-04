@@ -9,6 +9,7 @@ import { getOshiActresses, getOshiDirectors } from '@/lib/oshi'
 import { fetchItemList } from '@/lib/dmm/client'
 import { PushSubscribeButton } from '@/components/PushSubscribeButton'
 import { NotifyTypeToggle } from '@/components/mypage/NotifyTypeToggle'
+import { TelegramShareButton } from '@/components/telegram/TelegramShareButton'
 import { getMyNotificationType } from '@/actions/push'
 import { OshiCombinedSelector } from '@/components/mypage/OshiCombinedSelector'
 import { BadgeShowcase } from '@/components/badges/BadgeShowcase'
@@ -531,6 +532,7 @@ export default async function MyPage() {
         <div className="flex h-full flex-col gap-3">
           <PushSubscribeButton />
           <NotifyTypeToggle initialType={notifyType} />
+          <TelegramShareButton placement="mypage" />
           <Link
             href="/forgot-password"
             className="block w-full rounded-lg border border-white/12 py-4 text-center text-[14px] font-medium tracking-wide text-white/65 transition-colors duration-150 hover:border-white/20 hover:text-white/60"

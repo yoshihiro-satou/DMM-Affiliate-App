@@ -99,7 +99,7 @@ export default async function NewPage() {
         PR · 発売日の新しい順 · {total.toLocaleString('ja-JP')}件以上
       </p>
       <div className="flex flex-col gap-2 px-3 pb-1">
-        <PushSubscribeButton />
+        <PushSubscribeButton telegramFallback={false} />
         <TelegramJoinCard placement="new" />
       </div>
       <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">

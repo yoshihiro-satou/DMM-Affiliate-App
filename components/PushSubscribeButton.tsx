@@ -7,8 +7,14 @@ import { LoginPromptSheet } from '@/components/ui/LoginPromptSheet'
 import { NotifyChoiceSheet } from '@/components/ui/NotifyChoiceSheet'
 import { useAuth } from '@/components/providers/auth-provider'
 import { usePushSubscribe } from '@/components/push/usePushSubscribe'
+import { TelegramJoinCard } from '@/components/telegram/TelegramJoinCard'
 
-export function PushSubscribeButton() {
+/**
+ * @param telegramFallback Push非対応/拒否のときに Telegram 代替を出すか（既定 true）。
+ *   ページ側で別途 TelegramJoinCard を常設している場合は false にして二重表示を防ぐ。
+ *   iOS Safari（非PWA）は Web Push 不可なので、ここで取りこぼしを Telegram へ逃がす。
+ */
+export function PushSubscribeButton({ telegramFallback = true }: { telegramFallback?: boolean }) {
   const { isLoggedIn } = useAuth()
   const { state, isPending, subscribeWithType, unsubscribe } = usePushSubscribe()
   const [showPrompt, setShowPrompt] = useState(false)
@@ -31,7 +37,18 @@ export function PushSubscribeButton() {
     else if (state === 'unsubscribed') startSubscribe()
   }
 
-  if (state === 'unsupported') return null
+  // iOS Safari（非PWA）など Web Push 非対応端末: Telegram を代替提示して取りこぼしを回収
+  if (state === 'unsupported') {
+    if (!telegramFallback) return null
+    return (
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[11px] leading-relaxed text-white/55">
+          お使いの環境はプッシュ通知に非対応です。Telegramでセール速報を受け取れます。
+        </p>
+        <TelegramJoinCard placement="push_fallback_ios" />
+      </div>
+    )
+  }
 
   const isDisabled = state === 'loading' || state === 'denied' || isPending
 
@@ -75,6 +92,9 @@ export function PushSubscribeButton() {
           <BellRing size={20} className="text-white/65" />
         )}
       </button>
+
+      {/* 通知ブロック中も Telegram なら受け取れる代替導線 */}
+      {state === 'denied' && telegramFallback && <TelegramJoinCard placement="push_fallback_denied" />}
 
       {showChoice && (
         <NotifyChoiceSheet

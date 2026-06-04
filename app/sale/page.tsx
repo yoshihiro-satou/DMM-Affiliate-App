@@ -47,7 +47,7 @@ export default async function SalePage() {
   // try/catch の外で構築し、JSX-in-try の lint 違反を増やさない。
   const notifyBanner = (
     <div className="flex flex-col gap-2 px-3 pb-1">
-      <PushSubscribeButton />
+      <PushSubscribeButton telegramFallback={false} />
       <TelegramJoinCard placement="sale" />
     </div>
   )
