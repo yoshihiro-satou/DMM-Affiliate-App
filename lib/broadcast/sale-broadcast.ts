@@ -22,6 +22,10 @@ export type BroadcastMessage = {
   body: string
   url: string
   tag: string
+  /** Telegram投稿の着地リンク（path+ref）。未指定なら /sale?ref=telegram。 */
+  telegramUrl?: string
+  /** Telegram投稿のCTA文言。未指定なら「セール一覧を見る」。 */
+  telegramCta?: string
   /** TOP作品（ログ・将来のリッチ通知用） */
   items: Array<{ title: string; discountRate: number; affiliateUrl: string }>
 }
@@ -74,6 +78,7 @@ export async function buildSaleBroadcast(): Promise<BroadcastMessage | null> {
     body: `【${maxOff}%OFF】「${lead}」ほか本日限りの特価が登場🎉 最大${maxOff}%OFFを今すぐチェック`,
     // ?ref=push_sale で「通知→クリック」を funnel_by_ref に計測（追加18）
     url: '/sale?ref=push_sale',
+    telegramUrl: '/sale?ref=telegram',
     tag: 'sale_broadcast',
     items: top.map(({ item, rate }) => ({
       title: item.title,
@@ -204,17 +209,20 @@ export const telegramAdapter: BroadcastAdapter = {
       }
     }
 
-    const link = `${TELEGRAM_SITE_URL}/sale?ref=telegram`
+    const link = `${TELEGRAM_SITE_URL}${message.telegramUrl ?? '/sale?ref=telegram'}`
     const itemLines = message.items
       .slice(0, 3)
-      .map((it, i) => `${i + 1}. ${escapeHtml(it.title.slice(0, 40))}（${it.discountRate}%OFF）`)
+      .map((it, i) => {
+        const off = it.discountRate > 0 ? `（${it.discountRate}%OFF）` : ''
+        return `${i + 1}. ${escapeHtml(it.title.slice(0, 40))}${off}`
+      })
     const text = [
       `<b>${escapeHtml(message.title)}</b>`,
       '',
       escapeHtml(message.body),
       ...(itemLines.length ? ['', ...itemLines] : []),
       '',
-      `👉 <a href="${link}">セール一覧を見る</a>`,
+      `👉 <a href="${link}">${escapeHtml(message.telegramCta ?? 'セール一覧を見る')}</a>`,
       '',
       '<i>※PR（広告）｜18歳未満閲覧禁止</i>',
     ].join('\n')

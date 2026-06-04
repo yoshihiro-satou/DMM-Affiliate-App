@@ -15,6 +15,7 @@ const COLUMNS: Array<{ title: string; links: LinkDef[] }> = [
     links: [
       { href: '/', label: 'ホーム' },
       { href: '/sale', label: '今日のセール' },
+      { href: '/new', label: '今日の新作' },
       { href: '/ranking', label: 'ランキング' },
       { href: '/discover', label: 'スワイプで探す' },
     ],

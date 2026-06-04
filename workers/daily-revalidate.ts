@@ -21,27 +21,32 @@ async function revalidateHome(env: Env): Promise<void> {
     'Content-Type': 'application/json',
   }
 
-  const [revalidateRes, notifyRes, saleRes, badgeRes, directorRes] = await Promise.all([
-    fetch(`${env.SITE_URL}/api/revalidate`, { method: 'POST', headers }),
-    fetch(`${env.SITE_URL}/api/oshi-notify`, { method: 'POST', headers }),
-    fetch(`${env.SITE_URL}/api/sale-notify`, { method: 'POST', headers }),
-    fetch(`${env.SITE_URL}/api/badge-remind`, { method: 'POST', headers }),
-    fetch(`${env.SITE_URL}/api/oshi-director-notify`, { method: 'POST', headers }),
-  ])
+  const [revalidateRes, notifyRes, saleRes, badgeRes, directorRes, newReleaseRes] =
+    await Promise.all([
+      fetch(`${env.SITE_URL}/api/revalidate`, { method: 'POST', headers }),
+      fetch(`${env.SITE_URL}/api/oshi-notify`, { method: 'POST', headers }),
+      fetch(`${env.SITE_URL}/api/sale-notify`, { method: 'POST', headers }),
+      fetch(`${env.SITE_URL}/api/badge-remind`, { method: 'POST', headers }),
+      fetch(`${env.SITE_URL}/api/oshi-director-notify`, { method: 'POST', headers }),
+      fetch(`${env.SITE_URL}/api/newrelease-notify`, { method: 'POST', headers }),
+    ])
 
-  const [revalidateBody, notifyBody, saleBody, badgeBody, directorBody] = await Promise.all([
-    revalidateRes.text(),
-    notifyRes.text(),
-    saleRes.text(),
-    badgeRes.text(),
-    directorRes.text(),
-  ])
+  const [revalidateBody, notifyBody, saleBody, badgeBody, directorBody, newReleaseBody] =
+    await Promise.all([
+      revalidateRes.text(),
+      notifyRes.text(),
+      saleRes.text(),
+      badgeRes.text(),
+      directorRes.text(),
+      newReleaseRes.text(),
+    ])
 
   console.log('[daily-revalidate] revalidate:', revalidateRes.status, revalidateBody)
   console.log('[daily-revalidate] oshi-notify:', notifyRes.status, notifyBody)
   console.log('[daily-revalidate] sale-notify:', saleRes.status, saleBody)
   console.log('[daily-revalidate] badge-remind:', badgeRes.status, badgeBody)
   console.log('[daily-revalidate] director-notify:', directorRes.status, directorBody)
+  console.log('[daily-revalidate] newrelease-notify:', newReleaseRes.status, newReleaseBody)
 }
 
 const handler = {
