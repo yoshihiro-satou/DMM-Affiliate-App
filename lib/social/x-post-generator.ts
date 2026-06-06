@@ -1,7 +1,6 @@
 import 'server-only'
-import { fetchDailyDeals } from '@/lib/dmm/daily-deals'
-import { fetchItemList, isVrItem } from '@/lib/dmm/client'
-import { sortByDiscount } from '@/lib/ranking'
+import { fetchSaleItems, fetchItemList, isVrItem } from '@/lib/dmm/client'
+import { sortBySaleAppeal, calcDiscountRate } from '@/lib/ranking'
 import { toLargeDmmImageUrl } from '@/lib/dmm/image'
 import { TELEGRAM_CHANNEL_URL } from '@/lib/constants/telegram'
 import type { DmmItem } from '@/types/dmm'
@@ -33,11 +32,9 @@ export type XPost = {
   weight: number
 }
 
+/** 割引率（%）。価格差が無ければ 0。"698~" 等の表記揺れは calcDiscountRate が吸収する。 */
 function discountRate(item: DmmItem): number {
-  const price = Number(item.prices?.price)
-  const list = Number(item.prices?.list_price)
-  if (!price || !list || list <= price) return 0
-  return Math.round((1 - price / list) * 100)
+  return calcDiscountRate(item.prices?.price, item.prices?.list_price) ?? 0
 }
 
 /** X の文字数カウント（CJK・全角は2、その他は1。URLは t.co 換算で23）。 */
@@ -78,22 +75,27 @@ function collectImages(item: DmmItem): string[] {
 
 /** 今日のセール/新作から、熱量別のX投稿案を生成する。 */
 export async function buildXPosts(): Promise<XPost[]> {
-  const [deals, newResult] = await Promise.all([
-    fetchDailyDeals(50).catch(() => [] as DmmItem[]),
+  const [saleItems, newResult] = await Promise.all([
+    // /sale と同じプール（動画系フロアのセール作品・VR除外）
+    fetchSaleItems({ perFloor: 100, excludeVr: true }).catch(() => [] as DmmItem[]),
     fetchItemList({ sort: 'date', hits: 30, service: 'digital', floor: 'videoa' }).catch(
       () => null
     ),
   ])
 
-  const ranked = sortByDiscount(deals).filter((it) => discountRate(it) >= 10)
+  // 「評価が高い × 値引き幅が大きい」順に並べ、最低割引10%以上を投稿候補にする
+  const ranked = sortBySaleAppeal(saleItems).filter((it) => discountRate(it) >= 10)
   const fresh = (newResult?.items ?? []).filter((it) => !isVrItem(it))
 
   const saleLink = `${SITE_URL}/sale?ref=x`
   const newLink = `${SITE_URL}/new?ref=x`
 
+  // 「最大N%OFF」表記用の本日の実最大割引（高評価順とは別に正確な最大値を出す）
+  const maxRate = ranked.reduce((m, it) => Math.max(m, discountRate(it)), 0)
+
   const posts: XPost[] = []
 
-  // ① WOW（驚き）: 最大割引の作品を衝撃コピーで
+  // ① WOW（驚き）: 高評価×大幅値引きの一番手を衝撃コピーで
   const top = ranked[0]
   if (top) {
     const rate = discountRate(top)
@@ -115,7 +117,6 @@ export async function buildXPosts(): Promise<XPost[]> {
 
   // ② 知っトク（ライフハック）: セールの仕組みを「いいこと聞いた」で
   if (ranked.length > 0) {
-    const maxRate = discountRate(ranked[0])
     const text = [
       `知らないと損😳 FANZAのセールは毎日入れ替わるって知ってた？`,
       `今日は最大${maxRate}%OFF。狙い目をまとめてチェック👇`,

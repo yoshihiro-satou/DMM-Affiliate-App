@@ -1,6 +1,6 @@
 ﻿import Image from 'next/image'
 import type { DmmItem } from '@/types/dmm'
-import { parsePrice, calcDiscountRate } from '@/lib/ranking'
+import { parsePrice, calcDiscountRate, getSaleInfo } from '@/lib/ranking'
 
 const IMG_W = 184
 const IMG_H = 250
@@ -36,6 +36,11 @@ export function ProductCard({ item, rank, overlaySlot }: Props) {
   const price = parsePrice(item.prices.price)
   const listPrice = parsePrice(item.prices.list_price)
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
+  const sale = getSaleInfo(item)
+  // 公式キャンペーンの残り日数（3日以内のみ緊急訴求を出す）
+  const daysLeft = sale.daysLeft
+  const showUrgency = sale.campaignTitle !== null && daysLeft !== null && daysLeft <= 3
+  const urgencyLabel = daysLeft === 0 ? '本日終了' : `残り${daysLeft}日`
   const reviewAvg = item.review?.average ? parseFloat(item.review.average) : null
   const reviewCount = item.review?.count ?? 0
   const sampleL = item.sampleImageURL?.sample_l?.image
@@ -85,6 +90,19 @@ export function ProductCard({ item, rank, overlaySlot }: Props) {
         {discount !== null && discount >= 5 && (
           <span className="absolute right-1.5 top-1.5 rounded bg-red-600 px-1.5 py-0.5 text-[11px] font-black tabular-nums text-white">
             {discount}%OFF
+          </span>
+        )}
+
+        {/* 公式キャンペーンの残り日数（締切間近の緊急訴求） */}
+        {showUrgency && (
+          <span
+            className={`absolute right-1.5 ${
+              discount !== null && discount >= 5 ? 'top-8' : 'top-1.5'
+            } rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-bold tabular-nums backdrop-blur-sm ${
+              daysLeft === 0 ? 'text-red-400' : 'text-amber-300'
+            }`}
+          >
+            ⏳ {urgencyLabel}
           </span>
         )}
 

@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from 'next'
-import { fetchItemList } from '@/lib/dmm/client'
-import { sortByDiscount } from '@/lib/ranking'
+import type { DmmItem } from '@/types/dmm'
+import { fetchSaleItems } from '@/lib/dmm/client'
+import { sortByDiscount, getActiveCampaign } from '@/lib/ranking'
 import { todayJstLabel } from '@/lib/jst-date'
 import { ProductCard } from '@/components/product/ProductCard'
 import { FavoriteButton } from '@/components/product/FavoriteButton'
@@ -54,51 +55,91 @@ export default async function SalePage() {
   // 高インテント時（スクロール後）に控えめに出すセール速報ナッジ
   const saleNudge = <SaleNotifyNudge />
 
+  // データ取得のみ try/catch に閉じ込め、JSX は外で構築する
+  // （JSX-in-try は react-hooks/error-boundaries 違反になるため）
+  let items: DmmItem[] = []
+  let activeCampaigns: string[] = []
+  let failed = false
   try {
-    const result = await fetchItemList({
-      sort: 'rank',
-      hits: 40,
-      service: 'digital',
-      floor: 'videoa',
-    })
-    const items = sortByDiscount(result.items)
+    // 動画系フロア（AV・素人）を横断してセール作品を取得（VRは除外）
+    const saleItems = await fetchSaleItems({ perFloor: 100, excludeVr: true })
+    // 割引率の高い順に並べる
+    items = sortByDiscount(saleItems).slice(0, 60)
 
-    const jsonLdItemList = {
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      name: 'セール・値引き作品',
-      itemListElement: items.slice(0, 10).map((item, i) => ({
-        '@type': 'ListItem',
-        position: i + 1,
-        name: item.title,
-        url: item.affiliateURL,
-      })),
+    // 開催中の DMM 公式キャンペーン名を集計（重複排除・出現頻度順）
+    const campaignCounts = new Map<string, number>()
+    for (const item of items) {
+      const c = getActiveCampaign(item)
+      if (c) campaignCounts.set(c.title, (campaignCounts.get(c.title) ?? 0) + 1)
     }
+    activeCampaigns = [...campaignCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([title]) => title)
+      .slice(0, 3)
+  } catch {
+    failed = true
+  }
 
-    const jsonLdBreadcrumb = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
-        { '@type': 'ListItem', position: 2, name: 'セール・値引き作品', item: `${SITE_URL}/sale` },
-      ],
-    }
-
+  if (failed) {
     return (
       <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdItemList) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }}
-        />
         {header}
-        <p className="px-4 pb-2 pt-1 text-[11px] text-white/55">
-          PR · 割引率の高い順 · {result.total_count.toLocaleString('ja-JP')}件以上
+        <p className="py-16 text-center text-[13px] text-white/55">
+          コンテンツを準備中です。しばらくお待ちください。
         </p>
-        {notifyBanner}
+      </main>
+    )
+  }
+
+  const jsonLdItemList = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'セール・値引き作品',
+    itemListElement: items.slice(0, 10).map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.title,
+      url: item.affiliateURL,
+    })),
+  }
+
+  const jsonLdBreadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'セール・値引き作品', item: `${SITE_URL}/sale` },
+    ],
+  }
+
+  return (
+    <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdItemList) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }}
+      />
+      {header}
+      <p className="px-4 pb-2 pt-1 text-[11px] text-white/55">
+        PR · 割引率の高い順 · 値引き中{items.length}件
+      </p>
+      {activeCampaigns.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5 px-4 pb-2">
+          {activeCampaigns.map((title) => (
+            <span
+              key={title}
+              className="rounded-full border border-red-600/40 bg-red-600/10 px-2 py-0.5 text-[10px] font-bold text-red-400"
+            >
+              開催中 · {title}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {notifyBanner}
+      {items.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {items.map((item, i) => (
             <ProductCard
@@ -109,17 +150,12 @@ export default async function SalePage() {
             />
           ))}
         </div>
-        {saleNudge}
-      </main>
-    )
-  } catch {
-    return (
-      <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
-        {header}
+      ) : (
         <p className="py-16 text-center text-[13px] text-white/55">
-          コンテンツを準備中です。しばらくお待ちください。
+          現在値引き中の作品が見つかりませんでした。時間をおいて再度ご確認ください。
         </p>
-      </main>
-    )
-  }
+      )}
+      {saleNudge}
+    </main>
+  )
 }

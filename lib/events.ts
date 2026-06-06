@@ -16,6 +16,8 @@ export const EVENT_TYPES = [
   'revisit',
   // 追加11: サイト→Telegram「セール速報」チャンネルへの送客クリック（meta.placement で出稿面を識別）
   'telegram_click',
+  // チャンネル拡散の共有クリック（meta.network で SNS を識別: x/line/facebook/telegram/copy/native）
+  'share_click',
 ] as const
 
 export type EventType = (typeof EVENT_TYPES)[number]

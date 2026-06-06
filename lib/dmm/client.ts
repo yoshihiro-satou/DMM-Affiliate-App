@@ -7,6 +7,7 @@ import {
   DmmGenreResponseSchema,
 } from '@/types/dmm'
 import type { DmmItem, DmmItemListResponse, DmmActressResponse, DmmFloorListResponse, DmmGenreResponse, ItemSort, ActressSort, Article } from '@/types/dmm'
+import { isOnSale } from '@/lib/ranking'
 
 const BASE_URL = 'https://api.dmm.com/affiliate/v3'
 
@@ -229,7 +230,7 @@ export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
     fetchBatch('review'),
   ])
 
-  const today = new Date().toISOString().slice(0, 10)
+  const now = Date.now()
   const seen = new Set<string>()
 
   return [...rankItems, ...reviewItems]
@@ -240,14 +241,73 @@ export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
       // VR作品を除外
       if (isVrItem(item)) return false
 
-      const hasActiveCampaign = item.campaign?.some(c => c.date_end >= today)
-      const p  = parseFloat((item.prices.price      ?? '').replace('~', ''))
-      const lp = parseFloat((item.prices.list_price ?? '').replace('~', ''))
-      const hasDiscount = !isNaN(p) && !isNaN(lp) && lp > p
-
-      return hasActiveCampaign || hasDiscount
+      // 公式キャンペーン or 実値引きをセールとみなす
+      return isOnSale(item, now)
     })
     .slice(0, hits)
+}
+
+// ------------------------------------
+// セール作品の横断取得（動画系フロア）
+// ------------------------------------
+
+/**
+ * セール対象として横断取得する FANZA 動画系フロア。
+ * いずれも service=digital でジャケット画像の体裁が揃っており、
+ * フロアごとに別々のキャンペーン（ブランドストア / 素人100円 等）が走る。
+ */
+const SALE_VIDEO_FLOORS: ReadonlyArray<{ service: string; floor: string }> = [
+  { service: 'digital', floor: 'videoa' }, // AV
+  { service: 'digital', floor: 'videoc' }, // 素人
+]
+
+/**
+ * セール作品を掘り起こすためのキーワード候補。
+ * 人気上位（キーワードなし）だけだとセール作品を 10 件程度しか拾えないが、
+ * これらのキーワードで検索すると候補が一気に増える（実測 241 件）。
+ * キーワードは「候補ソース」であり、最終的に isOnSale() で実セールのみ通すため
+ * ノイズ（非セール）が表に出ることはない。
+ */
+const SALE_KEYWORDS: ReadonlyArray<string | undefined> = [
+  undefined, // 人気上位（キーワードなし）
+  'セール',
+  '30%OFF',
+  '50%OFF',
+]
+
+/**
+ * 動画系フロア（videoa / videoc）を横断してセール中（公式キャンペーン or 実値引き）の
+ * 作品を集める。フロア × セールキーワードの全組み合わせを並列取得し、
+ * content_id で重複排除 → isOnSale で絞り込む。
+ * 組み合わせ単位で失敗しても他の結果は返す（部分的失敗に強い）。
+ */
+export async function fetchSaleItems(
+  opts: { perFloor?: number; excludeVr?: boolean } = {}
+): Promise<DmmItem[]> {
+  const perFloor = opts.perFloor ?? 100
+  const sources = SALE_VIDEO_FLOORS.flatMap(({ service, floor }) =>
+    SALE_KEYWORDS.map((keyword) => ({ service, floor, keyword }))
+  )
+  const batches = await Promise.all(
+    sources.map(({ service, floor, keyword }) =>
+      fetchItemList({ service, floor, keyword, hits: perFloor, sort: 'rank' })
+        .then((r) => r.items)
+        .catch(() => [] as DmmItem[])
+    )
+  )
+
+  const seen = new Set<string>()
+  const merged: DmmItem[] = []
+  for (const items of batches) {
+    for (const it of items) {
+      if (seen.has(it.content_id)) continue
+      seen.add(it.content_id)
+      if (opts.excludeVr && isVrItem(it)) continue
+      if (!isOnSale(it)) continue
+      merged.push(it)
+    }
+  }
+  return merged
 }
 
 // ------------------------------------
