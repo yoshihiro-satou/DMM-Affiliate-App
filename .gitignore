@@ -54,3 +54,10 @@ next-env.d.ts
 
 # Serena AI assistant
 .serena/
+
+# Local verification artifacts under scripts/ (logs / screenshots / throwaway scripts)
+/scripts/*.log
+/scripts/*.png
+/scripts/preview-log.txt
+/scripts/verify-*.mjs
+/scripts/check-top*.mjs

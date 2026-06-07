@@ -16,6 +16,12 @@ import type { DmmItem } from '@/types/dmm'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
+/**
+ * 景表法（ステマ規制）対応。アフィリエイト誘導を含むツイートには広告である旨を明示する。
+ * リンクを載せる②ツイート目（リプライ）に必ず入れる。
+ */
+const PR_NOTE = '※PR・アフィリエイト広告を含みます'
+
 export type XPostAngle = 'wow' | 'lifehack' | 'want' | 'telegram'
 
 /** スレッド投稿の1ツイート分。連投する順に並ぶ（先頭=1ツイート目、以降=リプライ連投）。 */
@@ -214,8 +220,10 @@ export async function buildXPosts(): Promise<XPost[]> {
   const ranked = sortBySaleAppeal(saleItems).filter((it) => discountRate(it) >= 10)
   const fresh = (newResult?.items ?? []).filter((it) => !isVrItem(it))
 
-  const saleLink = `${SITE_URL}/sale?ref=x`
-  const newLink = `${SITE_URL}/new?ref=x`
+  // 流入元をアングル別に分けて funnel_by_ref で勝ちパターンを判別できるようにする
+  const saleLinkWow = `${SITE_URL}/sale?ref=x_wow`
+  const saleLinkKnow = `${SITE_URL}/sale?ref=x_know`
+  const newLink = `${SITE_URL}/new?ref=x_new`
 
   // 「最大N%OFF」表記用の本日の実最大割引（高評価順とは別に正確な最大値を出す）
   const maxRate = ranked.reduce((m, it) => Math.max(m, discountRate(it)), 0)
@@ -240,8 +248,9 @@ export async function buildXPosts(): Promise<XPost[]> {
       '',
       price ? `🔥${rate}%OFFセール中（${price}）` : `🔥今だけ${rate}%OFFセール中`,
       '他のお得情報もサイトでまとめました👇',
-      saleLink,
+      saleLinkWow,
       '',
+      PR_NOTE,
       '#FANZA #セール',
     ].join('\n')
     posts.push(
@@ -266,8 +275,9 @@ export async function buildXPosts(): Promise<XPost[]> {
       '',
       `FANZAのセールは毎日入れ替わる。今日は最大${maxRate}%OFF🔥`,
       '狙い目はサイトにまとめました👇',
-      saleLink,
+      saleLinkKnow,
       '',
+      PR_NOTE,
       '#FANZA #お得情報',
     ].join('\n')
     posts.push(
@@ -291,6 +301,7 @@ export async function buildXPosts(): Promise<XPost[]> {
       '他の新着・お得情報もサイトでまとめました👇',
       newLink,
       '',
+      PR_NOTE,
       '#FANZA #新作',
     ].join('\n')
     posts.push(
@@ -312,6 +323,7 @@ export async function buildXPosts(): Promise<XPost[]> {
       '見逃したくない人はTelegramが楽（登録不要）👇',
       TELEGRAM_CHANNEL_URL,
       '',
+      PR_NOTE,
       '#FANZA #セール速報',
     ].join('\n')
     posts.push(

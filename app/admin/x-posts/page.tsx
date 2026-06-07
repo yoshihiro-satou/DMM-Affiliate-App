@@ -157,12 +157,17 @@ export default async function XPostsPage() {
           </span>
           <h1 className="mt-1 text-xl font-black text-white">X 投稿ジェネレータ</h1>
           <p className="mt-1 text-[12px] leading-relaxed text-white/45">
-            今日のセール・新作から「拡散の科学」準拠の投稿案を生成。コピー → Xに貼り付け →
-            画像を添付して投稿。リンクは <code className="text-white/60">?ref=x</code> 付きで流入を計測。
+            今日のセール・新作から「拡散の科学」準拠の投稿案を生成。①フックを投稿 → そのツイートに②を
+            リプライ連投。リンクは <code className="text-white/60">?ref=x_*</code>{' '}
+            付き（アングル別）で流入を計測。
+          </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-sky-300/70">
+            ⏰ 投稿の狙い目: アダルト系Xは <strong>夜21時〜深夜2時</strong>{' '}
+            が最も伸びやすい（帰宅後〜就寝前）。昼12時台も小ピーク。
           </p>
           <p className="mt-2 text-[11px] leading-relaxed text-amber-300/70">
             ※ 画像はDMM公式パッケージを無改変で添付（規約）。センシティブメディア設定の上で投稿してください。
-            同一作品の72時間以内の再投稿は避ける。
+            同一作品の72時間以内の再投稿は避ける。②ツイートには景表法対応の「PR」表記を入れ込み済み。
           </p>
         </header>
 
