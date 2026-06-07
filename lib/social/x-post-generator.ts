@@ -110,16 +110,52 @@ function genreNames(item: DmmItem): string[] {
 }
 
 /**
+ * FANZA動画の検索人気キーワード（docs/fanzaキーワード.md・上位100より、ジャンル系を人気順に抜粋）。
+ * ハッシュタグの優先選択に使う。配列の前方ほど検索ボリュームが大きくリーチが見込める。
+ */
+const FANZA_POPULAR_GENRES: string[] = [
+  '熟女', '人妻', '主婦', '中出し', '巨乳', '寝取られ', 'NTR', '乳首', 'レズ', 'ギャル',
+  'アナル', '潮吹き', '爆乳', '痴女', 'コスプレ', '母乳', 'ハーレム', '素人', 'オナニー',
+  '媚薬', 'クンニ', 'マッサージ', '乳首責め', '温泉', '時間停止', 'M男', 'ぽっちゃり',
+  'パンスト', '主観', '乱交', 'フェラ', 'イラマチオ', '黒人', 'ごっくん', 'パンチラ',
+  '黒ギャル', '女子校生', 'ソープ', 'パイズリ', 'アヘ顔', 'エステ', '五十路', '手コキ', '童貞',
+]
+
+/** FANZA検索上位の人気女優名（docs/fanzaキーワード.md より）。指名検索が多く高リーチなタグ候補。 */
+const FANZA_POPULAR_ACTRESSES = new Set<string>([
+  '瀬戸環奈', '琴音華', '三岳ゆうな', '河北彩伽', '松本いちか', '美園和花', 'MINAMO', '七原さゆ',
+  '石川澪', '北岡果林', '三上悠亜', '小野六花', '青空ひかり', '新妻ゆうか', '川越にこ', '伊藤舞雪',
+  '篠田ゆう', '紗倉まな', '乙アリス', '逢沢みゆ', '凪ひかる', '美咲かんな', '波多野結衣', '七沢みあ',
+  '石原希望', '宮下玲奈', '姫咲はな', '神宮寺ナオ', '深田えいみ', '柏木こなつ', '森日向子', '美谷朱音',
+  '葵いぶき', '風間ゆみ', '鷲尾めい', '浅野こころ', '田中ねね', '小野坂ゆいか',
+])
+
+/**
  * ジャンルから「タイトルから想像できる卑猥な一言」を1本選ぶ。
  * 最初にマッチしたジャンルの煽り文を採用。マッチ無しは汎用プールから content_id で安定選択。
+ * 文面は FANZA 検索人気キーワード（docs/fanzaキーワード.md）の上位ジャンルを優先的にカバーする。
  */
 const GENRE_HOOKS: { match: RegExp; line: string }[] = [
   { match: /爆乳/, line: 'この爆乳に挟まれて窒息したい…マジで規格外🤤' },
   { match: /巨乳|おっぱい/, line: 'このおっぱい、揺れ方がもう反則…ずっと見てられる🥵' },
   { match: /痴女/, line: '完全に主導権握られてる…こんな風に攻められたら抗えない😳' },
-  { match: /人妻|熟女/, line: '大人の女の色気がエグい…この余裕に全部持っていかれる😩' },
+  { match: /人妻|熟女|主婦|五十路|おばさん/, line: '大人の女の色気がエグい…この余裕に全部持っていかれる😩' },
+  { match: /寝取|NTR/, line: 'まさか寝取られるなんて…この背徳感がクセになる😩' },
   { match: /中出し/, line: '最後まで生々しすぎる…これは保存しとかないと後悔するやつ🔥' },
   { match: /素人/, line: 'リアルすぎて逆にやばい…素人さんのこの感じが一番くる🥵' },
+  { match: /レズ/, line: '女の子同士の絡みが艶っぽすぎる…じっくり見たいやつ🥵' },
+  { match: /潮吹/, line: 'ここまで吹くの…？もう止まらなくなってる🤤' },
+  { match: /母乳/, line: 'こぼれるほど溢れてる…これは特別な一本🥵' },
+  { match: /ハーレム/, line: '全員から迫られる贅沢…独り占めとか夢すぎる😳' },
+  { match: /時間停止/, line: '時間を止めてやりたい放題…この設定ずるすぎる😏' },
+  { match: /媚薬/, line: '効きすぎて理性ゼロ…こんなに乱れる姿は反則🥵' },
+  { match: /黒ギャル/, line: '日焼け跡がエロすぎる…黒ギャルのこの感じ最高🤤' },
+  { match: /ギャル/, line: 'ノリも見た目も最高…こういうギャル、大好物😳' },
+  { match: /アヘ顔/, line: 'この表情はやばい…完全にイっちゃってる🥵' },
+  { match: /ぽっちゃり/, line: '包まれたくなる柔らかさ…むちむち感がたまらん🤤' },
+  { match: /主観|ハメ撮/, line: '完全に自分が攻められてる目線…没入感がやばい😳' },
+  { match: /マッサージ|エステ/, line: '施術のはずが…これはもう完全にアウトな展開🫣' },
+  { match: /オナニー/, line: 'ひとりで夢中になってる姿…覗いてる背徳感がやばい🫣' },
   { match: /制服|女子|JK/, line: '背徳感がすごい…見ちゃいけない気がするのに止まらない🫣' },
   { match: /ナンパ/, line: 'まさかここまで落ちるとは…ナンパの結末がえぐい😳' },
   { match: /スレンダー|美乳/, line: 'このスタイルは芸術…細いのに出るとこ出てて反則🤤' },
@@ -144,17 +180,37 @@ function suggestiveLead(item: DmmItem): string {
   return GENERIC_HOOKS[seed % GENERIC_HOOKS.length]
 }
 
-/** リーチ狙いのハッシュタグ。固定の高リーチ枠 + ジャンル由来を最大2つ。 */
+/**
+ * リーチ狙いのハッシュタグ。FANZA検索人気キーワード（docs/fanzaキーワード.md）を優先する。
+ * ①人気ジャンルに合致するもの（人気順・最大2）→ ②出演中の人気女優名 → ③その他ジャンルで補完
+ * → ④固定の高リーチ枠（#FANZA / #エロ動画）。全体で最大4つ程度に抑える。
+ */
 function reachHashtags(item: DmmItem): string {
-  const base = ['#エロ動画', '#FANZA']
-  const genreTags: string[] = []
-  for (const g of genreNames(item)) {
-    // 1〜6文字程度のジャンルだけタグ化（長文ジャンルはタグに不向き）
-    const t = g.replace(/\s/g, '')
-    if (t.length >= 2 && t.length <= 6) genreTags.push(`#${t}`)
-    if (genreTags.length >= 2) break
+  const genres = genreNames(item).map((g) => g.replace(/\s/g, ''))
+  const tags: string[] = []
+
+  // ① FANZA人気ジャンルに合致するものを人気順で最大2つ（検索ボリューム大＝リーチ大）
+  const hits = FANZA_POPULAR_GENRES.filter((kw) => genres.some((g) => g.includes(kw)))
+  for (const kw of hits.slice(0, 2)) tags.push(`#${kw}`)
+
+  // ② 出演中の人気女優がいれば女優名タグ（指名検索が多い）
+  const popAct = (item.iteminfo?.actress ?? [])
+    .map((a) => (a.name ?? '').replace(/\s/g, ''))
+    .find((n) => n.length > 0 && FANZA_POPULAR_ACTRESSES.has(n))
+  if (popAct) tags.push(`#${popAct}`)
+
+  // ③ まだ枠が空いていれば、その他の短いジャンル名で補完
+  for (const g of genres) {
+    if (tags.length >= 3) break
+    const t = `#${g}`
+    if (g.length >= 2 && g.length <= 6 && !tags.includes(t)) tags.push(t)
   }
-  return [...base, ...genreTags].join(' ')
+
+  // ④ 固定の高リーチ枠
+  tags.push('#FANZA')
+  if (tags.length < 4) tags.push('#エロ動画')
+
+  return [...new Set(tags)].join(' ')
 }
 
 /** 価格表記（"498" → "498円"）。表記揺れ時は元文字列に円を付ける。 */
