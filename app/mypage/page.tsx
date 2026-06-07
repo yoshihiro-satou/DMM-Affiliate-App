@@ -552,7 +552,7 @@ export default async function MyPage() {
           <div className="mt-auto flex flex-col items-center gap-1.5 pt-2">
             <p className="text-[10px] text-white/40">お問い合わせ</p>
             <a
-              href="https://x.com/zenyuu1978"
+              href="https://x.com/yoshihirock0710"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 text-white/55 transition-colors hover:border-white/25 hover:text-white/60"

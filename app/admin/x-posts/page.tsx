@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/server'
-import { buildXPosts, type XPost } from '@/lib/social/x-post-generator'
+import { buildXPosts, type XPost, type XPostSegment } from '@/lib/social/x-post-generator'
 import { CopyButton } from '@/components/admin/CopyButton'
 
 export const dynamic = 'force-dynamic'
@@ -8,6 +8,77 @@ export const dynamic = 'force-dynamic'
 export const metadata = {
   title: 'X 投稿ジェネレータ',
   robots: 'noindex,nofollow',
+}
+
+function ImageGrid({ images }: { images: string[] }) {
+  if (images.length === 0) return null
+  return (
+    <div className="mt-3">
+      <p className="mb-1.5 text-[11px] text-white/45">
+        添付候補（その都度選択・タップで原寸を開いて保存） · {images.length}枚
+      </p>
+      <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+        {images.map((src, i) => (
+          <a
+            key={src}
+            href={src}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative block overflow-hidden rounded-md border border-white/10 bg-black/30"
+            title={i === 0 ? 'パッケージ' : `サンプル ${i}`}
+          >
+            {/* 管理用ツールのため next/image ではなく素の img（無改変表示・DMM規約遵守） */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={i === 0 ? 'パッケージ画像' : `サンプル画像 ${i}`}
+              loading="lazy"
+              className="aspect-[3/2] w-full object-cover transition-opacity group-hover:opacity-80"
+            />
+            {i === 0 ? (
+              <span className="absolute left-1 top-1 rounded bg-black/70 px-1 text-[9px] font-bold text-white/85">
+                パッケージ
+              </span>
+            ) : null}
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SegmentBlock({ seg, index }: { seg: XPostSegment; index: number }) {
+  const over = seg.weight > 280
+  return (
+    <div className="rounded-lg border border-white/8 bg-black/20 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[11px] font-semibold text-sky-300/80">{seg.label}</span>
+        <span className={`text-[11px] tabular-nums ${over ? 'text-red-400' : 'text-white/40'}`}>
+          {seg.weight}/280
+        </span>
+      </div>
+      <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-white/85">
+        {seg.text}
+      </pre>
+      <div className="mt-3">
+        <CopyButton text={seg.text} label={`${index + 1}ツイート目をコピー`} />
+      </div>
+      {seg.movieUrl ? (
+        <p className="mt-2 text-[11px] leading-relaxed text-white/55">
+          🎬 サンプル動画:{' '}
+          <a
+            href={seg.movieUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sky-300/80 underline underline-offset-2 break-all"
+          >
+            開いてDL → 動画として添付
+          </a>
+        </p>
+      ) : null}
+      <ImageGrid images={seg.images} />
+    </div>
+  )
 }
 
 function PostCard({ post }: { post: XPost }) {
@@ -21,53 +92,38 @@ function PostCard({ post }: { post: XPost }) {
         >
           {post.angleLabel}
         </span>
-        <span className={`text-[11px] tabular-nums ${over ? 'text-red-400' : 'text-white/40'}`}>
-          {post.weight}/280
-        </span>
+        {post.thread ? (
+          <span className="text-[11px] tabular-nums text-white/40">{post.thread.length}連投</span>
+        ) : (
+          <span className={`text-[11px] tabular-nums ${over ? 'text-red-400' : 'text-white/40'}`}>
+            {post.weight}/280
+          </span>
+        )}
       </div>
 
-      <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-white/85">
-        {post.text}
-      </pre>
-
-      <div className="mt-3">
-        <CopyButton text={post.text} label="投稿文をコピー" />
-      </div>
-
-      {post.images.length > 0 ? (
-        <div className="mt-3">
-          <p className="mb-1.5 text-[11px] text-white/45">
-            添付候補（その都度選択・タップで原寸を開いて保存） · {post.images.length}枚
+      {post.thread ? (
+        <div className="flex flex-col gap-2.5">
+          <p className="text-[11px] leading-relaxed text-amber-300/70">
+            ①を投稿 → そのツイートに②をリプライで連投。リンクは②に逃がしてフックのリーチを最大化。
           </p>
-          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
-            {post.images.map((src, i) => (
-              <a
-                key={src}
-                href={src}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative block overflow-hidden rounded-md border border-white/10 bg-black/30"
-                title={i === 0 ? 'パッケージ' : `サンプル ${i}`}
-              >
-                {/* 管理用ツールのため next/image ではなく素の img（無改変表示・DMM規約遵守） */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={src}
-                  alt={i === 0 ? 'パッケージ画像' : `サンプル画像 ${i}`}
-                  loading="lazy"
-                  className="aspect-[3/2] w-full object-cover transition-opacity group-hover:opacity-80"
-                />
-                {i === 0 ? (
-                  <span className="absolute left-1 top-1 rounded bg-black/70 px-1 text-[9px] font-bold text-white/85">
-                    パッケージ
-                  </span>
-                ) : null}
-              </a>
-            ))}
-          </div>
+          {post.thread.map((seg, i) => (
+            <SegmentBlock key={seg.label} seg={seg} index={i} />
+          ))}
         </div>
       ) : (
-        <p className="mt-3 text-[11px] text-white/40">画像なし（テキスト投稿）</p>
+        <>
+          <pre className="whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-white/85">
+            {post.text}
+          </pre>
+          <div className="mt-3">
+            <CopyButton text={post.text} label="投稿文をコピー" />
+          </div>
+          {post.images.length > 0 ? (
+            <ImageGrid images={post.images} />
+          ) : (
+            <p className="mt-3 text-[11px] text-white/40">画像なし（テキスト投稿）</p>
+          )}
+        </>
       )}
 
       {post.itemTitle ? (
