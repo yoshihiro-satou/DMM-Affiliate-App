@@ -158,8 +158,9 @@ export default async function XPostsPage() {
           <h1 className="mt-1 text-xl font-black text-white">X 投稿ジェネレータ</h1>
           <p className="mt-1 text-[12px] leading-relaxed text-white/45">
             今日のセール・新作から「拡散の科学」準拠の投稿案を生成。①フックを投稿 → そのツイートに②を
-            リプライ連投。リンクは <code className="text-white/60">?ref=x_*</code>{' '}
-            付き（アングル別）で流入を計測。
+            リプライ連投。②の CTA は全アングル{' '}
+            <code className="text-white/60">Telegram（t.me/s/）</code>{' '}
+            へ一本化＝X→フォロー獲得で外部購読者0→1を狙う（Template A）。
           </p>
           <p className="mt-2 text-[11px] leading-relaxed text-sky-300/70">
             ⏰ 投稿の狙い目: アダルト系Xは <strong>夜21時〜深夜2時</strong>{' '}

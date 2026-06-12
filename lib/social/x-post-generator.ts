@@ -2,7 +2,7 @@ import 'server-only'
 import { fetchSaleItems, fetchItemList, isVrItem } from '@/lib/dmm/client'
 import { sortBySaleAppeal, calcDiscountRate, parsePrice } from '@/lib/ranking'
 import { toLargeDmmImageUrl } from '@/lib/dmm/image'
-import { TELEGRAM_CHANNEL_URL } from '@/lib/constants/telegram'
+import { TELEGRAM_CHANNEL_WEB_URL } from '@/lib/constants/telegram'
 import type { DmmItem } from '@/types/dmm'
 
 /**
@@ -10,11 +10,10 @@ import type { DmmItem } from '@/types/dmm'
  * API（従量課金）を使わず、コピペ即投稿できる投稿文を生成する。
  *
  * 設計は「拡散の科学」（kakusan_no_kagaku_summary.md / memory: project-x-posting-strategy）準拠。
- * 熱量パターン WOW / 知っトク / WANT を意図的に出し分ける。リンクは自社サイト（?ref=x）へ集約し、
- * X→サイト→（アフィリンク or Telegram購読）の流入を funnel_by_ref で計測する。
+ * 熱量パターン WOW / 知っトク / WANT を意図的に出し分けつつ、CTA は全アングルで
+ * Telegram セール速報チャンネル（t.me/s/・アプリ/登録不要）へ一本化する（Template A）。
+ * 狙いは X→アフィ購入（実績 CV0%）ではなく X→Telegram フォロー獲得（低ハードル・0→1の本丸）。
  */
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 /**
  * 景表法（ステマ規制）対応。アフィリエイト誘導を含むツイートには広告である旨を明示する。
@@ -276,10 +275,9 @@ export async function buildXPosts(): Promise<XPost[]> {
   const ranked = sortBySaleAppeal(saleItems).filter((it) => discountRate(it) >= 10)
   const fresh = (newResult?.items ?? []).filter((it) => !isVrItem(it))
 
-  // 流入元をアングル別に分けて funnel_by_ref で勝ちパターンを判別できるようにする
-  const saleLinkWow = `${SITE_URL}/sale?ref=x_wow`
-  const saleLinkKnow = `${SITE_URL}/sale?ref=x_know`
-  const newLink = `${SITE_URL}/new?ref=x_new`
+  // CTA は全アングルで Telegram 公開チャンネル（t.me/s/・アプリ/登録不要）へ一本化する（Template A）。
+  // X の役割を「アフィ購入(CV0%)」から「Telegram フォロー獲得」へ振り切り、0→1（外部購読者）を狙う。
+  const tgLink = TELEGRAM_CHANNEL_WEB_URL
 
   // 「最大N%OFF」表記用の本日の実最大割引（高評価順とは別に正確な最大値を出す）
   const maxRate = ranked.reduce((m, it) => Math.max(m, discountRate(it)), 0)
@@ -299,12 +297,12 @@ export async function buildXPosts(): Promise<XPost[]> {
     const price = priceLabel(top)
     const hookText = [suggestiveLead(top), '', reachHashtags(top)].join('\n')
     const replyText = [
-      `👆の作品はこちら`,
-      `「${trimTitle(top.title, 34)}」`,
+      `👆「${trimTitle(top.title, 30)}」`,
+      price ? `今だけ${rate}%OFF（${price}）🔥` : `今だけ${rate}%OFF🔥`,
+      'こういうお得作品を毎日0時にTelegramで速報配信📲',
       '',
-      price ? `🔥${rate}%OFFセール中（${price}）` : `🔥今だけ${rate}%OFFセール中`,
-      '他のお得情報もサイトでまとめました👇',
-      saleLinkWow,
+      '登録不要・無料で読める👇',
+      tgLink,
       '',
       PR_NOTE,
       '#FANZA #セール',
@@ -330,8 +328,8 @@ export async function buildXPosts(): Promise<XPost[]> {
       price ? `今だけ${rate}%OFF（${price}）なの知ってた？😳` : `今だけ${rate}%OFFなの知ってた？😳`,
       '',
       `FANZAのセールは毎日入れ替わる。今日は最大${maxRate}%OFF🔥`,
-      '狙い目はサイトにまとめました👇',
-      saleLinkKnow,
+      '見逃したくない人はTelegramが楽（毎日0時更新・登録不要）👇',
+      tgLink,
       '',
       PR_NOTE,
       '#FANZA #お得情報',
@@ -354,8 +352,8 @@ export async function buildXPosts(): Promise<XPost[]> {
       `👆の新作「${trimTitle(fresh0.title, 30)}」`,
       'ついに配信開始✨ これは早めにチェック案件',
       '',
-      '他の新着・お得情報もサイトでまとめました👇',
-      newLink,
+      '新作もセールも毎日0時にTelegramでまとめて速報📲（登録不要）👇',
+      tgLink,
       '',
       PR_NOTE,
       '#FANZA #新作',
@@ -375,9 +373,9 @@ export async function buildXPosts(): Promise<XPost[]> {
   if (teaser) {
     const hookText = [suggestiveLead(teaser), '', reachHashtags(teaser)].join('\n')
     const replyText = [
-      'こういうお得作品、毎日のFANZAセール速報で配信中📲',
-      '見逃したくない人はTelegramが楽（登録不要）👇',
-      TELEGRAM_CHANNEL_URL,
+      'こういうお得作品、毎日0時のFANZAセール速報で配信中📲',
+      'アプリ不要・登録不要・無料で読める👇',
+      tgLink,
       '',
       PR_NOTE,
       '#FANZA #セール速報',
