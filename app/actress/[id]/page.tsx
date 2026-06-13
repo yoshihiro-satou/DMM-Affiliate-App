@@ -45,19 +45,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const actress = result?.actress[0]
   if (!actress) return { title: '女優ページ' }
 
-  const stats = [
-    actress.bust ? `B${actress.bust}` : '',
-    actress.waist ? `W${actress.waist}` : '',
-    actress.hip ? `H${actress.hip}` : '',
-    actress.height ? `身長${actress.height}cm` : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const countText = totalCount ? `全${totalCount}作品。` : ''
-  const statsText = stats ? `${stats}。` : ''
-  const title = `${actress.name} おすすめFANZA作品一覧`
-  const description = `${actress.name}のFANZAおすすめ作品一覧。${countText}${statsText}最新作・人気作をレビュー順に掲載。`
+  const countBadge = totalCount ? `【全${totalCount}本】` : ''
+  const countPhrase = totalCount ? `全${totalCount}作品を` : 'FANZA動画を'
+  const title = `${actress.name}のFANZA作品一覧${countBadge}｜セール・最新作`
+  const description = `${actress.name}の${countPhrase}新着・人気順でチェック。今セール中の割引作品や最新作・独占配信もまとめて掲載。気になる作品はそのまま視聴ページへ。毎日0時にセール速報も配信中（登録不要・無料）。`
 
   return {
     title,
