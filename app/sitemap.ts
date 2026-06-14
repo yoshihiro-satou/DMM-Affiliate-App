@@ -15,9 +15,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/guide`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
   ]
 
-  const [actressResult, itemResult, genreResult] = await Promise.all([
+  const [actressResult, itemRankResult, itemDateResult, genreResult] = await Promise.all([
     fetchActressList({ hits: 100, sort: 'id' }).catch(() => null),
     fetchItemList({ sort: 'rank', hits: 100, service: 'digital', floor: 'videoa' }).catch(() => null),
+    fetchItemList({ sort: 'date', hits: 100, service: 'digital', floor: 'videoa' }).catch(() => null),
     fetchGenreList({ floor_id: '43', hits: 100 }).catch(() => null),
   ])
 
@@ -28,8 +29,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
+  // ランキング上位＋新着の両方から series ID を集約（新着シリーズの取りこぼしを防ぐ）
   const seriesIds = new Set<number>()
-  for (const item of itemResult?.items ?? []) {
+  for (const item of [...(itemRankResult?.items ?? []), ...(itemDateResult?.items ?? [])]) {
     for (const s of item.iteminfo?.series ?? []) {
       if (s.id !== undefined) seriesIds.add(s.id)
     }

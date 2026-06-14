@@ -26,14 +26,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const thumbnail =
     data.items[0]?.imageURL.list ?? data.items[0]?.imageURL.large ?? null
 
+  const volumeCount = data.items.length
+  const title = `${data.seriesName} 全${volumeCount}巻｜FANZAセール・最新巻まとめ`
+  const description = `${data.seriesName}シリーズ全${volumeCount}巻をまとめてチェック。セール中の割引巻・最新巻・独占配信も掲載し、気になる巻はそのままFANZA視聴ページへ。毎日0時にセール速報も配信中（登録不要・無料）。`
+
   return {
-    title: data.seriesName,
-    description: `${data.seriesName} 全${data.items.length}巻のシリーズ完走トラッカー`,
+    title,
+    description,
     alternates: { canonical: `/series/${id}` },
     openGraph: {
       url: `/series/${id}`,
-      title: `${data.seriesName} | シリーズトラッカー`,
-      description: `${data.seriesName} 全${data.items.length}巻のシリーズ完走トラッカー`,
+      title: `${title} | FANZAピックス`,
+      description,
       images: thumbnail ? [thumbnail] : undefined,
     },
   }
@@ -94,14 +98,40 @@ export default async function SeriesDetailPage({ params }: Props) {
     null
 
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'CreativeWorkSeries',
-    name: seriesName,
-    numberOfEpisodes: totalCount,
-    url: `${SITE_URL}/series/${id}`,
-    ...(thumbnail ? { image: thumbnail } : {}),
+
+  // 内部リンク用: シリーズ全巻から出演女優・ジャンルを集約（重複排除）
+  const actressMap = new Map<number, string>()
+  const genreMap = new Map<number, string>()
+  for (const item of items) {
+    for (const a of item.iteminfo?.actress ?? []) {
+      if (a.id !== undefined && a.name) actressMap.set(a.id, a.name)
+    }
+    for (const g of item.iteminfo?.genre ?? []) {
+      if (g.id !== undefined && g.name) genreMap.set(g.id, g.name)
+    }
   }
+  const actresses = [...actressMap.entries()].slice(0, 12)
+  const genres = [...genreMap.entries()].slice(0, 12)
+
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CreativeWorkSeries',
+      name: seriesName,
+      numberOfEpisodes: totalCount,
+      url: `${SITE_URL}/series/${id}`,
+      ...(thumbnail ? { image: thumbnail } : {}),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'シリーズ', item: `${SITE_URL}/series` },
+        { '@type': 'ListItem', position: 3, name: seriesName, item: `${SITE_URL}/series/${id}` },
+      ],
+    },
+  ]
 
   return (
     <main className="min-h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -109,6 +139,18 @@ export default async function SeriesDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {/* パンくず（内部リンク） */}
+      <nav className="flex items-center gap-1.5 px-4 pt-4 text-[11px] text-white/45">
+        <Link href="/" className="shrink-0 hover:text-white/70">
+          ホーム
+        </Link>
+        <span className="text-white/25">/</span>
+        <Link href="/series" className="shrink-0 hover:text-white/70">
+          シリーズ
+        </Link>
+        <span className="text-white/25">/</span>
+        <span className="truncate text-white/60">{seriesName}</span>
+      </nav>
       {/* ヘッダー */}
       <div className="flex gap-4 border-b border-white/8 px-4 py-5">
         <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-white/5">
@@ -265,6 +307,44 @@ export default async function SeriesDetailPage({ params }: Props) {
           })}
         </div>
       </div>
+
+      {/* 関連リンク（内部リンク・回遊/クロール） */}
+      {(actresses.length > 0 || genres.length > 0) && (
+        <section className="mt-6 border-t border-white/8 px-4 pt-5">
+          {actresses.length > 0 && (
+            <div className="mb-4">
+              <h2 className="mb-2 text-[12px] font-bold text-white/70">出演女優</h2>
+              <div className="flex flex-wrap gap-2">
+                {actresses.map(([aid, name]) => (
+                  <Link
+                    key={aid}
+                    href={`/actress/${aid}`}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/70 hover:border-red-500/50 hover:text-white"
+                  >
+                    {name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {genres.length > 0 && (
+            <div>
+              <h2 className="mb-2 text-[12px] font-bold text-white/70">ジャンル</h2>
+              <div className="flex flex-wrap gap-2">
+                {genres.map(([gid, name]) => (
+                  <Link
+                    key={gid}
+                    href={`/genre/${gid}`}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/60 hover:border-red-500/50 hover:text-white"
+                  >
+                    {name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
     </main>
   )
 }
