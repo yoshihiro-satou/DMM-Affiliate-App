@@ -61,3 +61,6 @@ next-env.d.ts
 /scripts/preview-log.txt
 /scripts/verify-*.mjs
 /scripts/check-top*.mjs
+# Build artifact: regenerated each build by scripts/patch-worker.js (BUILD_ID churns)
+/scripts/load-manifest-stub.js
+.mcp.json
