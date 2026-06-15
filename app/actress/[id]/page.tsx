@@ -140,6 +140,21 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     .slice(0, 8)
     .map(([coId, { name, count }]) => ({ id: coId, name, count }))
 
+  // 出演シリーズ（作品から集計・出現頻度順 上位8件）。
+  // actress → series の逆方向内部リンクで series ページのクロール発見性と順位を支える。
+  const seriesCountMap = new Map<number, { name: string; count: number }>()
+  for (const item of works) {
+    for (const s of item.iteminfo?.series ?? []) {
+      if (s.id == null || !s.name) continue
+      const prev = seriesCountMap.get(s.id)
+      seriesCountMap.set(s.id, { name: s.name, count: (prev?.count ?? 0) + 1 })
+    }
+  }
+  const relatedSeries = [...seriesCountMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 8)
+    .map(([sid, { name }]) => ({ id: sid, name }))
+
   const profileStats = [
     actress.height ? { label: '身長', value: `${actress.height}cm` } : null,
     actress.bust
@@ -336,6 +351,27 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
             ))}
           </ol>
           <p className="mt-2 text-[9px] text-white/35">PR · レビュー評価順</p>
+        </section>
+      )}
+
+      {/* 出演シリーズ（series ページへの逆方向内部リンク・クロール/順位を支える） */}
+      {relatedSeries.length > 0 && (
+        <section className="border-t border-white/8 px-4 pb-8 pt-5">
+          <h2 className="mb-3 text-[15px] font-black tracking-tight text-white">
+            {actress.name}の出演シリーズ
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {relatedSeries.map((s) => (
+              <a
+                key={s.id}
+                href={`/series/${s.id}`}
+                className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/70 hover:border-red-500/40 hover:bg-red-950/30 hover:text-white active:opacity-70"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                {s.name}
+              </a>
+            ))}
+          </div>
         </section>
       )}
 

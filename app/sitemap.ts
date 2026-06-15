@@ -22,11 +22,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     fetchGenreList({ floor_id: '43', hits: 100 }).catch(() => null),
   ])
 
-  const actressRoutes: MetadataRoute.Sitemap = (actressResult?.actress ?? []).map((a) => ({
-    url: `${BASE_URL}/actress/${a.id}`,
+  // 女優: カタログ既定100名に加え、人気ランキング/新着の出演女優を統合する。
+  // ActressSearch の既定100名は「今ホットな女優」が漏れ、需要の中心（例: 北岡果林/瀬戸環奈）が
+  // sitemap外＝Google未発見になる。series 用に取得済みの itemRank/itemDate から出演女優IDを拾い、
+  // 需要のある女優ページを能動的に発見させる（API呼び出しの追加なし）。
+  // 既定100名=0.7 / 人気・新着出演女優=0.8（後勝ちで優先度を引き上げる）。
+  const actressPriority = new Map<string, number>()
+  for (const a of actressResult?.actress ?? []) {
+    actressPriority.set(a.id, 0.7)
+  }
+  for (const item of [...(itemRankResult?.items ?? []), ...(itemDateResult?.items ?? [])]) {
+    for (const a of item.iteminfo?.actress ?? []) {
+      if (a.id !== undefined) actressPriority.set(String(a.id), 0.8)
+    }
+  }
+  const actressRoutes: MetadataRoute.Sitemap = [...actressPriority].map(([id, priority]) => ({
+    url: `${BASE_URL}/actress/${id}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
-    priority: 0.7,
+    priority,
   }))
 
   // ランキング上位＋新着の両方から series ID を集約（新着シリーズの取りこぼしを防ぐ）

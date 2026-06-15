@@ -184,6 +184,11 @@ export default async function SeriesDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {/* 導入文（SEO・検索意図に一致するテキストコンテンツ／画像グリッドだけだった本文を補強） */}
+      <p className="border-b border-white/8 px-4 py-3 text-[12px] leading-relaxed text-white/55">
+        <strong className="font-bold text-white/75">{seriesName}</strong>の全{totalCount}巻をまとめてチェックできるシリーズページです。各巻のセール価格・最新巻をひと目で確認でき、気になる巻はそのままFANZAの視聴ページへ。新刊フォローで最新巻の配信も見逃しません。
+      </p>
+
       {/* PR */}
       <p className="px-4 py-1 text-[9px] text-white/40">PR · FANZAアフィリエイトリンク</p>
 

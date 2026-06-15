@@ -119,8 +119,12 @@ export default async function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
+            // 管理画面(/admin/*)はオーナー専用のため計測から除外する。
+            // IP内部トラフィック除外(GA4側)に加え、IP変動時の保険として page_view を送らない。
+            var __isAdmin = window.location.pathname.indexOf('/admin') === 0;
             gtag('config', '${GA_ID}', {
               page_path: window.location.pathname,
+              send_page_view: !__isAdmin,
               ${user?.sub ? `user_id: '${user.sub}',` : ''}
             });
           `}
