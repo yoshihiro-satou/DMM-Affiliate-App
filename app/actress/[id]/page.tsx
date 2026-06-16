@@ -75,18 +75,24 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     return <ActressNotFound id={id} />
   }
 
-  const [actressResult, worksResult, oshiList] = await Promise.all([
+  const [actressResult, latestResult, popularResult, oshiList] = await Promise.all([
     getActressById(actressId),
-    Promise.resolve()
-      .then(() => fetchItemList({
-        article: 'actress',
-        article_id: actressId,
-        service: 'digital',
-        floor: 'videoa',
-        hits: 30,
-        sort: currentTab === 'popular' ? 'rank' : 'date',
-      }))
-      .catch(() => null),
+    fetchItemList({
+      article: 'actress',
+      article_id: actressId,
+      service: 'digital',
+      floor: 'videoa',
+      hits: 30,
+      sort: 'date',
+    }).catch(() => null),
+    fetchItemList({
+      article: 'actress',
+      article_id: actressId,
+      service: 'digital',
+      floor: 'videoa',
+      hits: 30,
+      sort: 'rank',
+    }).catch(() => null),
     getOshiActresses(),
   ])
 
@@ -102,13 +108,29 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     return <ActressNotFound id={id} />
   }
 
+  // 表示用グリッドは選択中タブ（最新 or 人気）の30件
+  const worksResult = currentTab === 'popular' ? popularResult : latestResult
   const works = worksResult?.items ?? []
-  const totalWorks = worksResult?.total_count ?? null
+  const totalWorks = (latestResult ?? popularResult)?.total_count ?? null
   const imageUrl = actress.imageURL?.large ?? actress.imageURL?.small ?? null
+
+  // 内部リンク/SEO集計用：最新(date)＋人気(rank)の和集合（content_idで重複排除）。
+  // 表示タブの30件窓だけだと、その女優の最新作に含まれない人気・旧作シリーズ
+  // （主力シリーズの旧巻など）が出演シリーズの逆方向内部リンクから漏れる。
+  // 人気順も併せて集計することで、被発見性と series ページの順位を底上げする。
+  const aggSeen = new Set<string>()
+  const aggWorks = [
+    ...(popularResult?.items ?? []),
+    ...(latestResult?.items ?? []),
+  ].filter((w) => {
+    if (aggSeen.has(w.content_id)) return false
+    aggSeen.add(w.content_id)
+    return true
+  })
 
   // 出演作品からジャンルを集計（出現頻度順・上位8件）
   const genreCountMap = new Map<number, { name: string; count: number }>()
-  for (const item of works) {
+  for (const item of aggWorks) {
     for (const g of item.iteminfo?.genre ?? []) {
       if (g.id == null || !g.name) continue
       const prev = genreCountMap.get(g.id)
@@ -121,14 +143,14 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
     .map(([genreId, { name }]) => ({ id: genreId, name }))
 
   // 人気作品ランキング（レビュー評価順 TOP5・テキストSEO用）
-  const popularWorks = [...works]
+  const popularWorks = [...aggWorks]
     .filter((w) => w.review?.average)
     .sort((a, b) => Number(b.review?.average ?? 0) - Number(a.review?.average ?? 0))
     .slice(0, 5)
 
   // 共演女優（出演作からの共演頻度・上位8人）
   const coActressMap = new Map<number, { name: string; count: number }>()
-  for (const item of works) {
+  for (const item of aggWorks) {
     for (const a of item.iteminfo?.actress ?? []) {
       if (a.id == null || a.id === actressId || !a.name) continue
       const prev = coActressMap.get(a.id)
@@ -143,7 +165,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
   // 出演シリーズ（作品から集計・出現頻度順 上位8件）。
   // actress → series の逆方向内部リンクで series ページのクロール発見性と順位を支える。
   const seriesCountMap = new Map<number, { name: string; count: number }>()
-  for (const item of works) {
+  for (const item of aggWorks) {
     for (const s of item.iteminfo?.series ?? []) {
       if (s.id == null || !s.name) continue
       const prev = seriesCountMap.get(s.id)
