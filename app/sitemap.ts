@@ -1,6 +1,12 @@
 import type { MetadataRoute } from 'next'
 import { fetchActressList, fetchItemList, fetchGenreList } from '@/lib/dmm/client'
 
+// sitemap は DMM API を4本ライブで叩いて生成する動的ルート。無キャッシュだと毎フェッチで
+// 上流呼び出しが走り、Workerコールドスタート＋上流の一時的な遅延が重なると稀に応答が
+// Googlebot のタイムアウトを跨いで500（GSC「一般的なHTTPエラー」）になる。ISRでKV
+// （NEXT_INC_CACHE_KV）にキャッシュし、6時間ごとに再生成して上流呼び出しを critical path から外す。
+export const revalidate = 21600 // 6h
+
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fanzapicks.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
