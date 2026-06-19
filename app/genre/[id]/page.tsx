@@ -35,15 +35,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const data = await getGenreData(genreId).catch(() => null)
   const genreName = data?.genreName ?? `ジャンル${id}`
+  const total = data?.result.total_count ?? null
+  const countPhrase = total ? `${total.toLocaleString()}本から` : ''
+
+  const title = `${genreName}のFANZA動画 人気ランキング｜新作・セール`
+  const description = `FANZA「${genreName}」の人気動画を${countPhrase}評価順・新着順でチェック。レビュー高評価の人気作・最新作・セール割引作品を厳選掲載。気になる作品はそのまま公式視聴ページへ。毎日0時にセール速報も配信中（登録不要・無料）。`
 
   return {
-    title: `${genreName} おすすめ作品`,
-    description: `FANZA ${genreName}のおすすめ作品一覧。レビュー評価の高い人気作を厳選して掲載。最新・人気順で${genreName}動画を探せます。`,
+    title,
+    description,
     alternates: { canonical: `/genre/${id}` },
     openGraph: {
       url: `/genre/${id}`,
-      title: `${genreName} おすすめ作品 | FANZAピックス`,
-      description: `FANZA ${genreName}のおすすめ作品一覧。レビュー評価の高い人気作を厳選して掲載。`,
+      title: `${title} | FANZAピックス`,
+      description,
     },
   }
 }
