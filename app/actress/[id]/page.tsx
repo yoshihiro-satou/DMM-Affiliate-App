@@ -46,9 +46,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!actress) return { title: '女優ページ' }
 
   const countBadge = totalCount ? `【全${totalCount}本】` : ''
-  const countPhrase = totalCount ? `全${totalCount}作品を` : 'FANZA動画を'
-  const title = `${actress.name}のFANZA作品一覧${countBadge}｜セール・最新作`
-  const description = `${actress.name}の${countPhrase}新着・人気順でチェック。今セール中の割引作品や最新作・独占配信もまとめて掲載。気になる作品はそのまま視聴ページへ。毎日0時にセール速報も配信中（登録不要・無料）。`
+  const countText = totalCount ? `全${totalCount}本` : '多数'
+  const title = `${actress.name}のFANZA動画一覧${countBadge}｜新作・人気・セール`
+  const description = `${actress.name}のFANZA動画を${countText}掲載。新作・人気作・セール割引作品を新着順／人気順でまとめてチェック。気になる作品はそのまま公式視聴ページへ。毎日0時にセール速報も配信中（登録不要・無料）。`
 
   return {
     title,
