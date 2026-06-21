@@ -36,7 +36,7 @@ export function ReadToggleButton({ itemId, seriesId, isRead: initialIsRead, tota
       <button
         onClick={toggle}
         disabled={isPending}
-        aria-label={isRead ? '未読に戻す' : '読了にする'}
+        aria-label={isRead ? '未購入に戻す' : '購入済みにする'}
         className={`mt-1 flex w-full items-center justify-center gap-1 rounded py-1 text-[10px] font-semibold transition-colors disabled:opacity-60 ${
           isRead
             ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
@@ -46,10 +46,10 @@ export function ReadToggleButton({ itemId, seriesId, isRead: initialIsRead, tota
         {isRead ? (
           <>
             <Check size={10} />
-            読了
+            購入済み
           </>
         ) : (
-          '未読'
+          '未購入'
         )}
       </button>
 

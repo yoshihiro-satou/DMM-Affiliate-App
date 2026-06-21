@@ -8,6 +8,23 @@ import { ReadToggleButton } from './_components/ReadToggleButton'
 import { FollowButton } from './_components/FollowButton'
 import { BulkBuyButton } from './_components/BulkBuyButton'
 
+// awsimgsrc.dmm.co.jp のリサイズAPIで 2x Retina(368x500) を取得し高精細化（他カード ProductCard と同方針）。
+// 小さい imageURL.list を素のまま拡大すると粗いため、large を優先しつつ CDN リサイズを噛ませる。
+function buildDmmImageUrl(raw: string): { src: string; unoptimized: boolean } {
+  try {
+    const url = new URL(raw)
+    if (url.hostname === 'awsimgsrc.dmm.co.jp') {
+      url.searchParams.set('w', '368')
+      url.searchParams.set('h', '500')
+      url.searchParams.set('t', 'margin')
+      return { src: url.toString(), unoptimized: true }
+    }
+  } catch {
+    // fall through
+  }
+  return { src: raw, unoptimized: false }
+}
+
 export const revalidate = 3600
 export const dynamicParams = true
 
@@ -90,7 +107,6 @@ export default async function SeriesDetailPage({ params }: Props) {
   const unreadUrls = items
     .filter((item) => !readItemIds.has(item.content_id))
     .map((item) => item.affiliateURL)
-  const allUrls = items.map((item) => item.affiliateURL)
 
   const thumbnail =
     items[items.length - 1]?.imageURL.list ??
@@ -198,12 +214,12 @@ export default async function SeriesDetailPage({ params }: Props) {
           <>
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[13px] font-semibold text-white/70">
-                {readCount}巻読了 / 全{totalCount}巻
+                {readCount}巻購入済み / 全{totalCount}巻
               </span>
               {remaining > 0 ? (
-                <span className="text-[11px] text-white/65">あと{remaining}巻で完走</span>
+                <span className="text-[11px] text-white/65">あと{remaining}巻でコンプリート</span>
               ) : (
-                <span className="text-[11px] font-bold text-yellow-400">完走達成!</span>
+                <span className="text-[11px] font-bold text-yellow-400">全巻コンプ達成!</span>
               )}
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-white/10">
@@ -214,7 +230,7 @@ export default async function SeriesDetailPage({ params }: Props) {
             </div>
           </>
         ) : (
-          <p className="text-[12px] text-white/55">ログインして読書進捗を記録しましょう</p>
+          <p className="text-[12px] text-white/55">ログインして購入済みの巻を記録しましょう</p>
         )}
       </div>
 
@@ -230,11 +246,10 @@ export default async function SeriesDetailPage({ params }: Props) {
         {unreadUrls.length > 0 && (
           <BulkBuyButton
             urls={unreadUrls}
-            label={`未読${unreadUrls.length}巻まとめ購入`}
+            label={`未購入${unreadUrls.length}巻まとめ購入`}
             variant="primary"
           />
         )}
-        <BulkBuyButton urls={allUrls} label="全巻FANZAで開く" variant="secondary" />
       </div>
 
       {/* 巻一覧 */}
@@ -243,11 +258,13 @@ export default async function SeriesDetailPage({ params }: Props) {
           {items.map((item, i) => {
             const isRead = readItemIds.has(item.content_id)
             const price = parsePrice(item.prices.price)
-            const imgSrc =
-              item.imageURL.list ??
+            // 他ページと同様に large(パッケージ画像)を優先＝list の素拡大による粗さを解消。
+            const rawImg =
               item.imageURL.large ??
+              item.imageURL.list ??
               item.imageURL.small ??
               null
+            const img = rawImg ? buildDmmImageUrl(rawImg) : null
 
             return (
               <div key={item.content_id} className="flex flex-col">
@@ -258,12 +275,14 @@ export default async function SeriesDetailPage({ params }: Props) {
                     rel="noopener noreferrer"
                     className="relative block overflow-hidden rounded-lg bg-white/5"
                   >
-                    {imgSrc ? (
+                    {img ? (
                       <Image
-                        src={imgSrc}
+                        src={img.src}
                         alt={item.title}
                         width={184}
                         height={250}
+                        unoptimized={img.unoptimized}
+                        sizes="(max-width: 639px) calc(50vw - 14px), (max-width: 767px) calc(33vw - 14px), 25vw"
                         className={`aspect-[184/250] w-full object-cover transition-opacity ${isRead ? 'opacity-35' : 'opacity-100'}`}
                       />
                     ) : (
@@ -277,7 +296,7 @@ export default async function SeriesDetailPage({ params }: Props) {
                     {isRead && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="rounded-full bg-green-500/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-                          読了
+                          購入済み
                         </span>
                       </div>
                     )}

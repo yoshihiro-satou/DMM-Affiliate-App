@@ -22,7 +22,7 @@ export default async function SeriesListPage() {
 
   const series = followedSeries ?? []
 
-  // フォロー中シリーズごとの読了数を一括取得
+  // フォロー中シリーズごとの購入済み数を一括取得
   const seriesIds = series.map((s) => s.series_id)
   const progressCounts = new Map<number, number>()
 
@@ -80,7 +80,7 @@ function SeriesCard({
         <p className="line-clamp-2 text-[14px] font-semibold leading-snug text-white">
           {series.series_name}
         </p>
-        <p className="text-[11px] text-white/55">{readCount}巻読了</p>
+        <p className="text-[11px] text-white/55">{readCount}巻購入済み</p>
       </div>
       <span className="shrink-0 text-[18px] text-white/40">›</span>
     </a>
