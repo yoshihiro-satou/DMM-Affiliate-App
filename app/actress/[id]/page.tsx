@@ -17,15 +17,23 @@ async function getActressById(actressId: number) {
   return fetchActressList({ actress_id: actressId }).catch(() => null)
 }
 
-async function getActressWorkCount(actressId: number): Promise<number | null> {
+// 件数と最新作を1コールで取得（sort:'date' を足すだけ＝API呼び出し増なし）。
+// 最新作タイトルは description の鮮度・具体性シグナルに使う（指名クエリのCTR刈り取り）。
+async function getActressWorkMeta(
+  actressId: number,
+): Promise<{ totalCount: number | null; latestTitle: string | null }> {
   const result = await fetchItemList({
     article: 'actress',
     article_id: actressId,
     service: 'digital',
     floor: 'videoa',
     hits: 1,
+    sort: 'date',
   }).catch(() => null)
-  return result?.total_count ?? null
+  return {
+    totalCount: result?.total_count ?? null,
+    latestTitle: result?.items?.[0]?.title ?? null,
+  }
 }
 
 type Props = {
@@ -38,17 +46,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const actressId = parseInt(id)
   if (isNaN(actressId)) return { title: '女優ページ' }
 
-  const [result, totalCount] = await Promise.all([
+  const [result, workMeta] = await Promise.all([
     getActressById(actressId),
-    getActressWorkCount(actressId),
+    getActressWorkMeta(actressId),
   ])
   const actress = result?.actress[0]
   if (!actress) return { title: '女優ページ' }
 
+  const { totalCount, latestTitle } = workMeta
   const countBadge = totalCount ? `【全${totalCount}本】` : ''
   const countText = totalCount ? `全${totalCount}本` : '多数'
-  const title = `${actress.name}のFANZA動画一覧${countBadge}｜新作・人気・セール`
-  const description = `${actress.name}のFANZA動画を${countText}掲載。新作・人気作・セール割引作品を新着順／人気順でまとめてチェック。気になる作品はそのまま公式視聴ページへ。毎日0時にセール速報も配信中（登録不要・無料）。`
+  const title = `${actress.name}のFANZA動画一覧${countBadge}｜新作・人気作を毎日更新`
+
+  // スニペット先頭に「女優名＋本数＋最新作」を置き、好位置×0CTRの指名クエリを刈る。
+  // 尾部は意図に合う「FANZA公式の視聴・サンプルへ」に寄せる（旧・セール速報の宣伝文は除去）。
+  const latestPhrase = latestTitle
+    ? `。最新作「${latestTitle.length > 22 ? `${latestTitle.slice(0, 22)}…` : latestTitle}」ほか、`
+    : '。'
+  const description = `${actress.name}のFANZA動画を${countText}掲載${latestPhrase}新作・人気作・セール割引作品を新着順／人気順でチェック。各作品はFANZA公式の視聴・サンプルページへ。`
 
   return {
     title,

@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { track, captureRef, getSessionId } from '@/lib/track'
+import { trackEvent } from '@/lib/analytics'
 
 const VISIT_SESSION_KEY = 'fp_visited' // セッション内 visit 重複防止
 const LAST_VISIT_KEY = 'fp_last_visit' // 日次 revisit 判定
@@ -63,7 +64,11 @@ export function Tracker() {
       const href = anchor.getAttribute('href') ?? ''
       if (/al\.dmm|al\.fanza|dmm\.co\.jp|fanza\.co\.jp/.test(href)) {
         const itemId = anchor.dataset.itemId ?? null
+        // 自前KPI（Supabase events）
         track('affiliate_click', { itemId })
+        // GA4 キーイベント（FANZA送客＝本サイト最重要のコンバージョン）。
+        // GA4管理画面で `affiliate_click` を「キーイベント」に指定して計上する。
+        trackEvent('affiliate_click', { item_id: itemId, link_url: href })
       }
     }
     document.addEventListener('click', onClick, { capture: true })
