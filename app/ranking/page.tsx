@@ -283,6 +283,7 @@ export default async function RankingPage({ searchParams }: Props) {
               item={item}
               rank={i + 1}
               featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
+              linkToItem
             />
           ))}
         </div>
