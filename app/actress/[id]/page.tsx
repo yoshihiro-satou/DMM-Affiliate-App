@@ -353,6 +353,7 @@ export default async function ActressDetailPage({ params, searchParams }: Props)
                 key={item.content_id}
                 item={item}
                 featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
+                linkToItem
               />
             ))}
           </div>

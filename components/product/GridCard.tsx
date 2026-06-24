@@ -1,4 +1,5 @@
 ﻿import Image from 'next/image'
+import Link from 'next/link'
 import type { DmmItem } from '@/types/dmm'
 import { parsePrice, calcDiscountRate } from '@/lib/ranking'
 
@@ -39,9 +40,11 @@ type Props = {
   rank?: number
   featured?: boolean
   dateEnd?: string
+  /** タイトル文字を個別作品ページ /item/[cid] への内部リンクにする（画像タップはDMMのまま）。 */
+  linkToItem?: boolean
 }
 
-export function GridCard({ item, rank, featured = false, dateEnd }: Props) {
+export function GridCard({ item, rank, featured = false, dateEnd, linkToItem = false }: Props) {
   const price = parsePrice(item.prices.price)
   const listPrice = parsePrice(item.prices.list_price)
   const discount = calcDiscountRate(item.prices.price, item.prices.list_price)
@@ -140,7 +143,16 @@ export function GridCard({ item, rank, featured = false, dateEnd }: Props) {
       {/* 小カードのみ: テキストを画像の下に表示 */}
       {!featured && (
         <div className="mt-1 flex flex-col gap-0.5 px-0.5">
-          <p className="line-clamp-2 text-[10px] leading-tight text-white/70">{item.title}</p>
+          {linkToItem ? (
+            <Link
+              href={`/item/${item.content_id}`}
+              className="line-clamp-2 text-[10px] leading-tight text-white/70 hover:text-white hover:underline"
+            >
+              {item.title}
+            </Link>
+          ) : (
+            <p className="line-clamp-2 text-[10px] leading-tight text-white/70">{item.title}</p>
+          )}
           <div className="flex items-center gap-1">
             {listPrice !== null && discount !== null && (
               <span className="text-[9px] text-white/55 line-through">

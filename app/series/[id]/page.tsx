@@ -317,9 +317,12 @@ export default async function SeriesDetailPage({ params }: Props) {
                 </div>
 
                 <div className="mt-1 px-0.5">
-                  <p className="line-clamp-2 text-[10px] leading-tight text-white/60">
+                  <Link
+                    href={`/item/${item.content_id}`}
+                    className="line-clamp-2 text-[10px] leading-tight text-white/60 hover:text-white hover:underline"
+                  >
                     {item.title}
-                  </p>
+                  </Link>
                   {price !== null && (
                     <p className="mt-0.5 text-[10px] font-bold tabular-nums text-white/65">
                       ¥{price.toLocaleString('ja-JP')}
