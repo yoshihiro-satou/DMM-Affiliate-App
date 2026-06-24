@@ -129,6 +129,13 @@ export default async function SeriesDetailPage({ params }: Props) {
   const actresses = [...actressMap.entries()].slice(0, 12)
   const genres = [...genreMap.entries()].slice(0, 12)
 
+  // 導入文を出演女優・ジャンルで肉付け（実体名でSEO関連度を上げる＝シリーズ名指名検索の押し上げ）。
+  const actressNames = actresses.slice(0, 3).map(([, name]) => name).join('・')
+  const genreNames = genres.slice(0, 3).map(([, name]) => name).join('・')
+  const seriesIntroRest = `は全${totalCount}巻が配信中のFANZA人気シリーズです。${
+    actressNames ? `${actressNames}らが出演し、` : ''
+  }${genreNames ? `${genreNames}などのジャンルを収録。` : ''}各巻のセール価格・割引・最新巻をひと目で比較でき、気になる巻はそのままFANZAの視聴ページへ。新刊フォローで最新巻の配信も見逃しません。`
+
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -202,7 +209,7 @@ export default async function SeriesDetailPage({ params }: Props) {
 
       {/* 導入文（SEO・検索意図に一致するテキストコンテンツ／画像グリッドだけだった本文を補強） */}
       <p className="border-b border-white/8 px-4 py-3 text-[12px] leading-relaxed text-white/55">
-        <strong className="font-bold text-white/75">{seriesName}</strong>の全{totalCount}巻をまとめてチェックできるシリーズページです。各巻のセール価格・最新巻をひと目で確認でき、気になる巻はそのままFANZAの視聴ページへ。新刊フォローで最新巻の配信も見逃しません。
+        <strong className="font-bold text-white/75">{seriesName}</strong>{seriesIntroRest}
       </p>
 
       {/* PR */}

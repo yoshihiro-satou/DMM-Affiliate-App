@@ -173,6 +173,7 @@ export default async function GenrePage({ params }: Props) {
             key={item.content_id}
             item={item}
             featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
+            linkToItem
           />
         ))}
       </div>

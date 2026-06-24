@@ -66,7 +66,7 @@ async function DailySaleSection() {
       return (
         <div className="grid grid-cols-2 grid-flow-dense gap-2 md:grid-cols-4">
           {result.items.map((item, i) => (
-            <GridCard key={item.content_id} item={item} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} />
+            <GridCard key={item.content_id} item={item} featured={BENTO_PATTERN[i % BENTO_PATTERN.length]} linkToItem />
           ))}
         </div>
       )
@@ -84,6 +84,7 @@ async function DailySaleSection() {
               item={item}
               featured={BENTO_PATTERN[i % BENTO_PATTERN.length]}
               dateEnd={soonest?.date_end}
+              linkToItem
             />
           )
         })}
