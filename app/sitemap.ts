@@ -71,5 +71,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...actressRoutes, ...seriesRoutes, ...genreRoutes]
+  // 個別作品ページ /item/[cid]：ランキング上位＋新着の content_id を能動的に発見させる。
+  // 既に取得済みの itemRank/itemDate 結果を再利用＝DMM API 呼び出しの追加なし。
+  // 作品タイトル指名検索（GSCで表示はあるが着地ページが無く順位低迷）の受け皿を発見させる狙い。
+  const itemCids = new Set<string>()
+  for (const item of [...(itemRankResult?.items ?? []), ...(itemDateResult?.items ?? [])]) {
+    if (item.content_id) itemCids.add(item.content_id)
+  }
+  const itemRoutes: MetadataRoute.Sitemap = [...itemCids].map((cid) => ({
+    url: `${BASE_URL}/item/${cid}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  return [...staticRoutes, ...actressRoutes, ...seriesRoutes, ...genreRoutes, ...itemRoutes]
 }
