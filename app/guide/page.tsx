@@ -170,6 +170,20 @@ export default async function GuidePage() {
           ))}
         </section>
 
+        {/* 関連ガイド */}
+        <section className="flex flex-col gap-2">
+          <h2 className="text-[16px] font-black text-white">関連ガイド</h2>
+          <Link
+            href="/toys"
+            className="rounded-xl border border-white/8 bg-white/3 p-4 transition-colors hover:border-red-500/40 hover:bg-red-950/20"
+          >
+            <p className="text-[13px] font-bold text-white">おとなのおもちゃ 初めてガイド</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-white/60">
+              選び方・使い方・お手入れの基本と、一人で・カップル・ギフトの目的別の入口・セール割引品をまとめました。
+            </p>
+          </Link>
+        </section>
+
         <p className="text-center text-[10px] text-white/35">
           PR · 本ページはFANZAアフィリエイトを利用しています
         </p>

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { fetchActressList, fetchItemList, fetchGenreList } from '@/lib/dmm/client'
+import { LESSONS } from '@/lib/toys/lessons'
 
 // sitemap は DMM API を4本ライブで叩いて生成する動的ルート。無キャッシュだと毎フェッチで
 // 上流呼び出しが走り、Workerコールドスタート＋上流の一時的な遅延が重なると稀に応答が
@@ -19,6 +20,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/discover`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE_URL}/pwa`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
     { url: `${BASE_URL}/guide`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
+    // おとなのおもちゃ（mono/goods floor拡張・サイト内サイト）
+    { url: `${BASE_URL}/toys`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/toys/sale`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE_URL}/toys/gift`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    ...LESSONS.map((l) => ({
+      url: `${BASE_URL}/toys/learn/${l.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
   ]
 
   const [actressResult, itemRankResult, itemDateResult, genreResult] = await Promise.all([

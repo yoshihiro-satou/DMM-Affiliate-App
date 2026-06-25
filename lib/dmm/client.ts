@@ -256,9 +256,23 @@ export async function fetchDailySaleItems(hits = 12): Promise<DmmItem[]> {
  * いずれも service=digital でジャケット画像の体裁が揃っており、
  * フロアごとに別々のキャンペーン（ブランドストア / 素人100円 等）が走る。
  */
-const SALE_VIDEO_FLOORS: ReadonlyArray<{ service: string; floor: string }> = [
+type SaleSource = { service: string; floor: string }
+
+const SALE_VIDEO_FLOORS: ReadonlyArray<SaleSource> = [
   { service: 'digital', floor: 'videoa' }, // AV
   { service: 'digital', floor: 'videoc' }, // 素人
+]
+
+// おとなのおもちゃ（mono/goods）のセール集約用ソース。
+// 在庫の大半（rank上位100の88%）が値引き中なので、人気上位＋セール系キーワードで
+// 候補を広げ、最終的に isOnSale() で実値引きのみを通す（動画系と同じ設計）。
+const GOODS_SALE_FLOORS: ReadonlyArray<SaleSource> = [
+  { service: 'mono', floor: 'goods' },
+]
+const GOODS_SALE_KEYWORDS: ReadonlyArray<string | undefined> = [
+  undefined, // 人気上位（キーワードなし）
+  'セール',
+  '1000円以下',
 ]
 
 /**
@@ -282,11 +296,20 @@ const SALE_KEYWORDS: ReadonlyArray<string | undefined> = [
  * 組み合わせ単位で失敗しても他の結果は返す（部分的失敗に強い）。
  */
 export async function fetchSaleItems(
-  opts: { perFloor?: number; excludeVr?: boolean } = {}
+  opts: {
+    perFloor?: number
+    excludeVr?: boolean
+    /** 巡回するフロア（既定＝動画系 videoa/videoc）。mono/goods 等に差し替え可能。 */
+    floors?: ReadonlyArray<SaleSource>
+    /** 候補を広げるキーワード（既定＝動画系セールワード）。 */
+    keywords?: ReadonlyArray<string | undefined>
+  } = {}
 ): Promise<DmmItem[]> {
   const perFloor = opts.perFloor ?? 100
-  const sources = SALE_VIDEO_FLOORS.flatMap(({ service, floor }) =>
-    SALE_KEYWORDS.map((keyword) => ({ service, floor, keyword }))
+  const floors = opts.floors ?? SALE_VIDEO_FLOORS
+  const keywords = opts.keywords ?? SALE_KEYWORDS
+  const sources = floors.flatMap(({ service, floor }) =>
+    keywords.map((keyword) => ({ service, floor, keyword }))
   )
   const batches = await Promise.all(
     sources.map(({ service, floor, keyword }) =>
@@ -308,6 +331,21 @@ export async function fetchSaleItems(
     }
   }
   return merged
+}
+
+/**
+ * おとなのおもちゃ（mono/goods・floorId 75）のセール中商品を集める。
+ * fetchSaleItems を goods 用ソースで呼ぶ薄いラッパー。VR除外は動画専用なので無効。
+ * 値引き判定は isOnSale()（list_price>price の実値引き or 公式キャンペーン）に委ねる。
+ */
+export async function fetchToysSaleItems(
+  opts: { perFloor?: number } = {}
+): Promise<DmmItem[]> {
+  return fetchSaleItems({
+    perFloor: opts.perFloor ?? 100,
+    floors: GOODS_SALE_FLOORS,
+    keywords: GOODS_SALE_KEYWORDS,
+  })
 }
 
 // ------------------------------------

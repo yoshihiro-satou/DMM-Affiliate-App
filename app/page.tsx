@@ -254,6 +254,22 @@ export default function HomePage() {
         </Suspense>
       </section>
 
+      {/* おとなのおもちゃ ガイドへの誘導 */}
+      <section className="px-4 pt-8">
+        <a
+          href="/toys"
+          className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 transition-colors hover:border-red-500/40 hover:bg-red-950/20"
+        >
+          <span className="flex flex-col">
+            <span className="text-[15px] font-black tracking-tight text-white">おとなのおもちゃ 初めてガイド</span>
+            <span className="mt-0.5 text-[11px] text-white/55">
+              選び方・使い方・お手入れ／一人で・カップル・ギフト／今日のセール
+            </span>
+          </span>
+          <span className="shrink-0 text-[13px] font-bold text-red-400">見る →</span>
+        </a>
+      </section>
+
       {/* あなたへのおすすめ（クライアントサイド・SWR） */}
       <ForYouFeedLazy />
     </main>

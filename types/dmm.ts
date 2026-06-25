@@ -3,8 +3,19 @@ import { z } from 'zod'
 // ------------------------------------
 // 共通パーツ
 // ------------------------------------
+// DMM は iteminfo.*.id を service によって number / 数値文字列 / 非数値文字列で返す。
+// 特に mono/goods の maker.id は非数値文字列のことがあり、z.number() だと配列全体の
+// safeParse が落ちて ItemList 取得ごと失敗する（digital では数値なので従来は露見せず）。
+// 既存コードは id を number 前提で扱う（genre 比較・sitemap 等）ため、有限数に変換できる
+// ものだけ number にし、変換できないものは undefined に落とす（パース失敗を起こさない）。
+const idSchema = z.preprocess((v) => {
+  if (v === undefined || v === null) return undefined
+  const n = Number(v)
+  return Number.isFinite(n) ? n : undefined
+}, z.number().optional())
+
 const InfoItemSchema = z.object({
-  id: z.number().optional(),
+  id: idSchema,
   ruby: z.string().optional(),
   name: z.string().optional(),
 })
