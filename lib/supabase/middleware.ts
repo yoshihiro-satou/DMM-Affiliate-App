@@ -2,7 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { AGE_CHECK_COOKIE, AGE_CHECK_VALUE } from '@/lib/constants/age-check'
 
-const SEARCH_BOT_RE = /googlebot|google-inspectiontool|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|ia_archiver/i
+// 検索クローラーは年齢ゲートを素通りさせ、実コンテンツをインデックス/引用させる。
+// oai-searchbot＝ChatGPT Search の検索ボット（robots.ts で許可と2点セット＝[[meeting-log]] 第10回）。
+const SEARCH_BOT_RE = /googlebot|google-inspectiontool|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|ia_archiver|oai-searchbot/i
 
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl

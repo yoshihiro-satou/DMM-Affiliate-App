@@ -9,9 +9,24 @@ import { trackEvent } from '@/lib/analytics'
 const VISIT_SESSION_KEY = 'fp_visited' // セッション内 visit 重複防止
 const LAST_VISIT_KEY = 'fp_last_visit' // 日次 revisit 判定
 const CHECKIN_KEY = 'fp_checkin' // 日次ログインストリーク更新の重複防止
+const AGE_GATE_SEEN_KEY = 'fp_age_gate_seen' // 年齢ゲートを見た（突破検出の前提）
+const AGE_PASSED_KEY = 'fp_age_passed' // 年齢ゲート突破 age_pass の二重送信防止
 
 function today(): string {
   return new Date().toISOString().slice(0, 10)
+}
+
+/** アフィリクリックの発生面をパスから粗く分類（GA4 cta_position 用）。 */
+function ctaPositionFromPath(path: string): string {
+  if (path.startsWith('/item')) return 'item'
+  if (path.startsWith('/toys')) return 'toys'
+  if (path.startsWith('/sale')) return 'sale'
+  if (path.startsWith('/ranking')) return 'ranking'
+  if (path.startsWith('/actress')) return 'actress'
+  if (path.startsWith('/series')) return 'series'
+  if (path.startsWith('/genre')) return 'genre'
+  if (path === '/') return 'home'
+  return 'other'
 }
 
 /**
@@ -36,13 +51,27 @@ export function Tracker() {
     const isAgeGate = pathname === '/age-check'
 
     try {
-      // visit はセッションにつき1回（ゲート画面では計上しない）
-      if (!isAgeGate && !sessionStorage.getItem(VISIT_SESSION_KEY)) {
-        track('visit')
-        sessionStorage.setItem(VISIT_SESSION_KEY, '1')
-      }
-      // revisit は「前回訪問日 < 今日」のとき1回（ゲート画面では計上しない）
-      if (!isAgeGate) {
+      if (isAgeGate) {
+        // ゲート画面を見たことを記録（突破検出の前提）。sessionStorage はゲート突破時の
+        // フルリロード（server action redirect）を跨いで残る。
+        sessionStorage.setItem(AGE_GATE_SEEN_KEY, '1')
+      } else {
+        // 年齢ゲート突破（GA4 age_pass）：ゲートを見たセッションで、突破後の本来ページに
+        // 到達した最初の1回だけ。本家の積年の謎「到達は出たが収益0」を分解するファネル
+        // 上段（visit → age_pass → affiliate_click）。GA4管理画面で「キーイベント」化する。
+        if (
+          sessionStorage.getItem(AGE_GATE_SEEN_KEY) === '1' &&
+          !sessionStorage.getItem(AGE_PASSED_KEY)
+        ) {
+          trackEvent('age_pass')
+          sessionStorage.setItem(AGE_PASSED_KEY, '1')
+        }
+        // visit はセッションにつき1回
+        if (!sessionStorage.getItem(VISIT_SESSION_KEY)) {
+          track('visit')
+          sessionStorage.setItem(VISIT_SESSION_KEY, '1')
+        }
+        // revisit は「前回訪問日 < 今日」のとき1回
         const last = localStorage.getItem(LAST_VISIT_KEY)
         const t = today()
         if (last && last < t) track('revisit')
@@ -64,11 +93,14 @@ export function Tracker() {
       const href = anchor.getAttribute('href') ?? ''
       if (/al\.dmm|al\.fanza|dmm\.co\.jp|fanza\.co\.jp/.test(href)) {
         const itemId = anchor.dataset.itemId ?? null
+        // CTA位置：明示タグ data-cta を優先、無ければ現在パスから推定（どの面が送客したか）。
+        const ctaEl = anchor.closest('[data-cta]') as HTMLElement | null
+        const ctaPosition = ctaEl?.dataset.cta ?? ctaPositionFromPath(window.location.pathname)
         // 自前KPI（Supabase events）
-        track('affiliate_click', { itemId })
+        track('affiliate_click', { itemId, meta: { ctaPosition } })
         // GA4 キーイベント（FANZA送客＝本サイト最重要のコンバージョン）。
         // GA4管理画面で `affiliate_click` を「キーイベント」に指定して計上する。
-        trackEvent('affiliate_click', { item_id: itemId, link_url: href })
+        trackEvent('affiliate_click', { item_id: itemId, link_url: href, cta_position: ctaPosition })
       }
     }
     document.addEventListener('click', onClick, { capture: true })

@@ -13,6 +13,7 @@ import { DmmCredit } from '@/components/layout/DmmCredit'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { getCurrentUser } from '@/lib/supabase/server'
 import { GA_ID } from '@/lib/analytics'
+import { TELEGRAM_CHANNEL_URL } from '@/lib/constants/telegram'
 import './globals.css'
 
 const mPlusRounded = M_PLUS_Rounded_1c({
@@ -91,15 +92,31 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: 'FANZAピックス',
-              url: SITE_URL,
-              description: 'FANZAのセール・ランキング・お気に入り管理アプリ',
-              potentialAction: {
-                '@type': 'SearchAction',
-                target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/search?q={search_term_string}` },
-                'query-input': 'required name=search_term_string',
-              },
+              '@graph': [
+                {
+                  // 運営エンティティ。sameAs で公式SNSと結びつけ、ナレッジグラフ/LLM上の
+                  // 一意な概念として確立する（GEO/E-E-A-T＝[[meeting-log]] 第10回）。
+                  '@type': 'Organization',
+                  '@id': `${SITE_URL}/#org`,
+                  name: 'FANZAピックス',
+                  url: SITE_URL,
+                  description: 'FANZAのセール・ランキング・推し女優を管理するメディア。',
+                  sameAs: ['https://x.com/yoshihirock0710', TELEGRAM_CHANNEL_URL],
+                },
+                {
+                  '@type': 'WebSite',
+                  '@id': `${SITE_URL}/#website`,
+                  name: 'FANZAピックス',
+                  url: SITE_URL,
+                  description: 'FANZAのセール・ランキング・お気に入り管理アプリ',
+                  publisher: { '@id': `${SITE_URL}/#org` },
+                  potentialAction: {
+                    '@type': 'SearchAction',
+                    target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/search?q={search_term_string}` },
+                    'query-input': 'required name=search_term_string',
+                  },
+                },
+              ],
             }),
           }}
         />
