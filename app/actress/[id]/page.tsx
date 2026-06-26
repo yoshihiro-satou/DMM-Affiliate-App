@@ -54,9 +54,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!actress) return { title: '女優ページ' }
 
   const { totalCount, latestTitle } = workMeta
-  const countBadge = totalCount ? `【全${totalCount}本】` : ''
   const countText = totalCount ? `全${totalCount}本` : '多数'
-  const title = `${actress.name}のFANZA動画一覧${countBadge}｜新作・人気作を毎日更新`
+  // タイトル清書：女優名＋本数(API実値)を前寄せして好位置×低CTRの指名クエリを刈り、
+  // 「セール中・人気作・最新作」で検索意図を網羅、年号で鮮度を出す。
+  // ブランド接尾辞(layout の template)は指名クエリでは無価値かつ幅を食うので
+  // title.absolute で外し、SERP に出る <title> を仕様どおりにする。
+  const year = new Date().getFullYear()
+  const countSeg = totalCount ? ` 全${totalCount}本｜` : '｜'
+  const title = `${actress.name}のFANZA動画${countSeg}セール中・人気作・最新作【${year}年最新】`
 
   // スニペット先頭に「女優名＋本数＋最新作」を置き、好位置×0CTRの指名クエリを刈る。
   // 尾部は意図に合う「FANZA公式の視聴・サンプルへ」に寄せる（旧・セール速報の宣伝文は除去）。
@@ -66,7 +71,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `${actress.name}のFANZA動画を${countText}掲載${latestPhrase}新作・人気作・セール割引作品を新着順／人気順でチェック。各作品はFANZA公式の視聴・サンプルページへ。`
 
   return {
-    title,
+    // absolute で layout の "%s | FANZAピックス" テンプレを外す（指名クエリ最適化）
+    title: { absolute: title },
     description,
     alternates: { canonical: `/actress/${id}` },
     openGraph: {
