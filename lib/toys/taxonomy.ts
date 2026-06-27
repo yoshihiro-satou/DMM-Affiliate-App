@@ -52,3 +52,16 @@ export const WOMEN_WELLNESS_BRANDS = [
   BRAND_SEEDS.womanizer,
   BRAND_SEEDS.satisfyer,
 ]
+
+// ローターsolo編のピンポイント除外ジャンル（2026-06-27 実測で確定／meeting-log 第10回「全体厳格化しない・
+// ローターsolo編のみピンポイント補強」決裁）。genre=初心者向け+keyword=ローター の review上位30件は約半数が
+// 三丸/プライム等の電動オナホ・亀頭責め・前立腺で汚染され、sceneAxis:'solo'（sceneMap）では scene 無印のため
+// 素通りしてしまう。この除外ジャンルを持つ商品を弾くと、本物のローター/デンマ（クロローター・例のデンマ・
+// QUEEN'Sローター等）だけが残ることを実測確認済み。性別テーマの汚染回避なので「ローター使い方」レッスン専用に使う。
+export const ROTOR_SOLO_EXCLUDE_GENRES = [
+  308896, // 亀頭責め（男性向け）
+  83153, // 夜のお悩み（ED等・男性の性能）
+  308850, // ソフトSM（電動オナホ群と同伴・初級ローター主題に不適）
+  308848, // 上級者向け（初級レッスンに不適）
+  TOY_GENRE.anany, // アナニー（前立腺＝ローター主題から外れる）
+] as const

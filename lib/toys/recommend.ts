@@ -34,6 +34,13 @@ function discountOf(item: DmmItem): number {
   return calcDiscountRate(item.prices.price, item.prices.list_price) ?? 0
 }
 
+/** 除外ジャンルを1つでも持つか（汚染ジャンルのピンポイント排除用）。 */
+function hasExcludedGenre(item: DmmItem, excludeGenreIds?: readonly number[]): boolean {
+  if (!excludeGenreIds || excludeGenreIds.length === 0) return false
+  const ids = item.iteminfo?.genre ?? []
+  return ids.some((g) => g.id !== undefined && excludeGenreIds.includes(g.id))
+}
+
 export type LessonPicks = {
   /** 学びにひもづく厳選商品（テーマの評価上位） */
   picks: DmmItem[]
@@ -87,6 +94,7 @@ export async function resolveRecommendSlots(lesson: Lesson): Promise<LessonPicks
       if (seen.has(it.content_id)) continue
       if (!inPriceBand(it, r.priceBand)) continue
       if (sceneConflicts(it, r.sceneAxis)) continue
+      if (hasExcludedGenre(it, r.excludeGenreIds)) continue
       seen.add(it.content_id)
       pool.push(it)
     }

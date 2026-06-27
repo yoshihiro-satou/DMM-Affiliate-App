@@ -1,4 +1,4 @@
-import { TOY_GENRE, BRAND_SEEDS, WOMEN_WELLNESS_BRANDS } from './taxonomy'
+import { TOY_GENRE, BRAND_SEEDS, WOMEN_WELLNESS_BRANDS, ROTOR_SOLO_EXCLUDE_GENRES } from './taxonomy'
 import type { SceneAxis } from './taxonomy'
 
 // 学びの梯子（静的・常緑・リポ内）。1レッスン=1検索意図。
@@ -20,6 +20,8 @@ export type RecommendSlots = {
   sceneAxis?: SceneAxis
   /** 価格帯（レベル相当の目安） */
   priceBand?: { min?: number; max?: number }
+  /** このジャンルIDを1つでも持つ商品を除外（汚染ジャンルのピンポイント排除。ROTOR_SOLO_EXCLUDE_GENRES 等） */
+  excludeGenreIds?: readonly number[]
   /** 取得点数（既定6） */
   hits?: number
 }
@@ -92,7 +94,7 @@ export const LESSONS: Lesson[] = [
       { q: '音は大きいですか？', a: 'モデルによって差があります。「静音」をうたうものや小型タイプは振動音が低めです。気になる場合は静音性を明記した製品を選ぶと安心です。' },
       { q: '洗い方は？', a: '使用後はぬるま湯と専用クリーナー、または各製品の取扱説明に従って洗い、しっかり乾かして保管します。防水対応なら水洗いしやすいです。電池式は保管時に電池を抜いておくと安心です。' },
     ],
-    recommend: { genreId: TOY_GENRE.beginner, keyword: 'ローター', sceneAxis: 'solo', priceBand: { max: 4000 }, hits: 6 },
+    recommend: { genreId: TOY_GENRE.beginner, keyword: 'ローター', sceneAxis: 'solo', priceBand: { max: 4000 }, excludeGenreIds: ROTOR_SOLO_EXCLUDE_GENRES, hits: 6 },
     related: ['hajimete-erabikata', 'arai-kata-eisei', 'kyuuin-itakunai'],
   },
   {
