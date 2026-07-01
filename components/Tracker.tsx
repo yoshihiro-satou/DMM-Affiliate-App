@@ -16,6 +16,21 @@ function today(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+/**
+ * DMMアフィリURL（?lurl=<encoded target>&af_id=...）から content id(cid) を復元する。
+ * CTAに data-item-id が無くても「どの作品が送客したか」を events.item_id に残せる保険。
+ */
+function itemIdFromHref(href: string): string | null {
+  try {
+    const u = new URL(href)
+    const lurl = u.searchParams.get('lurl')
+    const target = lurl ? decodeURIComponent(lurl) : href
+    return target.match(/cid=([^/&?]+)/)?.[1] ?? null
+  } catch {
+    return null
+  }
+}
+
 /** アフィリクリックの発生面をパスから粗く分類（GA4 cta_position 用）。 */
 function ctaPositionFromPath(path: string): string {
   if (path.startsWith('/item')) return 'item'
@@ -92,7 +107,7 @@ export function Tracker() {
       if (!anchor) return
       const href = anchor.getAttribute('href') ?? ''
       if (/al\.dmm|al\.fanza|dmm\.co\.jp|fanza\.co\.jp/.test(href)) {
-        const itemId = anchor.dataset.itemId ?? null
+        const itemId = anchor.dataset.itemId ?? itemIdFromHref(href)
         // CTA位置：明示タグ data-cta を優先、無ければ現在パスから推定（どの面が送客したか）。
         const ctaEl = anchor.closest('[data-cta]') as HTMLElement | null
         const ctaPosition = ctaEl?.dataset.cta ?? ctaPositionFromPath(window.location.pathname)
